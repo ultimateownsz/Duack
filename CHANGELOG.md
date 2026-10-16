@@ -79,3 +79,18 @@ While the version is `0.x`, the API may change between minor versions.
   a playlist advance is realized with the existing crossfade curve
   (`MusicTransitionSequencer`/`CrossfadeMath`) and a concurrent duck source stays audible and
   in range mid-transition via `MusicVolumeMath.Effective`.
+
+#### 2026-10-16 (music director)
+
+- `IMusicBackend` - the thin adapter contract the platform packages implement: overlap
+  capability flag, `PlayTrack` (name/initial volume/cue pitch), active/outgoing gain
+  setters, `Stop`/`StopOutgoing`, `IsTrackPlaying`, a `TrackEnded` completion event, and
+  a per-frame `Update` hook.
+- `MusicDirector` - backend-agnostic music playback core: drives a
+  `MusicPlaylistController`, realizes both crossfade models (equal-power overlap for
+  desktop backends via `CrossfadeMath`; fade-out/switch/fade-in sequencing for
+  single-instance web backends via `MusicTransitionSequencer`), restarts a
+  `Repeat=Track` (or single-track loop) after a natural end, applies the music
+  `CueVariation` pitch on every start, and raises `TrackCompleted` after the playlist
+  advances. Pins: `MusicDirectorTests` (15 cases, fake backend - play/advance/repeat/
+  crossfade both models/zero crossfade/cue pitch/stop/unknown playlist/idle updates).

@@ -55,3 +55,27 @@ While the version is `0.x`, the API may change between minor versions.
   (`[JsonConstructor]`). The WP1.6 primitives are documented as dual-purpose: `MarbleBag<T>`
   shuffles a music playlist AND a sound-effect variant pool, and `VolumeCurve` maps any
   volume control (music or SFX).
+
+#### 2026-10-16 (playlist)
+
+- `PlaylistConfig` - named playlists (a `PlaylistDefinition` per name): an ordered list of
+  `PlaylistTrack` (a name plus a music-context tag), a `PlaylistRepeatMode`
+  (`Off`/`Playlist`/`Track`) and a `PlaylistShuffleMode` (`Off`/`Bag`).
+- `MusicPlaylistController` - the backend-agnostic playlist sequencer. It owns the sequencing
+  decisions (which track is current, when a completion advances, how repeat and shuffle
+  behave) and exposes `Play(playlistName)`, `Next()`, `Stop()`, `CurrentTrack`, and a
+  `TrackCompleted` event. The adapter owns playback and completion detection: it calls
+  `NotifyTrackCompleted()` when the current track ends, then starts whatever `CurrentTrack`
+  names. Built on neither `MediaQueue` nor `MediaPlayer` (that queue cannot be changed at
+  runtime and does not exist on the web backend), so desktop and web share one sequencing
+  path. `Play` on an unknown/empty playlist is a no-op (never throws, so a stray name cannot
+  crash a game); a `TrackCompleted` handler reading `CurrentTrack` sees the successor (or
+  null on stop); shuffle is seeded via the injected `Random`.
+- `MarbleBag<T>` gains an opt-in `avoidImmediateRepeat` flag: when set, a draw never repeats
+  the previous item across a cycle boundary, so a shuffled playlist loops without a
+  back-to-back repeat at the seam. Off by default (plain shuffle-bag behavior unchanged);
+  best-effort with duplicate items.
+- Crossfade + ducking integration contract pinned in `PlaylistCrossfadeIntegrationTests`:
+  a playlist advance is realized with the existing crossfade curve
+  (`MusicTransitionSequencer`/`CrossfadeMath`) and a concurrent duck source stays audible and
+  in range mid-transition via `MusicVolumeMath.Effective`.

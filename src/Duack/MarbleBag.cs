@@ -12,14 +12,24 @@ public sealed class MarbleBag<T>
     private readonly List<T> _items;
     private readonly Random _random;
     private readonly List<T> _bag;
+    private readonly bool _avoidImmediateRepeat;
     private int _next;
+    private bool _hasDrawn;
+    private T _lastDrawn = default!;
 
     /// <param name="items">The set drawn from. Duplicates are allowed and counted separately.</param>
     /// <param name="random">Source of randomness; defaults to <see cref="Random.Shared"/>.</param>
-    public MarbleBag(IEnumerable<T> items, Random? random = null)
+    /// <param name="avoidImmediateRepeat">
+    /// When true, a draw never returns the same item as the previous draw, including across a cycle
+    /// boundary (the last item of one cycle differs from the first of the next), so a shuffled
+    /// playlist loops without a back-to-back repeat at the seam. Best effort with duplicate items:
+    /// it needs at least one item different from the last draw. Default is false (plain shuffle-bag).
+    /// </param>
+    public MarbleBag(IEnumerable<T> items, Random? random = null, bool avoidImmediateRepeat = false)
     {
         _items = items?.ToList() ?? throw new ArgumentNullException(nameof(items));
         _random = random ?? Random.Shared;
+        _avoidImmediateRepeat = avoidImmediateRepeat;
         _bag = new List<T>(_items.Count);
         Refill();
     }
@@ -60,6 +70,17 @@ public sealed class MarbleBag<T>
         if (_next >= _bag.Count)
             Refill();
 
+        if (_avoidImmediateRepeat &&
+            _hasDrawn &&
+            _items.Count > 1 &&
+            EqualityComparer<T>.Default.Equals(_bag[_next], _lastDrawn))
+        {
+            var swap = _next + 1 < _bag.Count ? _next + 1 : 0;
+            (_bag[_next], _bag[swap]) = (_bag[swap], _bag[_next]);
+        }
+
+        _lastDrawn = _bag[_next];
+        _hasDrawn = true;
         return _bag[_next++];
     }
 

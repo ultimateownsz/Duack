@@ -50,6 +50,67 @@ public class AudioConfigTests
     }
 
     [Fact]
+    public void Parse_reads_cue_variation_for_music_and_sfx()
+    {
+        var config = AudioConfig.Parse("""
+            {
+              "music": { "cue_variation": { "pitch_range": 0.1, "volume_range": 0.2 } },
+              "sfx":   { "cue_variation": { "pitch_range": 0.05, "volume_range": 0.15 } }
+            }
+            """);
+
+        Assert.NotNull(config.Music.CueVariation);
+        Assert.Equal(0.1f, config.Music.CueVariation!.Value.PitchRange);
+        Assert.Equal(0.2f, config.Music.CueVariation!.Value.VolumeRange);
+
+        Assert.NotNull(config.Sfx.CueVariation);
+        Assert.Equal(0.05f, config.Sfx.CueVariation!.Value.PitchRange);
+        Assert.Equal(0.15f, config.Sfx.CueVariation!.Value.VolumeRange);
+    }
+
+    [Fact]
+    public void Cue_variation_round_trips_across_serialize()
+    {
+        var config = AudioConfig.Parse("""
+            {
+              "music": { "cue_variation": { "pitch_range": 0.1, "volume_range": 0.2 } },
+              "sfx":   { "cue_variation": { "pitch_range": 0.05, "volume_range": 0.15 } }
+            }
+            """);
+
+        var reparsed = AudioConfig.Parse(config.Serialize());
+
+        Assert.Equal(0.1f, reparsed.Music.CueVariation!.Value.PitchRange);
+        Assert.Equal(0.15f, reparsed.Sfx.CueVariation!.Value.VolumeRange);
+    }
+
+    [Fact]
+    public void Cue_variation_is_omitted_when_unset()
+    {
+        var json = new AudioConfig().Serialize();
+
+        Assert.DoesNotContain("cue_variation", json);
+    }
+
+    [Fact]
+    public void Sanitize_normalizes_negative_cue_variation_ranges()
+    {
+        var config = AudioConfig.Parse("""
+            {
+              "music": { "cue_variation": { "pitch_range": -0.5, "volume_range": -0.5 } },
+              "sfx":   { "cue_variation": { "pitch_range": -1, "volume_range": -1 } }
+            }
+            """);
+
+        config.Sanitize();
+
+        Assert.Equal(0f, config.Music.CueVariation!.Value.PitchRange);
+        Assert.Equal(0f, config.Music.CueVariation!.Value.VolumeRange);
+        Assert.Equal(0f, config.Sfx.CueVariation!.Value.PitchRange);
+        Assert.Equal(0f, config.Sfx.CueVariation!.Value.VolumeRange);
+    }
+
+    [Fact]
     public void Parse_ignores_the_build_only_tracks_section()
     {
         var config = AudioConfig.Parse("""

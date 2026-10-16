@@ -4,8 +4,9 @@ namespace Duack.Tests.CodeOnly;
 
 /// <summary>
 /// Pins a "shuffle bag": every item is drawn exactly once per cycle (random without replacement),
-/// then the cycle refills. Used for playlist shuffle so a track cannot repeat until the others
-/// have played.
+/// then the cycle refills. Generic over the item type, so the same primitive serves a music
+/// playlist shuffle (a track cannot repeat until the others have played) and a sound-effect
+/// variant pool (footstep/hit variants do not repeat back-to-back).
 /// </summary>
 public class MarbleBagTests
 {

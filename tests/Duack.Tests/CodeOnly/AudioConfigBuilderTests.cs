@@ -58,6 +58,20 @@ public class AudioConfigBuilderTests
     }
 
     [Fact]
+    public void WithCueVariation_lands_per_section()
+    {
+        var built = new AudioConfigBuilder()
+            .WithMusicCueVariation(new CueVariation(pitchRange: 0.1f, volumeRange: 0.2f))
+            .WithSfxCueVariation(new CueVariation(pitchRange: 0.3f, volumeRange: 0.4f))
+            .Build();
+
+        Assert.Equal(0.1f, built.Music.CueVariation!.Value.PitchRange);
+        Assert.Equal(0.2f, built.Music.CueVariation!.Value.VolumeRange);
+        Assert.Equal(0.3f, built.Sfx.CueVariation!.Value.PitchRange);
+        Assert.Equal(0.4f, built.Sfx.CueVariation!.Value.VolumeRange);
+    }
+
+    [Fact]
     public void Chained_calls_return_the_same_builder_instance()
     {
         var builder = new AudioConfigBuilder();

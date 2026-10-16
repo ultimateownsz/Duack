@@ -5,7 +5,8 @@ namespace Duack;
 /// perception is closer to logarithmic, so a linear slider feeding a linear amplitude puts almost
 /// all of the audible change in the bottom of the travel. This quadratic approximation makes the
 /// midpoint noticeably quieter than a linear slider would (0.5 slider -&gt; 0.25 amplitude), which
-/// reads as a more natural volume control. <see cref="ToSlider"/> is the exact inverse.
+/// reads as a more natural volume control. Works for any volume control - music or sound effects -
+/// and <see cref="ToSlider"/> is the exact inverse.
 /// </summary>
 public static class VolumeCurve
 {

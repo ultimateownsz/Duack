@@ -1,10 +1,12 @@
+using System.Text.Json.Serialization;
+
 namespace Duack;
 
 /// <summary>
-/// Per-play jitter for a sound effect: a pitch range and a volume range applied on top of the
-/// cue's base settings so repeated effects (footsteps, hits) do not sound machine-gunned. All
-/// values are pure - <see cref="Resolve"/> takes the <see cref="Random"/> it should use, so a
-/// seeded generator makes the jitter reproducible in tests.
+/// Per-play jitter for an audio cue (a one-shot sound effect such as a footstep/hit, or a music
+/// stinger): a pitch range and a volume range applied on top of the cue's base settings so repeated
+/// plays do not sound machine-gunned. All values are pure - <see cref="Resolve"/> takes the
+/// <see cref="Random"/> it should use, so a seeded generator makes the jitter reproducible in tests.
 /// </summary>
 public readonly struct CueVariation
 {
@@ -19,6 +21,7 @@ public readonly struct CueVariation
 
     /// <param name="pitchRange">Half-width of the pitch jitter; negative or non-finite values become 0.</param>
     /// <param name="volumeRange">Half-width of the volume jitter; negative or non-finite values become 0.</param>
+    [JsonConstructor]
     public CueVariation(float pitchRange, float volumeRange)
     {
         PitchRange = pitchRange > 0f && float.IsFinite(pitchRange) ? pitchRange : 0f;
@@ -48,7 +51,7 @@ public readonly struct CueVariation
     }
 }
 
-/// <summary>The one-shot pitch/volume an effect should play with, produced by <see cref="CueVariation.Resolve"/>.</summary>
+/// <summary>The one-shot pitch/volume an audio cue should play with, produced by <see cref="CueVariation.Resolve"/>.</summary>
 public readonly struct CuePlay
 {
     public CuePlay(float pitch, float volumeScale)

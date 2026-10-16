@@ -40,6 +40,12 @@ public class MusicConfig
 
     /// <summary>Named duck sources (keys are the names referenced from code: "sfx", "dialogue", ...).</summary>
     public Dictionary<string, DuckSourceConfig> DuckSources { get; set; } = new();
+
+    /// <summary>
+    /// Optional per-play pitch/volume jitter for music cues. Null (omitted from JSON) means no jitter.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public CueVariation? CueVariation { get; set; }
 }
 
 /// <summary>Sound-effect mix settings.</summary>
@@ -49,6 +55,13 @@ public class SfxConfig
     /// Master volume for sound effects in the range [0, 1]. Default is 1.
     /// </summary>
     public float MasterVolume { get; set; } = 1f;
+
+    /// <summary>
+    /// Optional per-play pitch/volume jitter for sound-effect cues (footsteps, hits). Null (omitted
+    /// from JSON) means no jitter.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public CueVariation? CueVariation { get; set; }
 }
 
 /// <summary>
@@ -257,6 +270,11 @@ public class AudioConfig
             source.HoldSeconds = System.Math.Max(0f, source.HoldSeconds);
             source.ReleaseSeconds = System.Math.Max(0f, source.ReleaseSeconds);
         }
+
+        if (Music.CueVariation is { } musicVariation)
+            Music.CueVariation = new CueVariation(musicVariation.PitchRange, musicVariation.VolumeRange);
+        if (Sfx.CueVariation is { } sfxVariation)
+            Sfx.CueVariation = new CueVariation(sfxVariation.PitchRange, sfxVariation.VolumeRange);
     }
 
     /// <summary>Writes the config back to disk (no-op on Browser).</summary>

@@ -51,6 +51,20 @@ public sealed class AudioConfigBuilder
         return this;
     }
 
+    /// <summary>Sets the per-play pitch/volume jitter for music cues.</summary>
+    public AudioConfigBuilder WithMusicCueVariation(CueVariation variation)
+    {
+        _config.Music.CueVariation = variation;
+        return this;
+    }
+
+    /// <summary>Sets the per-play pitch/volume jitter for sound-effect cues.</summary>
+    public AudioConfigBuilder WithSfxCueVariation(CueVariation variation)
+    {
+        _config.Sfx.CueVariation = variation;
+        return this;
+    }
+
     /// <summary>Returns the assembled config, clamped by <see cref="AudioConfig.Sanitize"/>.</summary>
     public AudioConfig Build()
     {

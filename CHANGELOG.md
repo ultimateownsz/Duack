@@ -47,3 +47,11 @@ While the version is `0.x`, the API may change between minor versions.
   `PlayerAudioSettings`, serialized as `schema_version`). A missing stamp reads as the
   current version, `Sanitize` normalizes a zero/legacy stamp up to 1, and a FUTURE stamp is
   preserved rather than silently downgraded.
+- `cue_variation` is configurable per section, on BOTH `MusicConfig` and `SfxConfig`, so
+  per-play pitch/volume jitter (`CueVariation`) applies to music cues and sound-effect cues
+  alike. Optional and omitted from JSON when unset (no churn on existing configs);
+  `Sanitize` normalizes negative ranges; `AudioConfigBuilder` gains
+  `WithMusicCueVariation`/`WithSfxCueVariation`. `CueVariation` is now JSON round-trippable
+  (`[JsonConstructor]`). The WP1.6 primitives are documented as dual-purpose: `MarbleBag<T>`
+  shuffles a music playlist AND a sound-effect variant pool, and `VolumeCurve` maps any
+  volume control (music or SFX).

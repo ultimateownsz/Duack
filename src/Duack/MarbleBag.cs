@@ -2,8 +2,9 @@ namespace Duack;
 
 /// <summary>
 /// A "shuffle bag": items are drawn in random order without replacement, so every item appears
-/// exactly once per cycle, then the cycle refills. This is what makes playlist shuffle fair - a
-/// track cannot repeat until all the others have played.
+/// exactly once per cycle, then the cycle refills. Generic over the item type, so it serves both
+/// halves of the audio system: a music playlist (a track cannot repeat until all the others have
+/// played) and a sound-effect variant pool (footstep/hit variants do not repeat back-to-back).
 /// </summary>
 /// <typeparam name="T">Element type.</typeparam>
 public sealed class MarbleBag<T>

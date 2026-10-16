@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Backend-agnostic core: pure BCL (System.Text.Json only). No MonoGame/KNI/engine
+         reference, so it builds for every TFM and every front-end (game, tools, adapters). -->
+    <RootNamespace>Duack</RootNamespace>
+    <AssemblyName>Duack</AssemblyName>
+    <PackageId>Duack</PackageId>
+    <Description>Backend-agnostic audio config, ducking, crossfade, and player-settings core.</Description>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+</Project>

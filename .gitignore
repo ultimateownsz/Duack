@@ -1,0 +1,21 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+.idea/
+*.DotSettings.user
+
+## Test results
+[Tt]est[Rr]esult*/
+*.trx
+*.coverage
+coverage*.xml
+
+## Publish output
+publish/
+
+## OS
+.DS_Store
+Thumbs.db

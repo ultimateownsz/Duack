@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="src/Duack/Duack.csproj" />
+  <Project Path="tests/Duack.Tests/Duack.Tests.csproj" />
+</Solution>

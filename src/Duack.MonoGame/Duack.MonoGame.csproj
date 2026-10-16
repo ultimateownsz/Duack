@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- MonoGame/desktop adapter: implements Duack.IMusicBackend over SoundEffectInstance.
+         This is the only Duack project that references MonoGame; the core stays pure BCL. -->
+    <RootNamespace>Duack.MonoGame</RootNamespace>
+    <AssemblyName>Duack.MonoGame</AssemblyName>
+    <PackageId>Duack.MonoGame</PackageId>
+    <Description>MonoGame/desktop IMusicBackend adapter for Duack (cached SoundEffect tracks with overlap crossfade).</Description>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Duack\Duack.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Versions mirror the engine's Directory.Packages.props pins (see Duack AGENTS.md). -->
+    <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.5.1" />
+    <!-- OGG decode for the shared Content/Audio/*.ogg; desktop ships WAV masters, OGG is the fallback. -->
+    <PackageReference Include="NVorbis" Version="0.10.5" />
+  </ItemGroup>
+
+</Project>

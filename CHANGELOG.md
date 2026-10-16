@@ -83,14 +83,70 @@ While the version is `0.x`, the API may change between minor versions.
 #### 2026-10-16 (music director)
 
 - `IMusicBackend` - the thin adapter contract the platform packages implement: overlap
-  capability flag, `PlayTrack` (name/initial volume/cue pitch), active/outgoing gain
+  capability flag, `PlayTrack` (name/initial volume/cue pitch), active/outgoing **volume**
   setters, `Stop`/`StopOutgoing`, `IsTrackPlaying`, a `TrackEnded` completion event, and
-  a per-frame `Update` hook.
+  a per-frame `Update` hook. The setters take the FINAL composed volume, so adapters never
+  multiply anything themselves.
 - `MusicDirector` - backend-agnostic music playback core: drives a
   `MusicPlaylistController`, realizes both crossfade models (equal-power overlap for
   desktop backends via `CrossfadeMath`; fade-out/switch/fade-in sequencing for
   single-instance web backends via `MusicTransitionSequencer`), restarts a
   `Repeat=Track` (or single-track loop) after a natural end, applies the music
   `CueVariation` pitch on every start, and raises `TrackCompleted` after the playlist
-  advances. Pins: `MusicDirectorTests` (15 cases, fake backend - play/advance/repeat/
-  crossfade both models/zero crossfade/cue pitch/stop/unknown playlist/idle updates).
+  advances.
+- `MusicDirector` now OWNS the full mix: every backend volume is
+  `MusicVolumeMath.Effective(music master x the track's context scale x the live duck
+  ratio x the crossfade ramp)`, composed in `MusicDirector` with an internal
+  `DuckMixer` built from `MusicConfig.DuckSources`. The outgoing track keeps its OWN
+  context scale while fading out, and `DuckRatio` is exposed for diagnostics. New
+  passthroughs `Pulse(source, hold)` / `SetDuck(source, active)` let the game drive
+  dialogue/SFX ducking through the director instead of a separate mixer. Pins:
+  `MusicDirectorTests` (19 cases, fake backend - play/advance/repeat/crossfade both
+   models/zero crossfade/cue pitch/stop/unknown playlist/idle updates plus master x
+   context x duck composition and duck release).
+
+#### 2026-10-16 (backend adapters)
+
+- New `src/Duack.MonoGame` package (`Duack.MonoGame`): the desktop
+  `IMusicBackend`. `SoundEffectMusicBackend` plays cached, NON-looped tracks through the
+  headless-testable seams `IAudioClipLibrary` / `IAudioClip` / `IAudioInstance` (so the
+  backend has no MonoGame dependency in its logic and its tests need no audio device).
+  `SupportsOverlap` is true, so the core crossfades the outgoing track against the
+  incoming one. Completion is detected by polling the instance and is reported exactly
+  once via `TrackEnded`; looping is left to the core playlist (a natural end is a
+  completion, not an instance `IsLooped`). The real library,
+  `SoundEffectClipLibrary`, loads `Content/Audio/{name}.{ext}` through `TitleContainer`
+  (OGG-first via the ported `OggPcmWav` NVorbis decoder, WAV fallback), caches successes,
+  does NOT cache failures, retries once after a 50 ms pause for mid-copy files, and never
+  throws. `Invalidate(name)` drops a cached clip for content hot-reload.
+- New `src/Duack.KNI` package (`Duack.KNI`): the web `IMusicBackend` plus the browser
+  settings storage. `MediaPlayerMusicBackend` rides the platform player (an HTML
+  `<audio>` element on BlazorGL) through the injectable `IMediaPlayerHost` seam
+  (`KniMediaPlayerHost` wraps the static `MediaPlayer` in production). `SupportsOverlap`
+  is false, so the core uses its fade-out/switch/fade-in sequencing; the adapter plays
+  NON-repeating and reports a natural end via `TrackEnded`. Track end is decided by the
+  pure, headless-tested `MediaEndState`: an explicit stop latches the state out of
+  "running" synchronously, and a fresh start opens a short settle window during which
+  stop signals are swallowed, so the delayed "stopped" echo of a track switch is not
+  mistaken for the new track ending. `LocalStorageKeyValueStorage` (ported from the
+  game's `JsRuntimeKeyValueStorage`) is the only JS-interop surface: synchronous
+  `[JSImport("globalThis.localStorage.*")]` bindings, `Get` swallows and logs a failure
+  so a storage-disabled browser boots on authored defaults, `Set` logs and rethrows so a
+  real save failure is never reported as success.
+- New test suite `tests/Duack.Adapters.Tests` (27 cases, references both adapters): fake
+  `IAudioClipLibrary`/clip/instance drive the MonoGame backend (start params, overlap
+  demote/drop, outgoing stop, full stop, one-shot end), and a fake `IMediaPlayerHost`
+  drives the KNI backend (ogg URI, non-repeating, volume, natural end once, no end on
+  explicit stop, stale switch signal within the settle window, missed-event polling), with
+  `MediaEndState` pinned directly (settle, latch-once, stopped-by-us, zero-settle).
+
+### Known Limitations
+
+#### 2026-10-16
+
+- Web track-end detection (`Duack.KNI.MediaEndState`) is heuristic. The platform's
+  `MediaStateChanged` signal carries no track identity and no reason, so a stale "stopped"
+  event that arrives within the settle window of a track switch is correctly swallowed, but
+  one that arrives later than the window can still be misread as a natural end. Tracks are
+  minutes long and the window is a few frames, so this is not reachable by ordinary
+  playback; it has not been verified on a real browser from this environment.

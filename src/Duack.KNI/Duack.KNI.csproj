@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- KNI/web adapter: implements Duack.IMusicBackend over the platform MediaPlayer (an HTML
+         <audio> element on BlazorGL) and provides the browser localStorage settings storage.
+         This is the only Duack project that touches nkast/Browser interop; the core stays pure BCL. -->
+    <RootNamespace>Duack.KNI</RootNamespace>
+    <AssemblyName>Duack.KNI</AssemblyName>
+    <PackageId>Duack.KNI</PackageId>
+    <Description>KNI/browser IMusicBackend adapter for Duack (platform MediaPlayer plus localStorage settings storage).</Description>
+    <IsPackable>true</IsPackable>
+    <!-- Required by [JSImport]: the synchronous localStorage bindings generate unsafe marshalling
+         stubs, and they must stay synchronous (see LocalStorageKeyValueStorage remarks). -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Duack\Duack.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Versions mirror the engine's Directory.Packages.props pins (see Duack AGENTS.md). -->
+    <PackageReference Include="nkast.Xna.Framework" Version="4.3.9001" />
+    <PackageReference Include="nkast.Xna.Framework.Media" Version="4.3.9001" />
+    <PackageReference Include="Microsoft.JSInterop.WebAssembly" Version="10.0.11" />
+  </ItemGroup>
+
+</Project>

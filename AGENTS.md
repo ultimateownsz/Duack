@@ -36,15 +36,20 @@ A change that ships with no test needs a written reason in the changelog entry.
 
 ## Layout
 
-- `src/Duack` — the library.
+- `src/Duack` — the library (pure BCL).
+- `src/Duack.MonoGame` — desktop adapter: `IMusicBackend` over MonoGame `SoundEffectInstance`.
+- `src/Duack.KNI` — web adapter: `IMusicBackend` over the platform `MediaPlayer`, plus the browser
+  `localStorage` settings storage.
 - `tests/Duack.Tests/CodeOnly` — behavior with no serialization surface.
 - `tests/Duack.Tests/JsonRoundTrip` — config/player-settings wire-format pins.
+- `tests/Duack.Adapters.Tests` — behavior of the two adapter packages, driven through their
+  headless seams (fake clip library / fake media-player host); no audio device or browser needed.
 
 ## Build & test
 
 ```
 dotnet build Duack.slnx
-dotnet test tests/Duack.Tests
+dotnet test Duack.slnx
 ```
 
 To prove the core stays BCL-only, restore into an empty package cache:

@@ -2,9 +2,10 @@ namespace Duack;
 
 /// <summary>
 /// Backend abstraction for music playback. Adapters implement this over engine-specific
-/// audio APIs (MonoGame SoundEffectInstance, KNI MediaPlayer, etc.). The core
-/// <see cref="MusicDirector"/> owns all mixing logic (crossfade, ducking, gain math);
-/// backends are thin and report only playback state and completion.
+/// audio APIs (MonoGame <c>SoundEffectInstance</c>, KNI <c>MediaPlayer</c>, etc.). The core
+/// <see cref="MusicDirector"/> owns all mixing logic (crossfade, ducking, context scales,
+/// master volume); backends are thin and only apply the volume they are told, play tracks,
+/// and report completion.
 /// </summary>
 public interface IMusicBackend
 {
@@ -14,17 +15,19 @@ public interface IMusicBackend
     /// <summary>
     /// Starts playing the specified track. The backend should begin playback at the given
     /// initial volume and apply <paramref name="pitch"/> (cue variation) if supported.
+    /// When a track is already playing and <see cref="SupportsOverlap"/> is true, that track
+    /// becomes the outgoing (fading-out) track.
     /// </summary>
-    void PlayTrack(string trackName, float initialVolume = 1f, float pitch = 0f);
+    void PlayTrack(string trackName, float initialVolume, float pitch);
 
-    /// <summary>Sets the gain applied to the currently active (fading-in) track.</summary>
-    void SetActiveGain(float gain);
+    /// <summary>Sets the final volume (0..1) of the currently active (fading-in) track.</summary>
+    void SetActiveVolume(float volume);
 
     /// <summary>
-    /// Sets the gain applied to the outgoing (fading-out) track. Ignored if
+    /// Sets the final volume (0..1) of the outgoing (fading-out) track. Ignored if
     /// <see cref="SupportsOverlap"/> is false or no outgoing track exists.
     /// </summary>
-    void SetOutgoingGain(float gain);
+    void SetOutgoingVolume(float volume);
 
     /// <summary>Stops any outgoing (fading-out) track immediately.</summary>
     void StopOutgoing();

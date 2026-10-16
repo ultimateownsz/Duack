@@ -4,8 +4,9 @@ namespace Duack.Tests.CodeOnly;
 
 /// <summary>
 /// Headless pin of the <see cref="MusicDirector"/>: a fake backend stands in for the engine,
-/// so playlist advance, crossfade realization, and cue pitch application are all verifiable
-/// without MonoGame or KNI. The adapters stay thin precisely because these behaviors live here.
+/// so playlist advance, crossfade realization, cue pitch application, and the full
+/// master x context x duck x fade volume composition are all verifiable without MonoGame or KNI.
+/// The adapters stay thin precisely because these behaviors live here.
 /// </summary>
 public class MusicDirectorTests
 {
@@ -16,8 +17,8 @@ public class MusicDirectorTests
 
         public bool SupportsOverlap { get; }
         public List<(string Name, float InitialVolume, float Pitch)> Played { get; } = new();
-        public List<float> ActiveGains { get; } = new();
-        public List<float> OutgoingGains { get; } = new();
+        public List<float> ActiveVolumes { get; } = new();
+        public List<float> OutgoingVolumes { get; } = new();
         public int StopOutgoingCalls { get; private set; }
         public int StopCalls { get; private set; }
         public bool IsTrackPlaying { get; private set; }
@@ -29,8 +30,8 @@ public class MusicDirectorTests
             IsTrackPlaying = true;
         }
 
-        public void SetActiveGain(float gain) => ActiveGains.Add(gain);
-        public void SetOutgoingGain(float gain) => OutgoingGains.Add(gain);
+        public void SetActiveVolume(float volume) => ActiveVolumes.Add(volume);
+        public void SetOutgoingVolume(float volume) => OutgoingVolumes.Add(volume);
         public void StopOutgoing() => StopOutgoingCalls++;
         public void Stop() { StopCalls++; IsTrackPlaying = false; }
         public void Update(float deltaSeconds) { }
@@ -153,7 +154,7 @@ public class MusicDirectorTests
     }
 
     [Fact]
-    public void Overlap_backend_crossfades_with_equal_power_gains_after_a_skip()
+    public void Overlap_backend_crossfades_with_equal_power_volumes_after_a_skip()
     {
         var backend = new FakeMusicBackend(supportsOverlap: true);
         var playlist = new MusicPlaylistController(TwoTracks("a", "b"), new Random(1));
@@ -166,12 +167,12 @@ public class MusicDirectorTests
 
         Assert.Equal(2, backend.Played.Count);
         Assert.Equal(0f, backend.Played[^1].InitialVolume);
-        Assert.True(backend.ActiveGains.Last() < 1f);
-        Assert.True(backend.OutgoingGains.Last() > 0f);
+        Assert.True(backend.ActiveVolumes.Last() < 1f);
+        Assert.True(backend.OutgoingVolumes.Last() > 0f);
     }
 
     [Fact]
-    public void Overlap_crossfade_completes_by_stopping_the_outgoing_track_at_full_gain()
+    public void Overlap_crossfade_completes_by_stopping_the_outgoing_track_at_full_volume()
     {
         var backend = new FakeMusicBackend(supportsOverlap: true);
         var playlist = new MusicPlaylistController(TwoTracks("a", "b"), new Random(1));
@@ -184,11 +185,11 @@ public class MusicDirectorTests
         director.Update(1f);
 
         Assert.Equal(1, backend.StopOutgoingCalls);
-        Assert.Equal(1f, backend.ActiveGains.Last());
+        Assert.Equal(1f, backend.ActiveVolumes.Last());
     }
 
     [Fact]
-    public void Zero_crossfade_switches_instantly_to_full_gain()
+    public void Zero_crossfade_switches_instantly_to_full_volume()
     {
         var backend = new FakeMusicBackend(supportsOverlap: true);
         var playlist = new MusicPlaylistController(TwoTracks("a", "b"), new Random(1));
@@ -199,9 +200,9 @@ public class MusicDirectorTests
         director.Next();
         director.Update(0.016f);
 
-        // One crossfade completes per transition (first track + skip), each ending at full gain.
+        // One crossfade completes per transition (first track + skip), each ending at full volume.
         Assert.Equal(2, backend.StopOutgoingCalls);
-        Assert.Equal(1f, backend.ActiveGains.Last());
+        Assert.Equal(1f, backend.ActiveVolumes.Last());
     }
 
     [Fact]
@@ -217,8 +218,8 @@ public class MusicDirectorTests
 
         // Fade-out phase: the single instance follows the outgoing ramp down.
         director.Update(0.25f);
-        var gainAfterFadeOutStart = backend.ActiveGains.Last();
-        Assert.True(gainAfterFadeOutStart < 1f);
+        var volumeAfterFadeOutStart = backend.ActiveVolumes.Last();
+        Assert.True(volumeAfterFadeOutStart < 1f);
 
         // Cross the fade-out boundary (half of 1s): switch to "b".
         director.Update(0.3f);
@@ -226,9 +227,9 @@ public class MusicDirectorTests
         Assert.Equal("b", backend.Played[^1].Name);
         Assert.Equal(1, backend.StopCalls);
 
-        // Fade-in ramp finishes at full gain.
+        // Fade-in ramp finishes at full volume.
         director.Update(1f);
-        Assert.Equal(1f, backend.ActiveGains.Last());
+        Assert.Equal(1f, backend.ActiveVolumes.Last());
     }
 
     [Fact]
@@ -243,7 +244,7 @@ public class MusicDirectorTests
 
         Assert.Equal("solo", backend.Played.Single().Name);
         Assert.Equal(0f, backend.Played.Single().InitialVolume);
-        Assert.True(backend.ActiveGains.Last() < 1f);
+        Assert.True(backend.ActiveVolumes.Last() < 1f);
     }
 
     [Fact]
@@ -272,6 +273,71 @@ public class MusicDirectorTests
         director.Update(0.016f);
 
         Assert.Equal(0f, backend.Played.Single().Pitch);
+    }
+
+    [Fact]
+    public void Master_volume_scales_the_composed_volume()
+    {
+        var backend = new FakeMusicBackend(supportsOverlap: true);
+        var playlist = new MusicPlaylistController(OneTrack("solo"), new Random(1));
+        var director = new MusicDirector(backend, playlist, new MusicConfig { CrossfadeSeconds = 0f, MasterVolume = 0.5f });
+
+        director.Play("main");
+        director.Update(0.016f);
+
+        Assert.Equal(0.5f, backend.ActiveVolumes.Last(), 3);
+    }
+
+    [Fact]
+    public void Context_scale_multiplies_the_composed_volume()
+    {
+        var backend = new FakeMusicBackend(supportsOverlap: true);
+        var playlist = new MusicPlaylistController(OneTrack("solo"), new Random(1));
+        var music = new MusicConfig { CrossfadeSeconds = 0f };
+        music.Contexts["Overworld"] = 0.25f;
+        var director = new MusicDirector(backend, playlist, music);
+
+        director.Play("main");
+        director.Update(0.016f);
+
+        Assert.Equal(0.25f, backend.ActiveVolumes.Last(), 3);
+    }
+
+    [Fact]
+    public void Duck_ratio_multiplies_the_composed_volume()
+    {
+        var backend = new FakeMusicBackend(supportsOverlap: true);
+        var playlist = new MusicPlaylistController(OneTrack("solo"), new Random(1));
+        var music = new MusicConfig { CrossfadeSeconds = 0f };
+        music.DuckSources["sfx"] = new DuckSourceConfig { Ratio = 0.3f, AttackSeconds = 0f, ReleaseSeconds = 0f };
+        var director = new MusicDirector(backend, playlist, music);
+
+        director.Play("main");
+        director.Update(0.016f);
+        director.SetDuck("sfx", true);
+        director.Update(0.016f);
+
+        Assert.Equal(0.3f, director.DuckRatio, 3);
+        Assert.Equal(0.3f, backend.ActiveVolumes.Last(), 3);
+    }
+
+    [Fact]
+    public void Releasing_a_duck_returns_the_volume_to_full()
+    {
+        var backend = new FakeMusicBackend(supportsOverlap: true);
+        var playlist = new MusicPlaylistController(OneTrack("solo"), new Random(1));
+        var music = new MusicConfig { CrossfadeSeconds = 0f };
+        music.DuckSources["sfx"] = new DuckSourceConfig { Ratio = 0.3f, AttackSeconds = 0f, ReleaseSeconds = 0f };
+        var director = new MusicDirector(backend, playlist, music);
+
+        director.Play("main");
+        director.Update(0.016f);
+        director.SetDuck("sfx", true);
+        director.Update(0.016f);
+        director.SetDuck("sfx", false);
+        director.Update(0.016f);
+
+        Assert.Equal(1f, backend.ActiveVolumes.Last(), 3);
     }
 
     [Fact]
@@ -305,7 +371,7 @@ public class MusicDirectorTests
     }
 
     [Fact]
-    public void Updates_while_idle_do_not_touch_the_backend_gains()
+    public void Updates_while_idle_do_not_touch_the_backend_volumes()
     {
         var backend = new FakeMusicBackend(supportsOverlap: true);
         var director = new MusicDirector(backend, new MusicPlaylistController(TwoTracks("a", "b"), new Random(1)));
@@ -314,6 +380,6 @@ public class MusicDirectorTests
         director.Update(0.016f);
 
         Assert.Empty(backend.Played);
-        Assert.Empty(backend.ActiveGains);
+        Assert.Empty(backend.ActiveVolumes);
     }
 }

@@ -3,17 +3,18 @@ using System;
 namespace Duack;
 
 /// <summary>
-/// Core music director: owns playlist sequencing, crossfade realization, and per-frame gain
-/// application. It is backend-agnostic — it talks to an <see cref="IMusicBackend"/> to play
-/// tracks and apply gains, so both the MonoGame and KNI adapters stay thin.
+/// Core music director: owns playlist sequencing, crossfade realization, ducking, context
+/// scales, and master-volume composition — the final volume the backend plays at is
+/// <see cref="MusicVolumeMath.Effective"/> of (master × context scale × duck ratio × fade).
+/// It talks to a thin <see cref="IMusicBackend"/> that only plays tracks and applies
+/// volumes, so both the MonoGame and KNI adapters stay mechanical.
 ///
 /// <para>
-/// Two crossfade models, both realized here so the adapters stay mechanical:
-/// overlap-capable backends (desktop) demote the playing track to "outgoing" when
-/// <see cref="IMusicBackend.PlayTrack"/> is called and both gains are driven with the
-/// equal-power curve (<see cref="CrossfadeMath"/>); non-overlap backends (web, one
-/// <c>MediaPlayer</c>) run <see cref="MusicTransitionSequencer"/> — fade the current track
-/// out, switch, fade the new track in — and only ever touch the active gain.
+/// Two crossfade models, both realized here: overlap-capable backends (desktop) demote the
+/// playing track to "outgoing" when <see cref="IMusicBackend.PlayTrack"/> is called and both
+/// volumes follow the equal-power curve (<see cref="CrossfadeMath"/>); non-overlap backends
+/// (web, one <c>MediaPlayer</c>) run <see cref="MusicTransitionSequencer"/> — fade the
+/// current track out, switch, fade the new track in — touching only the active volume.
 /// </para>
 ///
 /// <para>
@@ -28,17 +29,24 @@ public class MusicDirector
     private readonly MusicPlaylistController _playlist;
     private readonly MusicConfig _music;
     private readonly Random _random;
+    private readonly DuckMixer _duck;
     private readonly MusicTransitionSequencer _sequencer = new();
+
+    private PlaylistTrack? _active;
+    private PlaylistTrack? _outgoing;
+    private PlaylistTrack? _pending;
     private bool _isCrossfading;
     private float _crossfadeElapsed;
-    private string? _currentTrackName;
 
     /// <summary>Raised after the playlist advanced: carries the track that just completed.</summary>
     public event Action<PlaylistTrack>? TrackCompleted;
 
+    /// <summary>Combined duck ratio the music is currently multiplied by (1 = unducked).</summary>
+    public float DuckRatio => _duck.EffectiveRatio;
+
     /// <param name="backend">The platform backend that actually plays tracks.</param>
     /// <param name="playlist">The playlist sequencer to drive.</param>
-    /// <param name="music">Music mix settings (crossfade duration, music cue variation). Optional.</param>
+    /// <param name="music">Music mix settings: master, crossfade, contexts, ducks, cue variation.</param>
     /// <param name="random">Random source for cue variation; defaults to <see cref="Random.Shared"/>.</param>
     public MusicDirector(IMusicBackend backend, MusicPlaylistController playlist, MusicConfig? music = null, Random? random = null)
     {
@@ -46,6 +54,9 @@ public class MusicDirector
         _playlist = playlist ?? throw new ArgumentNullException(nameof(playlist));
         _music = music ?? new MusicConfig();
         _random = random ?? Random.Shared;
+        _duck = new DuckMixer();
+        foreach (var (name, source) in _music.DuckSources)
+            _duck.SetSource(name, source);
         _playlist.TrackCompleted += track => TrackCompleted?.Invoke(track);
         _backend.TrackEnded += OnBackendTrackEnded;
     }
@@ -62,6 +73,12 @@ public class MusicDirector
     /// <summary>Skips to the next track (honours the playlist's repeat mode).</summary>
     public void Next() => _playlist.Next();
 
+    /// <summary>Ducks the named source for its configured hold (or <paramref name="holdSeconds"/>).</summary>
+    public void Pulse(string source, float holdSeconds = -1f) => _duck.Pulse(source, holdSeconds);
+
+    /// <summary>Holds a duck source on or off (e.g. dialogue open/close).</summary>
+    public void SetDuck(string source, bool active) => _duck.Set(source, active);
+
     /// <summary>Stops playback and clears all transition state.</summary>
     public void Stop()
     {
@@ -69,7 +86,9 @@ public class MusicDirector
         _sequencer.Cancel();
         _isCrossfading = false;
         _crossfadeElapsed = 0f;
-        _currentTrackName = null;
+        _active = null;
+        _outgoing = null;
+        _pending = null;
         _backend.Stop();
         _backend.StopOutgoing();
     }
@@ -78,120 +97,142 @@ public class MusicDirector
     public void Update(float deltaSeconds)
     {
         _backend.Update(deltaSeconds);
+        _duck.Update(deltaSeconds);
 
         if (!_playlist.IsPlaying)
         {
-            if (_isCrossfading) StopTransition();
+            if (_isCrossfading || _backend.IsTrackPlaying)
+            {
+                _backend.Stop();
+                _backend.StopOutgoing();
+            }
+            _isCrossfading = false;
+            _active = null;
+            _outgoing = null;
+            _pending = null;
             return;
         }
 
-        var next = _playlist.CurrentTrack;
-        var nextName = next?.Name;
-        if (!string.Equals(nextName, _currentTrackName, StringComparison.Ordinal))
+        var desired = _playlist.CurrentTrack;
+        if (desired != null && !ReferenceEquals(desired, _pending ?? _active))
         {
-            BeginTransition(nextName);
+            BeginTransition(desired);
         }
 
-        if (!_isCrossfading)
+        if (_isCrossfading)
         {
-            _backend.SetActiveGain(1f);
-            return;
-        }
-
-        var duration = _music.CrossfadeSeconds;
-        if (_backend.SupportsOverlap)
-        {
-            UpdateOverlapCrossfade(deltaSeconds, duration);
+            if (_backend.SupportsOverlap) UpdateOverlapCrossfade(deltaSeconds);
+            else UpdateSequencedCrossfade(deltaSeconds);
         }
         else
         {
-            UpdateSequencedCrossfade(deltaSeconds, duration);
+            ApplyVolumes(fadeIn: 1f, fadeOut: 0f);
         }
     }
 
-    private void UpdateOverlapCrossfade(float deltaSeconds, float duration)
+    private void UpdateOverlapCrossfade(float deltaSeconds)
     {
+        var duration = _music.CrossfadeSeconds;
         _crossfadeElapsed += deltaSeconds;
         var progress = duration <= 0f ? 1f : Math.Clamp(_crossfadeElapsed / duration, 0f, 1f);
-        var (inGain, outGain) = CrossfadeMath.EqualPower(progress);
-        _backend.SetActiveGain(inGain);
-        _backend.SetOutgoingGain(outGain);
-        if (progress >= 1f) FinishOverlapCrossfade();
+        var (fadeIn, fadeOut) = CrossfadeMath.EqualPower(progress);
+        ApplyVolumes(fadeIn, fadeOut);
+
+        if (progress >= 1f)
+        {
+            _backend.StopOutgoing();
+            _outgoing = null;
+            _isCrossfading = false;
+            ApplyVolumes(fadeIn: 1f, fadeOut: 0f);
+        }
     }
 
-    private void UpdateSequencedCrossfade(float deltaSeconds, float duration)
+    private void UpdateSequencedCrossfade(float deltaSeconds)
     {
+        var duration = _music.CrossfadeSeconds;
         var fadeOutCompleted = _sequencer.Advance(deltaSeconds, duration);
-        if (fadeOutCompleted)
+
+        if (fadeOutCompleted && _pending != null)
         {
             // The outgoing track has faded to silence: swap to the successor.
             _backend.Stop();
-            var next = _playlist.CurrentTrack;
-            var nextName = next?.Name;
-            if (string.IsNullOrEmpty(nextName))
-            {
-                StopTransition();
-                return;
-            }
-
-            _backend.PlayTrack(nextName, initialVolume: _sequencer.InGain, pitch: GetCuePitch(nextName));
-            _currentTrackName = nextName;
+            _active = _pending;
+            _pending = null;
+            _backend.PlayTrack(
+                _active.Name,
+                Compose(_sequencer.InGain, _active.Context),
+                NextCuePitch());
         }
 
-        // Fading out: the (old) active track follows OutGain. Fading in: it follows InGain.
-        _backend.SetActiveGain(_sequencer.Phase == MusicFadePhase.FadingOut ? _sequencer.OutGain : _sequencer.InGain);
-        if (_sequencer.Phase == MusicFadePhase.Steady) StopTransition();
+        if (_sequencer.Phase == MusicFadePhase.Steady)
+        {
+            _isCrossfading = false;
+            ApplyVolumes(fadeIn: 1f, fadeOut: 0f);
+        }
+        else if (_sequencer.Phase == MusicFadePhase.FadingOut)
+        {
+            // Still the old track on the single instance: its volume follows the outgoing ramp.
+            if (_active != null)
+                _backend.SetActiveVolume(Compose(_sequencer.OutGain, _active.Context));
+        }
+        else
+        {
+            ApplyVolumes(fadeIn: _sequencer.InGain, fadeOut: 0f);
+        }
     }
 
-    private void BeginTransition(string? trackName)
+    private void BeginTransition(PlaylistTrack desired)
     {
-        if (string.IsNullOrEmpty(trackName))
-        {
-            StopTransition();
-            return;
-        }
-
         if (_backend.SupportsOverlap)
         {
-            _backend.PlayTrack(trackName, initialVolume: 0f, pitch: GetCuePitch(trackName));
+            _outgoing = _active;
+            _active = desired;
+            _pending = null;
+            _backend.PlayTrack(desired.Name, Compose(0f, desired.Context), NextCuePitch());
+            _isCrossfading = true;
+            _crossfadeElapsed = 0f;
         }
         else if (_backend.IsTrackPlaying)
         {
             // Single-instance backend with something playing: fade it out first, switch later.
+            _pending = desired;
             _sequencer.BeginFadeOut();
-            _currentTrackName = trackName;
             _isCrossfading = true;
-            return;
         }
         else
         {
+            _active = desired;
+            _pending = null;
             _sequencer.BeginFadeIn();
-            _backend.PlayTrack(trackName, initialVolume: _sequencer.InGain, pitch: GetCuePitch(trackName));
+            _backend.PlayTrack(desired.Name, Compose(_sequencer.InGain, desired.Context), NextCuePitch());
+            _isCrossfading = true;
         }
-
-        _currentTrackName = trackName;
-        _isCrossfading = true;
-        _crossfadeElapsed = 0f;
     }
 
-    private void FinishOverlapCrossfade()
+    private void ApplyVolumes(float fadeIn, float fadeOut)
     {
-        _backend.StopOutgoing();
-        _backend.SetActiveGain(1f);
-        _isCrossfading = false;
-        _crossfadeElapsed = 0f;
-    }
-
-    private void StopTransition()
-    {
-        _sequencer.Cancel();
-        _isCrossfading = false;
-        _crossfadeElapsed = 0f;
-        if (!_backend.IsTrackPlaying)
+        if (_active != null)
         {
-            _currentTrackName = null;
+            _backend.SetActiveVolume(Compose(fadeIn, _active.Context));
+        }
+
+        if (_outgoing != null)
+        {
+            _backend.SetOutgoingVolume(Compose(fadeOut, _outgoing.Context));
         }
     }
+
+    /// <summary>The final volume: master × context scale × duck ratio × fade, clamped to [0, 1].</summary>
+    private float Compose(float fade, string context)
+    {
+        var scale = 1f;
+        if (!string.IsNullOrEmpty(context) && _music.Contexts.TryGetValue(context, out var authored))
+            scale = authored;
+
+        return MusicVolumeMath.Effective(_music.MasterVolume, scale, _duck.EffectiveRatio, fade);
+    }
+
+    private float NextCuePitch() => _music.CueVariation?.Resolve(_random).Pitch ?? 0f;
 
     private void OnBackendTrackEnded(object? sender, EventArgs e)
     {
@@ -203,15 +244,13 @@ public class MusicDirector
         {
             // Repeat=Track (or a single-track loop): the playlist keeps the same track, so no
             // Update-driven transition will fire — the director restarts playback itself.
-            _backend.PlayTrack(after.Name, initialVolume: 0f, pitch: GetCuePitch(after.Name));
+            _outgoing = null;
+            _active = after;
+            _pending = null;
+            _backend.PlayTrack(after.Name, Compose(0f, after.Context), NextCuePitch());
             _sequencer.BeginFadeIn();
             _isCrossfading = true;
             _crossfadeElapsed = 0f;
         }
-    }
-
-    private float GetCuePitch(string trackName)
-    {
-        return _music.CueVariation?.Resolve().Pitch ?? 0f;
     }
 }

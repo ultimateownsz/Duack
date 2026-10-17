@@ -33,6 +33,10 @@ A change that ships with no test needs a written reason in the changelog entry.
 - Backend glue (engine, XNA, browser interop) lives in adapter packages, not the core.
 - The JSON wire format is part of the public contract: `JsonRoundTrip` tests pin it,
   and unknown sections/fields must survive a load→save cycle (`[JsonExtensionData]`).
+- Playlists have their OWN source-generated context (`Duack.PlaylistJson`), so the AOT web
+  head can read them at runtime; a game may author them in code with `PlaylistConfigBuilder`
+  and embed them via `AudioConfigBuilder.WithPlaylists`. The CLI's `PlaylistFile` delegates
+  to `PlaylistJson`, so tool and runtime never drift on the format.
 
 ## Layout
 

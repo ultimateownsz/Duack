@@ -31,6 +31,36 @@ section, `convert` fails and asks for `--playlists` or `--all`. In this project 
 live in the game's `audio-config.json` under `playlists`, so one file drives both playback
 and conversion. See the wire format below.
 
+The format is defined **once in core** (`Duack.PlaylistJson`, source-generated so the AOT web
+head can read it at runtime); this tool's `PlaylistFile` is a thin wrapper over it, so the CLI
+and the game never drift on the format.
+
+## Authoring playlists in code
+
+A game can define playlists in C# and let them reach the CLI as JSON (the "define in code,
+convert from JSON" loop):
+
+```csharp
+var playlists = new PlaylistConfigBuilder()
+    .WithPlaylist("overworld", p => p
+        .Track("theme_a", "Overworld")
+        .Track("theme_b", "Overworld")
+        .Repeat(PlaylistRepeatMode.Playlist)
+        .Shuffle(PlaylistShuffleMode.Bag))
+    .Build();
+
+var config = new AudioConfigBuilder()
+    .WithPlaylists(playlists)   // embeds them under the "playlists" key
+    .Build();
+File.WriteAllText("audio-config.json", config.Serialize());
+// then: duack convert <contentDir> <outDir> --config audio-config.json
+```
+
+`WithPlaylists` stores the map in `AudioConfig.ExtensionData`, so it survives `Serialize()` /
+`Load()` exactly like a hand-authored section. `PlaylistJson` exposes the same conversion
+directly: `Parse` / `TryParse` / `Serialize` / `ToElement` / `FromElement` / `FromConfig` /
+`Embed`.
+
 ## `audio-config.json` wire format and the ExtensionData round-trip contract
 
 The config is snake_case JSON. The runtime model (`Duack.AudioConfig`) describes the mix

@@ -184,6 +184,28 @@ While the version is `0.x`, the API may change between minor versions.
   tool assembly from the test project's references (symptom: `CS0103` against a type that
   clearly existed). Renamed to `AssemblyName Duack.Tools`.
 
+#### 2026-10-17 (playlist authoring in code)
+
+- `PlaylistJson` - the playlist JSON wire format moved into core and made source-generated
+  (not reflection) so the AOT web head can read playlists at runtime. `Parse`/`TryParse`
+  (a standalone `{ "playlists": { ... } }` document), `Serialize`, `ToElement`/`FromElement`
+  (the bare map stored under an audio config's `playlists` key), and `FromConfig`/`Embed`
+  (read/write that section through `AudioConfig.ExtensionData`). Snake_case keys with string
+  enum values (`Playlist`, `Bag`, ...); reads are case-insensitive and also accept numeric
+  enums, comments, and trailing commas.
+- `PlaylistConfigBuilder` (plus `PlaylistDefinitionBuilder`) - fluent code authoring of a
+  `PlaylistConfig`, mirroring `AudioConfigBuilder`, so a game can define playlists in C#
+  instead of JSON. `AudioConfigBuilder.WithPlaylists(PlaylistConfig)` embeds them, so
+  `Build()` then `AudioConfig.Serialize()` produces a config the tooling reads back. This is
+  the "define in code, convert from JSON" loop the game pipeline uses.
+- `duack`'s `PlaylistFile` now delegates to `PlaylistJson`, so the tool and the runtime share
+  ONE wire-format definition (no drift); behavior is unchanged (its tests pass untouched).
+- The new CLI end-to-end pin `Convert_uses_code_built_playlists_serialized_to_a_config`
+  covers code-authoring -> serialize -> `duack convert` (grows `tests/Duack.Tools.Tests` to
+  58). Core gains `PlaylistJsonTests` (10: round-trip, snake_case, lowercase/numeric enums,
+  comments, embedded map through an `AudioConfig`, malformed JSON) and
+  `PlaylistConfigBuilderTests` (6: ordering, defaults, modes, empty, replace, fluency).
+
 ### Known Limitations
 
 #### 2026-10-16

@@ -250,6 +250,28 @@ public class CliTests : IDisposable
         Assert.False(File.Exists(Path2("out", "hit.ogg")));
     }
 
+    [Fact]
+    public void Convert_uses_code_built_playlists_serialized_to_a_config()
+    {
+        TestWav.WriteSine(Path2("theme_a.wav"));
+        TestWav.WriteSine(Path2("hit.wav"));
+
+        // Author the playlist in code, serialize it into an audio config, then let the CLI read it
+        // back: the build-in-code / convert-from-JSON loop the game pipeline relies on.
+        var playlists = new PlaylistConfigBuilder()
+            .WithPlaylist("overworld", p => p.Track("theme_a", "Overworld"))
+            .Build();
+        var config = new AudioConfigBuilder().WithPlaylists(playlists).Build();
+        var configPath = Path2("audio-config.json");
+        File.WriteAllText(configPath, config.Serialize());
+
+        var (code, _, _) = Run("convert", _dir, Path2("out"), "--config", configPath);
+
+        Assert.Equal(0, code);
+        Assert.True(File.Exists(Path2("out", "theme_a.ogg")));
+        Assert.False(File.Exists(Path2("out", "hit.ogg")));
+    }
+
     private static string CleanJson() => """
         {
           "schema_version": 1,

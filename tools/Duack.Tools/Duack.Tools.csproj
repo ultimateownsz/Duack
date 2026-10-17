@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Offline authoring CLI: `duack init`, `duack validate`, `duack convert`. This is the ONLY
+         Duack project allowed to reference NAudio / OggVorbisEncoder (audio file codecs live here,
+         never in src/). Desktop .NET only; never referenced by src/ or samples/. -->
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Duack.Tools</RootNamespace>
+    <!-- NOT "duack": a case-insensitive collision with the core's Duack.dll makes MSBuild drop
+         this assembly from downstream references (symptom: CS0103 'ConfigValidator' not found in
+         a project that references this one on Windows). The `duack` CLI name is a packaging
+         concern (ToolCommandName), not the assembly identity. -->
+    <AssemblyName>Duack.Tools</AssemblyName>
+    <PackageId>Duack.Tools</PackageId>
+    <Description>Offline Duack tooling: scaffold and validate audio-config.json, and convert WAV masters to OGG for web builds.</Description>
+    <IsPackable>false</IsPackable>
+    <!-- Invoked from build targets; keep startup cheap and never emit build noise (logo off). -->
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Duack\Duack.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Versions mirror MonsterProjectWeb's tools/AudioConverter pins so a converted OGG is
+         byte-comparable with the game's web build. -->
+    <PackageReference Include="NAudio" Version="2.2.1" />
+    <PackageReference Include="OggVorbisEncoder" Version="1.2.2" />
+  </ItemGroup>
+
+</Project>

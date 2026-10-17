@@ -1,0 +1,266 @@
+namespace Duack.Tools.Tests;
+
+/// <summary>
+/// End-to-end tests for the <c>duack</c> CLI, driven through <see cref="Cli.Run"/> with captured
+/// writers and a temp content directory. Each verb's exit code and filesystem effects are pinned.
+/// </summary>
+public class CliTests : IDisposable
+{
+    private readonly string _dir = Path.Combine(Path.GetTempPath(), "duack-cli-" + Guid.NewGuid().ToString("N"));
+
+    public CliTests() => Directory.CreateDirectory(_dir);
+
+    public void Dispose()
+    {
+        try { Directory.Delete(_dir, recursive: true); } catch { /* best effort */ }
+    }
+
+    private (int code, string outText, string errText) Run(params string[] args)
+    {
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+        var code = Cli.Run(args, output, error);
+        return (code, output.ToString(), error.ToString());
+    }
+
+    private string Path2(params string[] parts) => Path.Combine(new[] { _dir }.Concat(parts).ToArray());
+
+    // ---- general ----
+
+    [Fact]
+    public void No_arguments_prints_usage_and_fails()
+    {
+        var (code, _, err) = Run();
+        Assert.NotEqual(0, code);
+        Assert.Contains("usage", err, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Unknown_command_fails()
+    {
+        var (code, _, err) = Run("frobnicate");
+        Assert.NotEqual(0, code);
+        Assert.Contains("frobnicate", err);
+    }
+
+    // ---- init ----
+
+    [Fact]
+    public void Init_writes_a_config_next_to_the_content()
+    {
+        File.WriteAllBytes(Path2("theme_a.wav"), Array.Empty<byte>());
+        File.WriteAllBytes(Path2("hit.wav"), Array.Empty<byte>());
+
+        var (code, _, err) = Run("init", _dir);
+
+        Assert.Equal(0, code);
+        Assert.Equal("", err);
+        var configPath = Path2("audio-config.json");
+        Assert.True(File.Exists(configPath));
+        var json = File.ReadAllText(configPath);
+        Assert.Contains("theme_a", json);
+        Assert.Contains("hit", json);
+        Assert.Contains("dialogue", json);
+    }
+
+    [Fact]
+    public void Init_refuses_to_overwrite_without_force()
+    {
+        var configPath = Path2("audio-config.json");
+        File.WriteAllText(configPath, "sentinel");
+
+        var (code, _, err) = Run("init", _dir);
+
+        Assert.NotEqual(0, code);
+        Assert.Contains("force", err, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("sentinel", File.ReadAllText(configPath));
+    }
+
+    [Fact]
+    public void Init_force_overwrites()
+    {
+        var configPath = Path2("audio-config.json");
+        File.WriteAllText(configPath, "sentinel");
+
+        var (code, _, _) = Run("init", _dir, "--force");
+
+        Assert.Equal(0, code);
+        Assert.NotEqual("sentinel", File.ReadAllText(configPath));
+    }
+
+    [Fact]
+    public void Init_respects_explicit_out()
+    {
+        var outPath = Path2("nested", "custom.json");
+        var (code, _, _) = Run("init", _dir, "--out", outPath);
+        Assert.Equal(0, code);
+        Assert.True(File.Exists(outPath));
+    }
+
+    // ---- validate ----
+
+    [Fact]
+    public void Validate_a_clean_config_succeeds()
+    {
+        var configPath = Path2("audio-config.json");
+        File.WriteAllText(configPath, CleanJson());
+
+        var (code, _, err) = Run("validate", configPath);
+
+        Assert.Equal(0, code);
+        Assert.Equal("", err);
+    }
+
+    [Fact]
+    public void Validate_reports_errors_and_fails()
+    {
+        var configPath = Path2("audio-config.json");
+        File.WriteAllText(configPath, CleanJson().Replace("\"master_volume\": 1.0", "\"master_volume\": 1.5"));
+
+        var (code, _, err) = Run("validate", configPath);
+
+        Assert.NotEqual(0, code);
+        Assert.Contains("master_volume", err);
+    }
+
+    [Fact]
+    public void Validate_a_missing_file_fails()
+    {
+        var (code, _, err) = Run("validate", Path2("nope.json"));
+        Assert.NotEqual(0, code);
+        Assert.NotEqual("", err);
+    }
+
+    [Fact]
+    public void Validate_warns_but_succeeds_on_an_unknown_playlist_context()
+    {
+        var configPath = Path2("audio-config.json");
+        File.WriteAllText(configPath, CleanJson());
+        var playlistPath = Path2("playlists.json");
+        File.WriteAllText(playlistPath, """
+            { "playlists": { "overworld": { "tracks": [ { "name": "theme_a", "context": "Nowhere" } ] } } }
+            """);
+
+        var (code, _, err) = Run("validate", configPath, "--playlists", playlistPath);
+
+        Assert.Equal(0, code);
+        Assert.Contains("Nowhere", err);
+    }
+
+    // ---- convert ----
+
+    [Fact]
+    public void Convert_without_a_playlist_source_fails()
+    {
+        TestWav.WriteSine(Path2("theme_a.wav"));
+        TestWav.WriteSine(Path2("hit.wav"));
+
+        var (code, _, err) = Run("convert", _dir, Path2("out"));
+
+        Assert.NotEqual(0, code);
+        Assert.Contains("--all", err);
+        Assert.False(File.Exists(Path2("out", "theme_a.ogg")));
+    }
+
+    [Fact]
+    public void Convert_with_all_converts_every_wav()
+    {
+        TestWav.WriteSine(Path2("theme_a.wav"));
+        TestWav.WriteSine(Path2("hit.wav"));
+
+        var (code, _, _) = Run("convert", _dir, Path2("out"), "--all");
+
+        Assert.Equal(0, code);
+        Assert.True(File.Exists(Path2("out", "theme_a.ogg")));
+        Assert.True(File.Exists(Path2("out", "hit.ogg")));
+    }
+
+    [Fact]
+    public void Convert_with_all_and_a_playlist_source_fails()
+    {
+        TestWav.WriteSine(Path2("theme_a.wav"));
+        var playlistPath = Path2("playlists.json");
+        File.WriteAllText(playlistPath, """{ "playlists": {} }""");
+
+        var (code, _, err) = Run("convert", _dir, Path2("out"), "--all", "--playlists", playlistPath);
+
+        Assert.NotEqual(0, code);
+        Assert.NotEqual("", err);
+    }
+
+    [Fact]
+    public void Convert_with_a_config_lacking_playlists_fails()
+    {
+        TestWav.WriteSine(Path2("theme_a.wav"));
+        var configPath = Path2("audio-config.json");
+        File.WriteAllText(configPath, CleanJson());
+
+        var (code, _, err) = Run("convert", _dir, Path2("out"), "--config", configPath);
+
+        Assert.NotEqual(0, code);
+        Assert.Contains("--all", err);
+    }
+
+    [Fact]
+    public void Convert_with_playlists_only_converts_songs()
+    {
+        TestWav.WriteSine(Path2("theme_a.wav"));
+        TestWav.WriteSine(Path2("hit.wav"));
+        var playlistPath = Path2("playlists.json");
+        File.WriteAllText(playlistPath, """
+            { "playlists": { "overworld": { "tracks": [ { "name": "theme_a", "context": "Overworld" } ] } } }
+            """);
+
+        var (code, _, _) = Run("convert", _dir, Path2("out"), "--playlists", playlistPath);
+
+        Assert.Equal(0, code);
+        Assert.True(File.Exists(Path2("out", "theme_a.ogg")));
+        Assert.False(File.Exists(Path2("out", "hit.ogg")));
+    }
+
+    [Fact]
+    public void Convert_skips_up_to_date_outputs_on_the_second_run()
+    {
+        TestWav.WriteSine(Path2("theme_a.wav"));
+
+        Run("convert", _dir, Path2("out"), "--all");
+        var (code, outText, _) = Run("convert", _dir, Path2("out"), "--all");
+
+        Assert.Equal(0, code);
+        Assert.Contains("converted=0", outText);
+    }
+
+    [Fact]
+    public void Convert_reads_playlists_from_a_config()
+    {
+        TestWav.WriteSine(Path2("theme_a.wav"));
+        TestWav.WriteSine(Path2("hit.wav"));
+        var configPath = Path2("audio-config.json");
+        File.WriteAllText(configPath, """
+            {
+              "master_volume": 1.0,
+              "playlists": { "overworld": { "tracks": [ { "name": "theme_a", "context": "Overworld" } ] } }
+            }
+            """);
+
+        var (code, _, _) = Run("convert", _dir, Path2("out"), "--config", configPath);
+
+        Assert.Equal(0, code);
+        Assert.True(File.Exists(Path2("out", "theme_a.ogg")));
+        Assert.False(File.Exists(Path2("out", "hit.ogg")));
+    }
+
+    private static string CleanJson() => """
+        {
+          "schema_version": 1,
+          "master_volume": 1.0,
+          "music": {
+            "master_volume": 1.0,
+            "crossfade_seconds": 1.2,
+            "contexts": {},
+            "duck_sources": {}
+          },
+          "sfx": { "master_volume": 1.0 }
+        }
+        """;
+}

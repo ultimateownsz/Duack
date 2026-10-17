@@ -44,6 +44,11 @@ A change that ships with no test needs a written reason in the changelog entry.
 - `tests/Duack.Tests/JsonRoundTrip` — config/player-settings wire-format pins.
 - `tests/Duack.Adapters.Tests` — behavior of the two adapter packages, driven through their
   headless seams (fake clip library / fake media-player host); no audio device or browser needed.
+- `tools/Duack.Tools` — the desktop-only `duack` CLI (`init`/`validate`/`convert`); the only
+  place `NAudio`/`OggVorbisEncoder` live. Never referenced by `src/` or `samples/`. See its
+  `README.md` for the CLI and the `ExtensionData` round-trip contract.
+- `tests/Duack.Tools.Tests` — the tool's pure logic plus CLI end-to-end (exit codes +
+  filesystem effects) against temp directories.
 
 ## Build & test
 
@@ -51,6 +56,11 @@ A change that ships with no test needs a written reason in the changelog entry.
 dotnet build Duack.slnx
 dotnet test Duack.slnx
 ```
+
+The tool projects carry a distinct assembly identity (`AssemblyName Duack.Tools`): a bare
+`duack` collides case-insensitively with the core `Duack.dll` on Windows, and MSBuild then
+silently drops the tool assembly from the test project's references (`CS0103` against a type
+that clearly exists). `duack` is a packaging concern (`ToolCommandName`), not the assembly name.
 
 To prove the core stays BCL-only, restore into an empty package cache:
 

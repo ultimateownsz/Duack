@@ -1,0 +1,328 @@
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+
+namespace Duack.Tools;
+
+/// <summary>
+/// Testable command dispatcher for the <c>duack</c> CLI. Writes user-facing text to the supplied
+/// writers so an end-to-end test can capture output without touching the real console.
+/// </summary>
+public static class Cli
+{
+    /// <summary>Dispatches <paramref name="args"/> and returns the process exit code.</summary>
+    public static int Run(string[] args, TextWriter output, TextWriter error)
+    {
+        if (args.Length == 0)
+        {
+            PrintUsage(error);
+            return 1;
+        }
+
+        try
+        {
+            return args[0] switch
+            {
+                "init" => RunInit(args[1..], output, error),
+                "validate" => RunValidate(args[1..], output, error),
+                "convert" => RunConvert(args[1..], output, error),
+                "-h" or "--help" or "help" => PrintUsage(output),
+                _ => Unknown(args[0], error),
+            };
+        }
+        catch (Exception ex)
+        {
+            error.WriteLine($"error: {ex.Message}");
+            return 1;
+        }
+    }
+
+    private static int Unknown(string command, TextWriter error)
+    {
+        error.WriteLine($"error: unknown command '{command}'.");
+        PrintUsage(error);
+        return 1;
+    }
+
+    private static int PrintUsage(TextWriter writer)
+    {
+        writer.WriteLine("usage: duack <command> [options]");
+        writer.WriteLine();
+        writer.WriteLine("  init     <contentDir> [--out <file>] [--force]");
+        writer.WriteLine("  validate <config.json> [--playlists <file>]");
+        writer.WriteLine("  convert  <contentDir> <outDir> [--config <file>] [--playlists <file>]");
+        writer.WriteLine("           [--quality <0..1>] [--force] [--all]");
+        writer.WriteLine("           (a playlist source is required; --all converts every WAV)");
+        return 0;
+    }
+
+    // ---- init ----
+
+    private static int RunInit(string[] args, TextWriter output, TextWriter error)
+    {
+        if (!TryParseArgs(args, valueOptions: new[] { "--out" }, flags: new[] { "--force" }, out var parsed, out var errorMessage))
+            return Fail(error, errorMessage);
+
+        if (parsed.Positional.Count != 1)
+            return Fail(error, "init requires exactly one <contentDir>.");
+
+        var contentDir = parsed.Positional[0];
+        if (!Directory.Exists(contentDir))
+            return Fail(error, $"content directory not found: {contentDir}");
+
+        var outPath = parsed.Value("--out") ?? Path.Combine(contentDir, "audio-config.json");
+        if (File.Exists(outPath) && !parsed.Has("--force"))
+            return Fail(error, $"{outPath} already exists; pass --force to overwrite.");
+
+        var wavs = EnumerateWavs(contentDir);
+        var config = ConfigScaffolder.Build(wavs);
+        WriteAllText(outPath, config.Serialize());
+        output.WriteLine($"[duack] wrote {outPath} ({config.Tracks?.Count ?? 0} tracks, {wavs.Count} wavs).");
+        return 0;
+    }
+
+    // ---- validate ----
+
+    private static int RunValidate(string[] args, TextWriter output, TextWriter error)
+    {
+        if (!TryParseArgs(args, valueOptions: new[] { "--playlists" }, flags: Array.Empty<string>(), out var parsed, out var errorMessage))
+            return Fail(error, errorMessage);
+
+        if (parsed.Positional.Count != 1)
+            return Fail(error, "validate requires exactly one <config.json>.");
+
+        var configPath = parsed.Positional[0];
+        if (!TryReadConfig(configPath, out var config, out errorMessage))
+            return Fail(error, errorMessage);
+
+        PlaylistConfig? playlists = null;
+        if (parsed.Value("--playlists") is { } playlistPath &&
+            !TryReadPlaylists(playlistPath, out playlists, out errorMessage))
+        {
+            return Fail(error, errorMessage);
+        }
+
+        var issues = ConfigValidator.Validate(config!, playlists);
+        foreach (var issue in issues)
+        {
+            var label = issue.Severity == IssueSeverity.Error ? "error" : "warning";
+            error.WriteLine($"{label}: {issue.Message}");
+        }
+
+        if (issues.Any(i => i.Severity == IssueSeverity.Error))
+            return 1;
+
+        if (issues.Count == 0)
+            output.WriteLine("[duack] ok");
+        return 0;
+    }
+
+    // ---- convert ----
+
+    private static int RunConvert(string[] args, TextWriter output, TextWriter error)
+    {
+        if (!TryParseArgs(
+                args,
+                valueOptions: new[] { "--config", "--playlists", "--quality" },
+                flags: new[] { "--force", "--all" },
+                out var parsed,
+                out var errorMessage))
+            return Fail(error, errorMessage);
+
+        if (parsed.Positional.Count != 2)
+            return Fail(error, "convert requires <contentDir> and <outDir>.");
+
+        var contentDir = parsed.Positional[0];
+        var outDir = parsed.Positional[1];
+        if (!Directory.Exists(contentDir))
+            return Fail(error, $"content directory not found: {contentDir}");
+
+        // The playlist is the authoritative song list: only named songs become OGG and SFX stay WAV.
+        // A playlist source (--playlists, or an embedded `playlists` section in --config) is therefore
+        // required; --all is the explicit opt-in to convert EVERY WAV (SFX included) and is mutually
+        // exclusive with a playlist source.
+        var all = parsed.Has("--all");
+        var playlistOption = parsed.Value("--playlists");
+        var configOption = parsed.Value("--config");
+        if (all && (playlistOption is not null || configOption is not null))
+            return Fail(error, "choose either --all or a playlist source (--playlists/--config), not both.");
+
+        SongSet? songs = null;
+        if (playlistOption is { } playlistPath)
+        {
+            if (!TryReadPlaylists(playlistPath, out var playlists, out errorMessage))
+                return Fail(error, errorMessage);
+            songs = SongSet.FromPlaylists(playlists!);
+        }
+        else if (configOption is { } configPath)
+        {
+            if (!TryReadConfig(configPath, out var config, out errorMessage))
+                return Fail(error, errorMessage);
+            if (PlaylistFile.FromConfig(config!) is { } embedded)
+                songs = SongSet.FromPlaylists(embedded);
+            else
+                return Fail(error, $"{configPath} has no playlists section; pass --playlists or --all.");
+        }
+        else if (!all)
+        {
+            return Fail(error, "no playlist source: pass --playlists <file>, --config <file> (with a playlists section), or --all to convert every WAV.");
+        }
+
+        var quality = WavToOggConverter.DefaultQuality;
+        if (parsed.Value("--quality") is { } qualityText)
+        {
+            if (!float.TryParse(qualityText, NumberStyles.Float, CultureInfo.InvariantCulture, out quality))
+                return Fail(error, $"invalid --quality '{qualityText}' (expected a number in 0..1).");
+            quality = WavToOggConverter.ClampQuality(quality);
+        }
+
+        var force = parsed.Has("--force");
+        Directory.CreateDirectory(outDir);
+
+        var converted = 0;
+        var upToDate = 0;
+        var notSong = 0;
+        foreach (var wavPath in EnumerateWavs(contentDir))
+        {
+            var name = Path.GetFileNameWithoutExtension(wavPath);
+            var oggPath = Path.Combine(outDir, name + ".ogg");
+
+            var isSong = songs?.Contains(name) ?? true;
+            var oggExists = File.Exists(oggPath);
+            var oggUpToDate = oggExists &&
+                              File.GetLastWriteTimeUtc(oggPath) >= File.GetLastWriteTimeUtc(wavPath);
+
+            switch (ConversionPlanner.Decide(isSong, force, oggExists, oggUpToDate))
+            {
+                case ConversionAction.Convert:
+                    WavToOggConverter.Encode(wavPath, oggPath, quality);
+                    converted++;
+                    break;
+                case ConversionAction.SkipUpToDate:
+                    upToDate++;
+                    break;
+                default:
+                    notSong++;
+                    break;
+            }
+        }
+
+        output.WriteLine($"[duack] converted={converted} up-to-date={upToDate} not-song={notSong} ({outDir})");
+        return 0;
+    }
+
+    // ---- helpers ----
+
+    private static List<string> EnumerateWavs(string directory) =>
+        Directory.EnumerateFiles(directory, "*.wav")
+            .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+    private static bool TryReadConfig(string path, out AudioConfig? config, out string errorMessage)
+    {
+        config = null;
+        if (!File.Exists(path))
+        {
+            errorMessage = $"config file not found: {path}";
+            return false;
+        }
+
+        if (!AudioConfig.TryParse(File.ReadAllText(path), out config) || config is null)
+        {
+            errorMessage = $"could not parse config: {path}";
+            return false;
+        }
+
+        errorMessage = "";
+        return true;
+    }
+
+    private static bool TryReadPlaylists(string path, out PlaylistConfig? playlists, out string errorMessage)
+    {
+        playlists = null;
+        if (!File.Exists(path))
+        {
+            errorMessage = $"playlist file not found: {path}";
+            return false;
+        }
+
+        if (!PlaylistFile.TryParse(File.ReadAllText(path), out playlists) || playlists is null)
+        {
+            errorMessage = $"could not parse playlists: {path}";
+            return false;
+        }
+
+        errorMessage = "";
+        return true;
+    }
+
+    private static void WriteAllText(string path, string contents)
+    {
+        var directory = Path.GetDirectoryName(Path.GetFullPath(path));
+        if (!string.IsNullOrEmpty(directory))
+            Directory.CreateDirectory(directory);
+        File.WriteAllText(path, contents);
+    }
+
+    private static int Fail(TextWriter error, string message)
+    {
+        error.WriteLine($"error: {message}");
+        return 1;
+    }
+
+    private static bool TryParseArgs(
+        string[] args,
+        string[] valueOptions,
+        string[] flags,
+        out ParsedArgs parsed,
+        out string errorMessage)
+    {
+        var values = new HashSet<string>(valueOptions, StringComparer.OrdinalIgnoreCase);
+        var flagSet = new HashSet<string>(flags, StringComparer.OrdinalIgnoreCase);
+        parsed = new ParsedArgs();
+
+        for (var i = 0; i < args.Length; i++)
+        {
+            var arg = args[i];
+            if (!arg.StartsWith("--", StringComparison.Ordinal))
+            {
+                parsed.Positional.Add(arg);
+                continue;
+            }
+
+            if (flagSet.Contains(arg))
+            {
+                parsed.Options[arg] = "true";
+            }
+            else if (values.Contains(arg))
+            {
+                if (i + 1 >= args.Length)
+                {
+                    errorMessage = $"option {arg} requires a value.";
+                    return false;
+                }
+
+                parsed.Options[arg] = args[++i];
+            }
+            else
+            {
+                errorMessage = $"unknown option '{arg}'.";
+                return false;
+            }
+        }
+
+        errorMessage = "";
+        return true;
+    }
+
+    private sealed class ParsedArgs
+    {
+        public List<string> Positional { get; } = new();
+        public Dictionary<string, string> Options { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+        public bool Has(string name) => Options.ContainsKey(name);
+        public string? Value(string name) => Options.TryGetValue(name, out var value) ? value : null;
+    }
+}

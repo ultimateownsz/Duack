@@ -140,6 +140,50 @@ While the version is `0.x`, the API may change between minor versions.
   explicit stop, stale switch signal within the settle window, missed-event polling), with
   `MediaEndState` pinned directly (settle, latch-once, stopped-by-us, zero-settle).
 
+#### 2026-10-17 (tooling package)
+
+- New desktop-only `tools/Duack.Tools` project publishing the `duack` CLI
+  (`AssemblyName Duack.Tools`; `duack` is only the packaging command name). It is the single
+  home for `NAudio` (2.2.1) and `OggVorbisEncoder` (1.2.2) and is never referenced by `src/`
+  or `samples/`. Three verbs:
+  - `duack init <contentDir> [--out <file>] [--force]` - scaffold a starting
+    `audio-config.json` from the discovered `*.wav` masters (default sections + `sfx`/
+    `dialogue` duck sources + one placeholder `tracks` entry per WAV); refuses to overwrite
+    without `--force`.
+  - `duack validate <config.json> [--playlists <file>]` - report schema/range problems with
+    path-qualified messages; exits non-zero only on an **error** (warnings exit zero). Never
+    mutates the file, so a hand-edited config is checkable before the runtime `Sanitize`
+    clamps it.
+  - `duack convert <contentDir> <outDir> [--config <file>] [--playlists <file>]
+    [--quality <0..1>] [--force] [--all]` - encode the SONGS to OGG Vorbis for the web build
+    (SFX stay WAV: they are short and small, so converting them buys nothing), skipping
+    outputs already newer than their WAV. The **playlist is the authoritative song list**, so
+    a playlist source (`--playlists`, or an embedded `playlists` section in `--config`) is
+    **required**; `--all` is the explicit opt-in to convert every WAV (SFX included) and is
+    mutually exclusive with a playlist source.
+- Pure, individually-tested policy pieces: `ConfigValidator` (issues with severity,
+  range/path checks, playlist-context cross-check), `SongSet` (case/extension-insensitive
+  membership), `ConversionPlanner.Decide` (`Convert`/`SkipUpToDate`/`SkipNotSong`),
+  `ConfigScaffolder.Build`, and `WavToOggConverter` (ported from the game's
+  `tools/AudioConverter`; `ClampQuality`, FNV-1a serial derived from the output path for
+  byte-deterministic output). CLI is a thin `Cli.Run(args, output, error)` dispatcher over
+  them, so the end-to-end behavior (exit codes + filesystem effects) is test-coverable
+  without a console.
+- `PlaylistFile` loads a `PlaylistConfig` from a standalone playlist JSON or from an embedded
+  `playlists` section in an audio config's `ExtensionData`. This documents and relies on the
+  **ExtensionData round-trip contract**: build-only sections such as `playlists` are absent
+  from the runtime model yet survive `AudioConfig` load->save because unknown properties are
+  captured and re-emitted. An external editor against this tooling layer MUST preserve unknown
+  sections (see `tools/Duack.Tools/README.md`).
+- New test suite `tests/Duack.Tools.Tests` (57 cases): validator rules, song-set/planner
+  decisions, scaffold shape, WAV->OGG round trip in a temp directory, playlist loader
+  (standalone + embedded, string/numeric enums, comments/trailing commas), and CLI
+  end-to-end for `init`/`validate`/`convert`.
+- Assembly identity note: the tool assembly was initially named `duack`, which collides
+  case-insensitively with the core `Duack.dll` on Windows; MSBuild then silently dropped the
+  tool assembly from the test project's references (symptom: `CS0103` against a type that
+  clearly existed). Renamed to `AssemblyName Duack.Tools`.
+
 ### Known Limitations
 
 #### 2026-10-16
@@ -150,3 +194,11 @@ While the version is `0.x`, the API may change between minor versions.
   one that arrives later than the window can still be misread as a natural end. Tracks are
   minutes long and the window is a few frames, so this is not reachable by ordinary
   playback; it has not been verified on a real browser from this environment.
+
+#### 2026-10-17
+
+- Playlists are authored in the game's `audio-config.json` under `playlists` (decided: one file
+  drives both playback and conversion), but MonsterProjectWeb has not written that section yet.
+  Until it does, its web build must call `duack convert ... --all`, so the song-vs-SFX split
+  (SFX staying WAV) does not engage for the game yet. Authoring the playlist is part of the WP6
+  migration.

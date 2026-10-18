@@ -45,6 +45,7 @@ public class Game1 : Game
     private float _flash; // seconds of screen flash remaining (battle-start)
     private float _hitFlash; // seconds of hit-entity flash remaining
     private int _hitSide; // -1 none, 0 player, 1 foe
+    private float _duckPeakHold = 1f; // lowest duck ratio seen, decays toward 1.0
 
     public Game1()
     {
@@ -229,46 +230,73 @@ public class Game1 : Game
     /// </summary>
     private void DrawDuckBar(Viewport viewport)
     {
-        // Title strip so the bar reads as a named meter, not a mystery rectangle.
-        var title = new Rectangle(8, 8, viewport.Width - 16, 12);
+        // Decay the peak-hold marker toward 1.0 (slow, familiar VU-meter behaviour).
+        if (_duckPeakHold < _director.DuckRatio)
+            _duckPeakHold = _director.DuckRatio;
+        else
+            _duckPeakHold = Math.Max(_director.DuckRatio, _duckPeakHold - 0.005f);
+
+        var x = 8;
+        var w = viewport.Width - 16;
+
+        // Title strip naming the meter.
+        var title = new Rectangle(x, 8, w, 10);
         DrawRect(title, Color.Black * 0.7f);
-        // "DUCK" label as a small block on the left of the title strip.
-        DrawRect(new Rectangle(title.X + 4, title.Y + 3, 34, 6), Color.White * 0.85f);
-        // Ratio readout as a filled block on the right of the title strip (wider = more ducked).
-        var ratioBlock = new Rectangle(title.Right - 60, title.Y + 3, (int)(56 * (1f - _director.DuckRatio)), 6);
-        if (ratioBlock.Width > 0)
-            DrawRect(ratioBlock, _director.DuckRatio < 0.99f ? Color.OrangeRed : Color.LightGreen);
+        // "DUCK" label block on the left of the title strip.
+        DrawRect(new Rectangle(title.X + 4, title.Y + 3, 30, 4), Color.White * 0.85f);
+        // Ratio readout block on the right (wider = more ducked).
+        var readout = new Rectangle(title.Right - 50, title.Y + 3, (int)(46 * (1f - _director.DuckRatio)), 4);
+        if (readout.Width > 0)
+            DrawRect(readout, _director.DuckRatio < 0.99f ? Color.OrangeRed : Color.LightGreen);
 
-        // The meter itself.
-        var bar = new Rectangle(8, 22, viewport.Width - 16, 14);
-        DrawRect(bar, Color.Black * 0.6f);
+        // --- Lane 1: MUSIC (the ducked signal) ---
+        var musicLabel = new Rectangle(x, 20, 46, 12);
+        DrawRect(musicLabel, Color.Black * 0.5f);
+        // "M" glyph as a small block inside the label.
+        DrawRect(new Rectangle(musicLabel.X + 4, musicLabel.Y + 3, 8, 6), Color.CornflowerBlue);
 
+        var musicBar = new Rectangle(x + 48, 20, w - 48, 12);
+        DrawRect(musicBar, Color.Black * 0.6f);
         var ratio = _director.DuckRatio;
-        var filled = new Rectangle(bar.X, bar.Y, (int)(bar.Width * ratio), bar.Height);
-        var color = ratio > 0.99f ? Color.LightGreen
-                  : ratio > 0.6f ? Color.Orange
-                  : Color.OrangeRed;
-        DrawRect(filled, color);
+        var musicFill = new Rectangle(musicBar.X, musicBar.Y, (int)(musicBar.Width * ratio), musicBar.Height);
+        var musicColor = ratio > 0.99f ? Color.LightGreen
+                       : ratio > 0.6f ? Color.Orange
+                       : Color.OrangeRed;
+        DrawRect(musicFill, musicColor);
 
-        // Tick marks at 0 / 0.25 / 0.5 / 0.75 / 1.0 so the scale is readable.
+        // Tick marks on the music lane.
         for (var i = 0; i <= 4; i++)
         {
-            var x = bar.X + (int)(bar.Width * (i / 4f));
-            DrawRect(new Rectangle(x, bar.Bottom - 4, 1, 4), Color.White * 0.4f);
+            var tx = musicBar.X + (int)(musicBar.Width * (i / 4f));
+            DrawRect(new Rectangle(tx, musicBar.Bottom - 3, 1, 3), Color.White * 0.35f);
         }
 
-        // Legend row: green = music full, orange = ducked while an sfx plays.
-        var legend = new Rectangle(8, 38, viewport.Width - 16, 8);
-        DrawRect(new Rectangle(legend.X, legend.Y, 8, legend.Height), Color.LightGreen);
-        DrawRect(new Rectangle(legend.X + 10, legend.Y, 8, legend.Height), Color.Orange);
-        DrawRect(new Rectangle(legend.X + 20, legend.Y, 8, legend.Height), Color.OrangeRed);
+        // Peak-hold tick: thin vertical marker at the deepest dip, decays slowly.
+        var peakX = musicBar.X + (int)(musicBar.Width * _duckPeakHold);
+        DrawRect(new Rectangle(peakX, musicBar.Y, 2, musicBar.Height), Color.White * 0.9f);
 
-        // When actively ducking, pulse the filled portion.
+        // --- Lane 2: SFX (the sidechain trigger) ---
+        var sfxLabel = new Rectangle(x, 34, 46, 12);
+        DrawRect(sfxLabel, Color.Black * 0.5f);
+        // "S" glyph as a small block inside the label.
+        DrawRect(new Rectangle(sfxLabel.X + 4, sfxLabel.Y + 3, 8, 6), Color.Orange);
+
+        var sfxBar = new Rectangle(x + 48, 34, w - 48, 12);
+        DrawRect(sfxBar, Color.Black * 0.6f);
+
+        // SFX lane: solid flash while ducking (no fast pulsing — Jakob's Law: familiar calm meters).
         if (ratio < 0.99f)
         {
-            var pulse = (float)(0.5 + 0.5 * Math.Sin(Environment.TickCount64 / 80.0));
-            DrawRect(new Rectangle(bar.X, bar.Y, (int)(bar.Width * ratio), 2), Color.White * (0.5f * pulse));
+            DrawRect(new Rectangle(sfxBar.X, sfxBar.Y, sfxBar.Width, sfxBar.Height), Color.Orange * 0.85f);
         }
+        else
+        {
+            // Idle: a thin baseline so the lane reads as "ready".
+            DrawRect(new Rectangle(sfxBar.X, sfxBar.Y + sfxBar.Height / 2, sfxBar.Width, 2), Color.White * 0.15f);
+        }
+
+        // --- Sidechain connector: SFX lane feeds into the MUSIC lane (small vertical bar). ---
+        DrawRect(new Rectangle(x + 44, 32, 2, 4), Color.White * 0.4f);
     }
 
     private void DrawOverworld(Viewport viewport)
@@ -375,7 +403,7 @@ public class Game1 : Game
     private void DrawBattle(Viewport viewport)
     {
         var centerX = viewport.Width / 2;
-        var y = viewport.Height / 2 + 20;
+        var y = viewport.Height / 2 + 40;
 
         // Player (left, blue) and foe (right, red) as simple rectangles.
         // The entity that just got hit flashes white and scales up briefly so the blow is readable.
@@ -410,10 +438,20 @@ public class Game1 : Game
         DrawHpBar(new Rectangle(centerX - 220, y - 14, 120, 8), _story.PlayerHp, Color.CornflowerBlue);
         DrawHpBar(new Rectangle(centerX + 100, y - 14, 120, 8), _story.FoeHp, Color.Red);
 
-        // "Hit number" pips so traded blows are visible even without sound.
+        // "Hit number" pips so traded blows are visible even without sound, centered with
+        // comfortable spacing (5 per row, 2 rows max).
+        const int pipSize = 12;
+        const int pipGap = 6;
+        const int pipsPerRow = 5;
+        var rowWidth = pipsPerRow * pipSize + (pipsPerRow - 1) * pipGap;
+        var startX = centerX - rowWidth / 2;
         for (var i = 0; i < _story.BattleRound && i < 10; i++)
         {
-            DrawRect(new Rectangle(centerX - 60 + (i % 5) * 14, 40 + (i / 5) * 14, 10, 10), Color.White * 0.7f);
+            var col = i % pipsPerRow;
+            var row = i / pipsPerRow;
+            var px = startX + col * (pipSize + pipGap);
+            var py = 52 + row * (pipSize + pipGap);
+            DrawRect(new Rectangle(px, py, pipSize, pipSize), Color.White * 0.7f);
         }
     }
 

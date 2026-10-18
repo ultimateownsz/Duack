@@ -138,7 +138,10 @@ While the version is `0.x`, the API may change between minor versions.
   `hit*` cues, so adding `hit-2.wav`, `hit-3.wav`, … gives no-back-to-back variation with no
   code change (a single `hit` cue keeps playing "hit"); the dialog box now shows a speaker
   portrait, a big digit for the current line, placeholder text bars with a blinking caret, and
-  the line pips, so the dialog reads as live speech.
+  the line pips, so the dialog reads as live speech; the duck meter is now a two-lane sidechain
+  view (a MUSIC lane showing the duck ratio with tick marks, an SFX lane that pulses while a cue
+  speaks, plus a sidechain connector), so the cause-and-effect of ducking reads as two audio
+  tracks.
 - Verified: full suite green (360 tests across 4 suites); desktop + web samples build clean.
 
 ### Known Limitations

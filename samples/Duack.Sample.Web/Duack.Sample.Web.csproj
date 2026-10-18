@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Duack.Sample.Web</RootNamespace>
+    <AssemblyName>Duack.Sample.Web</AssemblyName>
+    <!-- KNI defines the web backend path (mirrors the game's BlazorGL head). -->
+    <DefineConstants>$(DefineConstants);KNI</DefineConstants>
+    <BlazorEnableCompression>false</BlazorEnableCompression>
+    <EnableDefaultCompressionFormats>false</EnableDefaultCompressionFormats>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Duack\Duack.csproj" />
+    <ProjectReference Include="..\..\src\Duack.KNI\Duack.KNI.csproj" />
+    <ProjectReference Include="..\Duack.Sample.Core\Duack.Sample.Core.csproj" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.11" />
+  </ItemGroup>
+
+</Project>

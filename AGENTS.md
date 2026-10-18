@@ -41,19 +41,43 @@ A change that ships with no test needs a written reason in the changelog entry.
 ## Layout
 
 - `src/Duack` — the library (pure BCL).
-- `src/Duack.MonoGame` — desktop adapter: `IMusicBackend` over MonoGame `SoundEffectInstance`.
+- `src/Duack.MonoGame` — desktop adapter: `IMusicBackend` over MonoGame `SoundEffectInstance`,
+  plus `SoundEffectSfxBackend` (the core `ISfxBackend`) over the clip seams.
 - `src/Duack.KNI` — web adapter: `IMusicBackend` over the platform `MediaPlayer`, plus the browser
   `localStorage` settings storage.
 - `tests/Duack.Tests/CodeOnly` — behavior with no serialization surface.
 - `tests/Duack.Tests/JsonRoundTrip` — config/player-settings wire-format pins.
 - `tests/Duack.Adapters.Tests` — behavior of the two adapter packages, driven through their
   headless seams (fake clip library / fake media-player host); no audio device or browser needed.
-- `tools/Duack.Tools` — the desktop-only `duack` CLI (`init`/`validate`/`convert`); the only
+- `tools/Duack.Tools` — the desktop-only `duack` CLI (`init`/`validate`/`convert`/`scan`); the only
   place `NAudio`/`OggVorbisEncoder` live. Never referenced by `src/` or `samples/`. See its
   `README.md` for the CLI and the `ExtensionData` round-trip contract.
 - `tests/Duack.Tools.Tests` — the tool's pure logic plus CLI end-to-end (exit codes +
   filesystem effects) against temp directories.
+- `samples/Duack.Sample.Core` — the engine-free sample core both heads share: the scripted
+  storyline (`StoryController`) and the demo wiring (`SampleAudio`), pure BCL over `src/Duack`.
+- `samples/Duack.Sample.Desktop` — MonoGame storyline demo (walk → dialog → battle) over the
+  two-directory convention; the storyline/wiring come from `Duack.Sample.Core`, pinned by…
+- `tests/Duack.Sample.Tests` — …the sample test project (references the core only; headless,
+  no graphics device).
+- `samples/Duack.Sample.Web` — BlazorWASM/KNI music + storyline demo (same `Duack.Sample.Core`
+  as desktop; story cues surface as duck pulses — no web sfx backend yet); manifest-driven
+  (checked-in `audio-manifest.json` from `duack scan`); kept out of `Duack.slnx` (CI may lack
+  the WASM workload), so build it explicitly.
 
+## Two-directory audio convention
+
+An audio root holds `SFX/` (small one-shot sounds, wav preferred) and `Tracks/` (loops and
+songs, ogg preferred) — users never register cue names by hand. `AudioLibrary.ScanDirectory`
+classifies live where the filesystem is available (desktop); browsers cannot enumerate
+directories, so `duack scan` writes the checked-in `audio-manifest.json` web hosts read back
+via `AudioLibraryManifestJson` (source-generated, AOT-safe). Classification is
+case-SENSITIVE on purpose (`SFX`/`Tracks` and lowercase `.wav`/`.ogg` only): case-sensitive
+web hosts 404 on any mismatch, and `duack scan` warns about files it therefore cannot load.
+The legacy flat layout (`Content/Audio/{name}.ogg|.wav`) remains a working fallback — the
+last candidates in `AudioLibrary.CandidatePaths` order, and the exact probe order of
+`SoundEffectClipLibrary.CandidateUris` when no library is supplied — so existing flat
+content (MonsterProjectWeb) keeps loading unchanged.
 ## Build & test
 
 ```

@@ -272,6 +272,91 @@ public class CliTests : IDisposable
         Assert.False(File.Exists(Path2("out", "hit.ogg")));
     }
 
+    // ---- scan ----
+
+    [Fact]
+    public void Scan_writes_a_manifest_describing_both_directories()
+    {
+        Directory.CreateDirectory(Path2("SFX"));
+        Directory.CreateDirectory(Path2("Tracks"));
+        File.WriteAllBytes(Path2("SFX", "hit.wav"), Array.Empty<byte>());
+        File.WriteAllBytes(Path2("SFX", "dialog.wav"), Array.Empty<byte>());
+        File.WriteAllBytes(Path2("Tracks", "overworld.ogg"), Array.Empty<byte>());
+        File.WriteAllBytes(Path2("Tracks", "battle.ogg"), Array.Empty<byte>());
+
+        var (code, outText, err) = Run("scan", _dir);
+
+        Assert.Equal(0, code);
+        Assert.Equal("", err);
+
+        var manifestPath = Path2("audio-manifest.json");
+        Assert.True(File.Exists(manifestPath));
+        var manifest = AudioLibraryManifestJson.Deserialize(File.ReadAllText(manifestPath));
+        Assert.Equal(AudioLibraryManifest.CurrentSchemaVersion, manifest.SchemaVersion);
+        Assert.Equal(new[] { "dialog", "hit" }, manifest.Sfx);
+        Assert.Equal(new[] { "battle", "overworld" }, manifest.Tracks);
+
+        Assert.Contains("sfx=2", outText);
+        Assert.Contains("tracks=2", outText);
+    }
+
+    [Fact]
+    public void Scan_respects_an_explicit_out_path()
+    {
+        var outPath = Path2("nested", "manifest.json");
+
+        var (code, _, _) = Run("scan", _dir, "--out", outPath);
+
+        Assert.Equal(0, code);
+        Assert.True(File.Exists(outPath));
+    }
+
+    [Fact]
+    public void Scan_a_missing_audio_root_fails()
+    {
+        var (code, _, err) = Run("scan", Path2("nope"));
+
+        Assert.Equal(1, code);
+        Assert.Contains("nope", err);
+    }
+
+    [Fact]
+    public void Scan_warns_about_unloadable_files_but_still_succeeds()
+    {
+        Directory.CreateDirectory(Path2("SFX"));
+        Directory.CreateDirectory(Path2("Tracks"));
+        File.WriteAllBytes(Path2("SFX", "notes.txt"), Array.Empty<byte>());
+        File.WriteAllBytes(Path2("SFX", "hit.wav"), Array.Empty<byte>());
+        File.WriteAllBytes(Path2("Tracks", "song.flac"), Array.Empty<byte>());
+
+        var (code, outText, err) = Run("scan", _dir);
+
+        Assert.Equal(0, code); // warnings do not fail the scan
+        Assert.Contains("warning:", err);
+        Assert.Contains("notes.txt", err);
+        Assert.Contains("song.flac", err);
+        Assert.Contains("sfx=1", outText);
+
+        var manifest = AudioLibraryManifestJson.Deserialize(File.ReadAllText(Path2("audio-manifest.json")));
+        Assert.Equal(new[] { "hit" }, manifest.Sfx);
+        Assert.Empty(manifest.Tracks);
+    }
+
+    [Fact]
+    public void Scan_an_audio_root_without_convention_directories_writes_an_empty_manifest()
+    {
+        var (code, outText, err) = Run("scan", _dir);
+
+        Assert.Equal(0, code);
+        Assert.Equal("", err);
+        Assert.Contains("sfx=0", outText);
+        Assert.Contains("tracks=0", outText);
+
+        var manifest = AudioLibraryManifestJson.Deserialize(File.ReadAllText(Path2("audio-manifest.json")));
+        Assert.Empty(manifest.Sfx);
+        Assert.Empty(manifest.Tracks);
+    }
+
     private static string CleanJson() => """
         {
           "schema_version": 1,

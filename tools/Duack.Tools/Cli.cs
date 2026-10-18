@@ -28,6 +28,7 @@ public static class Cli
                 "init" => RunInit(args[1..], output, error),
                 "validate" => RunValidate(args[1..], output, error),
                 "convert" => RunConvert(args[1..], output, error),
+                "scan" => RunScan(args[1..], output, error),
                 "-h" or "--help" or "help" => PrintUsage(output),
                 _ => Unknown(args[0], error),
             };
@@ -55,6 +56,8 @@ public static class Cli
         writer.WriteLine("  convert  <contentDir> <outDir> [--config <file>] [--playlists <file>]");
         writer.WriteLine("           [--quality <0..1>] [--force] [--all]");
         writer.WriteLine("           (a playlist source is required; --all converts every WAV)");
+        writer.WriteLine("  scan     <audioRoot> [--out <file>]");
+        writer.WriteLine("           (writes an audio-manifest.json of the SFX/ + Tracks/ cues)");
         return 0;
     }
 
@@ -211,6 +214,58 @@ public static class Cli
 
         output.WriteLine($"[duack] converted={converted} up-to-date={upToDate} not-song={notSong} ({outDir})");
         return 0;
+    }
+
+    // ---- scan ----
+
+    private static int RunScan(string[] args, TextWriter output, TextWriter error)
+    {
+        if (!TryParseArgs(args, valueOptions: new[] { "--out" }, flags: Array.Empty<string>(), out var parsed, out var errorMessage))
+            return Fail(error, errorMessage);
+
+        if (parsed.Positional.Count != 1)
+            return Fail(error, "scan requires exactly one <audioRoot>.");
+
+        var audioRoot = parsed.Positional[0];
+        if (!Directory.Exists(audioRoot))
+            return Fail(error, $"audio root not found: {audioRoot}");
+
+        var library = AudioLibrary.ScanDirectory(audioRoot);
+        WarnAboutUnloadableFiles(audioRoot, error);
+
+        var outPath = parsed.Value("--out") ?? Path.Combine(audioRoot, "audio-manifest.json");
+        WriteAllText(outPath, AudioLibraryManifestJson.Serialize(library.ToManifest()));
+
+        output.WriteLine($"[duack] sfx={library.Sfx.Count} tracks={library.Tracks.Count} -> {outPath}");
+        return 0;
+    }
+
+    /// <summary>
+    /// Warns about files in the convention directories the loader can never open (wrong type, or an
+    /// upper-cased extension — the case mismatch a case-sensitive host would 404 on). Warnings only:
+    /// the scan still writes the manifest for everything it could classify.
+    /// </summary>
+    private static void WarnAboutUnloadableFiles(string audioRoot, TextWriter error)
+    {
+        foreach (var (directory, supported) in new[]
+                 {
+                     (AudioLibrary.SfxDirectoryName, AudioLibrary.SfxExtensions),
+                     (AudioLibrary.TracksDirectoryName, AudioLibrary.TrackExtensions),
+                 })
+        {
+            var full = Path.Combine(audioRoot, directory);
+            if (!Directory.Exists(full)) continue;
+
+            foreach (var file in Directory.EnumerateFiles(full))
+            {
+                var extension = Path.GetExtension(file);
+                if (supported.Contains(extension, StringComparer.Ordinal)) continue;
+
+                error.WriteLine(
+                    $"warning: {directory}/{Path.GetFileName(file)} has unsupported type '{extension}' " +
+                    $"(loadable: {string.Join(", ", supported)}); it was not listed in the manifest.");
+            }
+        }
     }
 
     // ---- helpers ----

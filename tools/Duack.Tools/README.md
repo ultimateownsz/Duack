@@ -8,6 +8,7 @@ Build-time tooling for Duack content: scaffold, validate, and convert an
 duack init     <contentDir> [--out <file>] [--force]
 duack validate <config.json> [--playlists <file>]
 duack convert  <contentDir> <outDir> [--config <file>] [--playlists <file>] [--quality <0..1>] [--force] [--all]
+duack scan     <audioRoot> [--out <file>]
 ```
 
 - **init** scans `<contentDir>` for `*.wav` and writes a starting `audio-config.json`
@@ -24,6 +25,14 @@ duack convert  <contentDir> <outDir> [--config <file>] [--playlists <file>] [--q
   the OGG already exists and is at least as new as its WAV, and `--force` re-encodes anyway.
   `--all` is the explicit opt-in to convert **every** WAV (SFX included) and is mutually
   exclusive with a playlist source.
+- **scan** reads the two-directory audio convention (`<audioRoot>/SFX/*` for one-shot
+  sounds, `<audioRoot>/Tracks/*` for loops/songs) and writes `audio-manifest.json` (default
+  `<audioRoot>/audio-manifest.json`) listing the discovered cue names — the checked-in file
+  a **web host** reads at runtime, because browsers cannot enumerate directories. Classifies
+  case-sensitively (`SFX`/`Tracks` and lowercase extensions only — case-sensitive hosts 404
+  on any mismatch), warns (without failing) about files it cannot load (wrong type or
+  upper-cased extension), and exits 1 when the audio root does not exist. Wire format:
+  `Duack.AudioLibraryManifestJson` (`schema_version`, `sfx`, `tracks`).
 
 The playlist source is `--playlists <file>` (a standalone playlist JSON) or an embedded
 `playlists` section read from `--config`. If `--config` is given but has no `playlists`

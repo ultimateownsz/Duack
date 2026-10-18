@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- The engine-free sample core: the scripted storyline (StoryController) and the shared demo
+         wiring (SampleAudio). Pure BCL over src/Duack — no MonoGame, no KNI, no graphics — so the
+         desktop and web heads play the same story and the headless test suite can pin both. -->
+    <RootNamespace>Duack.Sample.Core</RootNamespace>
+    <AssemblyName>Duack.Sample.Core</AssemblyName>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Duack\Duack.csproj" />
+  </ItemGroup>
+
+</Project>

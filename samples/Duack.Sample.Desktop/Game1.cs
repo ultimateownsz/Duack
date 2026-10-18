@@ -299,15 +299,77 @@ public class Game1 : Game
     private void DrawDialog(Viewport viewport)
     {
         // A text box with one pip per dialog line; filled pips = lines already read.
-        var box = new Rectangle(40, viewport.Height - 90, viewport.Width - 80, 70);
-        DrawRect(box, Color.Black * 0.75f);
-        DrawRect(new Rectangle(box.X, box.Y, box.Width, 3), Color.White * 0.5f);
+        // Dialog text is shown as a simple "LINE n" readout (no SpriteFont in the sample) plus a
+        // blinking caret so the box reads as live speech rather than a static panel.
+        var box = new Rectangle(40, viewport.Height - 110, viewport.Width - 80, 90);
+        DrawRect(box, Color.Black * 0.8f);
+        DrawRect(new Rectangle(box.X, box.Y, box.Width, 3), Color.White * 0.6f);
 
+        // Speaker portrait (a small colored square) on the left.
+        DrawRect(new Rectangle(box.X + 12, box.Y + 12, 40, 40), Color.Gold);
+        DrawRect(new Rectangle(box.X + 16, box.Y + 16, 32, 32), Color.DarkGoldenrod);
+
+        // "LINE n" as a big digit on the right of the portrait.
+        var digitX = box.X + 64;
+        var digitY = box.Y + 14;
+        DrawDigit(digitX, digitY, 36, _story.DialogLine, Color.White);
+
+        // Three text lines as varying-width bars (a "typing" placeholder) so the box reads as speech.
+        var textX = box.X + 110;
+        var textY = box.Y + 16;
+        var widths = new[] { (int)(box.Width * 0.55f), (int)(box.Width * 0.45f), (int)(box.Width * 0.35f) };
+        for (var i = 0; i < 3; i++)
+        {
+            var w = widths[i];
+            var alpha = (i == 0) ? 0.9f : (i == 1) ? 0.6f : 0.35f;
+            DrawRect(new Rectangle(textX, textY + i * 16, w, 6), Color.White * alpha);
+        }
+
+        // Blinking caret at the end of the first text line.
+        if ((Environment.TickCount64 / 400) % 2 == 0)
+            DrawRect(new Rectangle(textX + widths[0] + 4, textY, 6, 6), Color.White);
+
+        // Pips: one per dialog line, filled = read.
         for (var i = 0; i < StoryController.DialogLineCount; i++)
         {
-            var pip = new Rectangle(box.X + 16 + i * 26, box.Bottom - 22, 18, 10);
+            var pip = new Rectangle(box.X + 16 + i * 26, box.Bottom - 16, 18, 8);
             DrawRect(pip, i <= _story.DialogLine ? Color.White : Color.White * 0.25f);
         }
+    }
+
+    /// <summary>Draws a single digit 0-9 as a 7-segment display made of rectangles.</summary>
+    private void DrawDigit(int x, int y, int size, int digit, Color color)
+    {
+        var seg = size / 7;
+        // segments: 0=top,1=upper-left,2=upper-right,3=middle,4=lower-left,5=lower-right,6=bottom
+        var on = digit switch
+        {
+            0 => new[] { true, true, true, false, true, true, true },
+            1 => new[] { false, false, true, false, false, true, false },
+            2 => new[] { true, false, true, true, true, false, true },
+            3 => new[] { true, false, true, true, false, true, true },
+            4 => new[] { false, true, true, true, false, true, false },
+            5 => new[] { true, true, false, true, false, true, true },
+            6 => new[] { true, true, false, true, true, true, true },
+            7 => new[] { true, false, true, false, false, true, false },
+            8 => new[] { true, true, true, true, true, true, true },
+            9 => new[] { true, true, true, true, false, true, true },
+            _ => new[] { false, false, false, false, false, false, false },
+        };
+        // top
+        if (on[0]) DrawRect(new Rectangle(x + seg, y, size - 2 * seg, seg), color);
+        // upper-left
+        if (on[1]) DrawRect(new Rectangle(x, y + seg, seg, (size / 2) - seg), color);
+        // upper-right
+        if (on[2]) DrawRect(new Rectangle(x + size - seg, y + seg, seg, (size / 2) - seg), color);
+        // middle
+        if (on[3]) DrawRect(new Rectangle(x + seg, y + size / 2, size - 2 * seg, seg), color);
+        // lower-left
+        if (on[4]) DrawRect(new Rectangle(x, y + size / 2 + seg, seg, (size / 2) - seg), color);
+        // lower-right
+        if (on[5]) DrawRect(new Rectangle(x + size - seg, y + size / 2 + seg, seg, (size / 2) - seg), color);
+        // bottom
+        if (on[6]) DrawRect(new Rectangle(x + seg, y + size - seg, size - 2 * seg, seg), color);
     }
 
     private void DrawBattle(Viewport viewport)

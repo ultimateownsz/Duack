@@ -136,7 +136,9 @@ While the version is `0.x`, the API may change between minor versions.
   the entity that gets hit flashes white and scales up, with a strike marker on the attacker, so
   traded blows are visible; hit cues now draw from a `MarbleBag<string>` over the discovered
   `hit*` cues, so adding `hit-2.wav`, `hit-3.wav`, … gives no-back-to-back variation with no
-  code change (a single `hit` cue keeps playing "hit").
+  code change (a single `hit` cue keeps playing "hit"); the dialog box now shows a speaker
+  portrait, a big digit for the current line, placeholder text bars with a blinking caret, and
+  the line pips, so the dialog reads as live speech.
 - Verified: full suite green (360 tests across 4 suites); desktop + web samples build clean.
 
 ### Known Limitations

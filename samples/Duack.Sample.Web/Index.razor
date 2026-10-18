@@ -13,10 +13,10 @@
     <p>@_status</p>
 
     <div class="row">
-        <button @onclick="StartStory" disabled="@(_disabled || _storyRunning)">Start story (gesture)</button>
-        <button @onclick="AdvanceStory" disabled="@(!_storyRunning)">Advance (Space)</button>
-        <button @onclick="RestartStory" disabled="@(!_storyRunning)">Restart (R)</button>
-        <button @onclick="PulseSfx" disabled="@_disabled">Duck pulse (sfx)</button>
+        <button onclick="blazorClick('StartStory')" disabled="@(_disabled || _storyRunning)">Start story (gesture)</button>
+        <button onclick="blazorClick('AdvanceStory')" disabled="@(!_storyRunning)">Advance (Space)</button>
+        <button onclick="blazorClick('RestartStory')" disabled="@(!_storyRunning)">Restart (R)</button>
+        <button onclick="blazorClick('PulseSfx')" disabled="@_disabled">Duck pulse (sfx)</button>
     </div>
 
     <div class="row">
@@ -71,6 +71,24 @@
 </div>
 
 @code {
+    private static Index? _instance;
+
+    [Microsoft.JSInterop.JSInvokable]
+    public static void StartStory() => _instance?.StartStoryImpl();
+
+    [Microsoft.JSInterop.JSInvokable]
+    public static void AdvanceStory() => _instance?.AdvanceStoryImpl();
+
+    [Microsoft.JSInterop.JSInvokable]
+    public static void RestartStory() => _instance?.RestartStoryImpl();
+
+    [Microsoft.JSInterop.JSInvokable]
+    public static void PulseSfx() => _instance?.PulseSfxImpl();
+
+    protected override void OnInitialized()
+    {
+        _instance = this;
+    }
     private MusicDirector? _director;
     private AudioLibrary? _library;
     private StoryController? _story;
@@ -203,7 +221,7 @@
         }
     }
 
-    private void StartStory()
+    private void StartStoryImpl()
     {
         _clicks++;
         _staticClicks++;
@@ -215,7 +233,7 @@
         _status = "Story started — Space advances a beat, R restarts.";
     }
 
-    private void AdvanceStory()
+    private void AdvanceStoryImpl()
     {
         _clicks++;
         _staticClicks++;
@@ -223,7 +241,7 @@
             ApplyFrame(_story.Advance());
     }
 
-    private void RestartStory()
+    private void RestartStoryImpl()
     {
         _clicks++;
         _staticClicks++;
@@ -247,7 +265,7 @@
         }
     }
 
-    private void PulseSfx()
+    private void PulseSfxImpl()
     {
         if (_director is null) return;
         _director.Pulse(SampleAudio.SfxDuckSource);

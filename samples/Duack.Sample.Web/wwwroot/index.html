@@ -22,6 +22,34 @@
         .chip.green { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
         .chip.red { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
         .chip.blue { background: #3b82f6; box-shadow: 0 0 8px #3b82f6; }
+        .meter { margin-top: 1rem; background: #111; border: 1px solid #333; border-radius: 6px; padding: 0.5rem; }
+        .meter-title { font-size: 0.8rem; color: #999; margin-bottom: 0.3rem; }
+        .meter-lane { display: flex; align-items: center; gap: 0.4rem; margin: 0.2rem 0; }
+        .meter-label { width: 1.2rem; text-align: center; font-weight: bold; font-size: 0.8rem; }
+        .meter-label.music { color: #22c55e; }
+        .meter-label.sfx { color: #f97316; }
+        .meter-bar { flex: 1; height: 10px; background: #222; border-radius: 4px; overflow: hidden; }
+        .meter-fill { height: 100%; transition: width 0.1s linear; }
+        .meter-fill.music { background: #22c55e; }
+        .meter-fill.sfx { background: #f97316; opacity: 0.3; }
+        .meter-fill.sfx.active { opacity: 1; }
+        .story { margin-top: 1rem; background: #111; border: 1px solid #333; border-radius: 6px; padding: 0.8rem; }
+        .story-row { margin-bottom: 0.5rem; }
+        .bar { height: 6px; background: #222; border-radius: 3px; margin: 0.3rem 0; overflow: hidden; }
+        .bar-fill { height: 100%; background: #3b82f6; transition: width 0.1s linear; }
+        .pips { display: flex; gap: 0.3rem; margin-top: 0.3rem; }
+        .pip { width: 12px; height: 8px; background: #333; border-radius: 2px; }
+        .pip.filled { background: #fff; }
+        .hp-row { display: flex; gap: 1rem; margin-top: 0.5rem; }
+        .hp { display: flex; align-items: center; gap: 0.4rem; flex: 1; }
+        .hp-bar { flex: 1; height: 8px; background: #222; border-radius: 4px; overflow: hidden; }
+        .hp-fill { height: 100%; transition: width 0.1s linear; }
+        .hp-fill.you { background: #3b82f6; }
+        .hp-fill.foe { background: #ef4444; }
+        .hit-flash { font-weight: bold; color: #fbbf24; animation: flash 0.25s ease-out; }
+        .hit-flash.you { color: #3b82f6; }
+        .hit-flash.foe { color: #ef4444; }
+        @keyframes flash { from { opacity: 1; transform: scale(1.2); } to { opacity: 0; transform: scale(1); } }
     </style>
 </head>
 <body>
@@ -30,5 +58,10 @@
     <!-- Web audio autoplay policy: browsers suspend the AudioContext / pause media until a real
          user gesture. The buttons below are that gesture — clicking one starts playback. -->
     <script src="_framework/blazor.webassembly.js"></script>
+    <script>
+        window.blazorClick = function (method) {
+            DotNet.invokeMethodAsync('Duack.Sample.Web', method);
+        };
+    </script>
 </body>
 </html>

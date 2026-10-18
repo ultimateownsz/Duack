@@ -142,6 +142,12 @@ While the version is `0.x`, the API may change between minor versions.
   view (a MUSIC lane showing the duck ratio with tick marks, an SFX lane that pulses while a cue
   speaks, plus a sidechain connector), so the cause-and-effect of ducking reads as two audio
   tracks.
+- **Web sample now mirrors the desktop storyline**: the KNI/Blazor head runs the same shared
+  `StoryController` with Start/Advance/Restart buttons, scene state (walk progress, dialog line,
+  HP bars, battle round, hit flash), a two-lane duck meter, and a hit-cue `MarbleBag<string>`
+  readout — all driven through `MediaPlayerMusicBackend` (KNI). Story cues still surface as duck
+  pulses (no web sfx backend), but the mix reaction and scene visuals now match the desktop
+  sample. Added matching CSS (meter, HP bars, pips, hit-flash).
 - Verified: full suite green (360 tests across 4 suites); desktop + web samples build clean.
 
 ### Known Limitations

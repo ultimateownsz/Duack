@@ -1,46 +1,48 @@
 using System;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Media;
 
 namespace Duack.KNI;
 
-/// <summary>
-/// Production <see cref="IMediaPlayerHost"/> over the static platform <c>MediaPlayer</c>. On
-/// BlazorGL <c>Song.FromUri</c> + <c>MediaPlayer.Play</c> drive an HTML <c>&lt;audio&gt;</c> element;
-/// the relative URI resolves against the document base URL.
-/// </summary>
 public sealed class KniMediaPlayerHost : IMediaPlayerHost
 {
-    /// <inheritdoc />
     public event EventHandler<EventArgs>? StateChanged
     {
-        add => MediaPlayer.MediaStateChanged += value;
-        remove => MediaPlayer.MediaStateChanged -= value;
+        add { try { FrameworkDispatcher.Update(); MediaPlayer.MediaStateChanged += value; } catch { } }
+        remove { try { MediaPlayer.MediaStateChanged -= value; } catch { } }
     }
 
-    /// <inheritdoc />
-    public bool IsStopped => MediaPlayer.State == MediaState.Stopped;
+    public bool IsStopped
+    {
+        get { try { FrameworkDispatcher.Update(); return MediaPlayer.State == MediaState.Stopped; } catch { return true; } }
+    }
 
-    /// <inheritdoc />
-    public bool IsPlaying => MediaPlayer.State == MediaState.Playing;
+    public bool IsPlaying
+    {
+        get { try { FrameworkDispatcher.Update(); return MediaPlayer.State == MediaState.Playing; } catch { return false; } }
+    }
 
-    /// <inheritdoc />
     public float Volume
     {
-        get => MediaPlayer.Volume;
-        set => MediaPlayer.Volume = value;
+        get { try { FrameworkDispatcher.Update(); return MediaPlayer.Volume; } catch { return 1f; } }
+        set { try { FrameworkDispatcher.Update(); MediaPlayer.Volume = value; } catch { } }
     }
 
-    /// <inheritdoc />
     public bool IsRepeating
     {
-        get => MediaPlayer.IsRepeating;
-        set => MediaPlayer.IsRepeating = value;
+        get { try { FrameworkDispatcher.Update(); return MediaPlayer.IsRepeating; } catch { return false; } }
+        set { try { FrameworkDispatcher.Update(); MediaPlayer.IsRepeating = value; } catch { } }
     }
 
-    /// <inheritdoc />
-    public void Play(string relativeUri) =>
-        MediaPlayer.Play(Song.FromUri(relativeUri, new Uri(relativeUri, UriKind.Relative)));
+    public void Play(string relativeUri)
+    {
+        try { FrameworkDispatcher.Update(); MediaPlayer.Play(Song.FromUri(relativeUri, new Uri(relativeUri, UriKind.Relative))); }
+        catch { }
+    }
 
-    /// <inheritdoc />
-    public void Stop() => MediaPlayer.Stop();
+    public void Stop()
+    {
+        try { FrameworkDispatcher.Update(); MediaPlayer.Stop(); }
+        catch { }
+    }
 }

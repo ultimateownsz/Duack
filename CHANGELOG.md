@@ -131,6 +131,12 @@ While the version is `0.x`, the API may change between minor versions.
   there for the bag); `LastHitPitch` is now always 0. The two pins that asserted varying
   pitches were updated to assert natural pitch.
 - **Sample: dialog cue cut on battle start** (see `ISfxBackend.Stop()` above).
+- **Sample UX**: the top duck bar is now taller with a clearer color ramp (green → orange →
+  red) and a pulsing highlight while ducking, so the ducking is readable at a glance; in battle
+  the entity that gets hit flashes white and scales up, with a strike marker on the attacker, so
+  traded blows are visible; hit cues now draw from a `MarbleBag<string>` over the discovered
+  `hit*` cues, so adding `hit-2.wav`, `hit-3.wav`, … gives no-back-to-back variation with no
+  code change (a single `hit` cue keeps playing "hit").
 - Verified: full suite green (360 tests across 4 suites); desktop + web samples build clean.
 
 ### Known Limitations

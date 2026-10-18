@@ -39,9 +39,12 @@ public class Game1 : Game
     private MusicDirector _director = null!;
     private SfxDirector _sfx = null!;
     private readonly StoryController _story = new();
+    private MarbleBag<string> _hitBag = null!;
 
     private KeyboardState _previousKeyboard;
-    private float _flash; // seconds of screen flash remaining (battle-start, hits)
+    private float _flash; // seconds of screen flash remaining (battle-start)
+    private float _hitFlash; // seconds of hit-entity flash remaining
+    private int _hitSide; // -1 none, 0 player, 1 foe
 
     public Game1()
     {
@@ -58,6 +61,11 @@ public class Game1 : Game
         _library = AudioLibrary.ScanDirectory(AudioRoot);
         Console.WriteLine($"[Sample] discovered sfx: [{string.Join(", ", _library.Sfx)}]");
         Console.WriteLine($"[Sample] discovered tracks: [{string.Join(", ", _library.Tracks)}]");
+
+        // Bag of hit cues (any discovered cue whose name starts with "hit") so a battle never
+        // plays the same hit twice in a row; with a single "hit" cue this is just "hit" every time.
+        var hitCues = _library.Sfx.Where(n => n.StartsWith("hit", StringComparison.Ordinal)).ToList();
+        _hitBag = new MarbleBag<string>(hitCues.Count > 0 ? hitCues : new[] { StoryController.HitCue }, random: null, avoidImmediateRepeat: true);
 
         // --- Auto-build the playlists: one looping playlist per track + the "music" bag ---
         // The context mapping and the mix itself live in the shared sample core (SampleAudio),
@@ -101,6 +109,8 @@ public class Game1 : Game
 
         if (_flash > 0f)
             _flash = Math.Max(0f, _flash - dt);
+        if (_hitFlash > 0f)
+            _hitFlash = Math.Max(0f, _hitFlash - dt);
 
         var keyboard = Keyboard.GetState();
 
@@ -154,10 +164,23 @@ public class Game1 : Game
             // Duck only when no scene switch is happening: a cue that accompanies a switch
             // (the fainting hit) must not suppress the crossfade back to the overworld track.
             var duck = frame.Music is null;
-            if (_sfx.Play(frame.Sfx, frame.Pitch, duck: duck) &&
+
+            // Hit cues draw from the MarbleBag so a battle never plays the same hit twice in a row
+            // (the XACT-successor variation feature); with a single "hit" cue this is just "hit".
+            var cueName = frame.Sfx;
+            if (frame.Sfx == StoryController.HitCue && _hitBag is not null)
+                cueName = _hitBag.Draw();
+
+            if (_sfx.Play(cueName, frame.Pitch, duck: duck) &&
                 (frame.Sfx == StoryController.HitCue || frame.Sfx == StoryController.BattleStartCue))
             {
                 _flash = 0.12f;
+                if (frame.Sfx == StoryController.HitCue)
+                {
+                    // Who got hit: player attacks on odd BattleRound (after increment), foe on even.
+                    _hitSide = (_story.BattleRound % 2 == 1) ? 1 : 0;
+                    _hitFlash = 0.25f;
+                }
             }
         }
     }
@@ -200,13 +223,52 @@ public class Game1 : Game
         base.Draw(gameTime);
     }
 
-    /// <summary>Top strip visualizing <see cref="MusicDirector.DuckRatio"/> — ducking you can see.</summary>
+    /// <summary>
+    /// Top strip visualizing <see cref="MusicDirector.DuckRatio"/> — the sidechain ducking meter.
+    /// 1.0 = music at full volume; lower = the music is ducked (quieter) while a sound effect speaks.
+    /// </summary>
     private void DrawDuckBar(Viewport viewport)
     {
-        var bar = new Rectangle(8, 8, viewport.Width - 16, 10);
-        DrawRect(bar, Color.Black * 0.5f);
-        var filled = new Rectangle(bar.X, bar.Y, (int)(bar.Width * _director.DuckRatio), bar.Height);
-        DrawRect(filled, _director.DuckRatio < 0.99f ? Color.Orange : Color.LightGreen);
+        // Title strip so the bar reads as a named meter, not a mystery rectangle.
+        var title = new Rectangle(8, 8, viewport.Width - 16, 12);
+        DrawRect(title, Color.Black * 0.7f);
+        // "DUCK" label as a small block on the left of the title strip.
+        DrawRect(new Rectangle(title.X + 4, title.Y + 3, 34, 6), Color.White * 0.85f);
+        // Ratio readout as a filled block on the right of the title strip (wider = more ducked).
+        var ratioBlock = new Rectangle(title.Right - 60, title.Y + 3, (int)(56 * (1f - _director.DuckRatio)), 6);
+        if (ratioBlock.Width > 0)
+            DrawRect(ratioBlock, _director.DuckRatio < 0.99f ? Color.OrangeRed : Color.LightGreen);
+
+        // The meter itself.
+        var bar = new Rectangle(8, 22, viewport.Width - 16, 14);
+        DrawRect(bar, Color.Black * 0.6f);
+
+        var ratio = _director.DuckRatio;
+        var filled = new Rectangle(bar.X, bar.Y, (int)(bar.Width * ratio), bar.Height);
+        var color = ratio > 0.99f ? Color.LightGreen
+                  : ratio > 0.6f ? Color.Orange
+                  : Color.OrangeRed;
+        DrawRect(filled, color);
+
+        // Tick marks at 0 / 0.25 / 0.5 / 0.75 / 1.0 so the scale is readable.
+        for (var i = 0; i <= 4; i++)
+        {
+            var x = bar.X + (int)(bar.Width * (i / 4f));
+            DrawRect(new Rectangle(x, bar.Bottom - 4, 1, 4), Color.White * 0.4f);
+        }
+
+        // Legend row: green = music full, orange = ducked while an sfx plays.
+        var legend = new Rectangle(8, 38, viewport.Width - 16, 8);
+        DrawRect(new Rectangle(legend.X, legend.Y, 8, legend.Height), Color.LightGreen);
+        DrawRect(new Rectangle(legend.X + 10, legend.Y, 8, legend.Height), Color.Orange);
+        DrawRect(new Rectangle(legend.X + 20, legend.Y, 8, legend.Height), Color.OrangeRed);
+
+        // When actively ducking, pulse the filled portion.
+        if (ratio < 0.99f)
+        {
+            var pulse = (float)(0.5 + 0.5 * Math.Sin(Environment.TickCount64 / 80.0));
+            DrawRect(new Rectangle(bar.X, bar.Y, (int)(bar.Width * ratio), 2), Color.White * (0.5f * pulse));
+        }
     }
 
     private void DrawOverworld(Viewport viewport)
@@ -254,8 +316,33 @@ public class Game1 : Game
         var y = viewport.Height / 2 + 20;
 
         // Player (left, blue) and foe (right, red) as simple rectangles.
+        // The entity that just got hit flashes white and scales up briefly so the blow is readable.
+        var playerFlash = (_hitSide == 0 && _hitFlash > 0f) ? (_hitFlash / 0.25f) : 0f;
+        var foeFlash = (_hitSide == 1 && _hitFlash > 0f) ? (_hitFlash / 0.25f) : 0f;
+
+        var playerRect = new Rectangle(centerX - 220, y, 120, 120);
+        var foeRect = new Rectangle(centerX + 100, y, 120, 120);
+        if (playerFlash > 0f)
+        {
+            playerRect.Inflate((int)(6 * playerFlash), (int)(6 * playerFlash));
+            DrawRect(playerRect, Color.White * (0.6f * playerFlash));
+        }
+        if (foeFlash > 0f)
+        {
+            foeRect.Inflate((int)(6 * foeFlash), (int)(6 * foeFlash));
+            DrawRect(foeRect, Color.White * (0.6f * foeFlash));
+        }
+
         DrawRect(new Rectangle(centerX - 220, y, 120, 120), Color.CornflowerBlue);
         DrawRect(new Rectangle(centerX + 100, y, 120, 120), Color.Red);
+
+        // A "strike" marker on the side that just attacked, so the blow reads even without sound.
+        if (_hitFlash > 0f)
+        {
+            var attackerX = (_hitSide == 0) ? (centerX + 100 + 60) : (centerX - 220 + 60);
+            var markerColor = (_hitSide == 0) ? Color.CornflowerBlue : Color.Red;
+            DrawRect(new Rectangle(attackerX - 4, y - 30, 8, 180), markerColor * (_hitFlash / 0.25f));
+        }
 
         // HP bars driven by the story state.
         DrawHpBar(new Rectangle(centerX - 220, y - 14, 120, 8), _story.PlayerHp, Color.CornflowerBlue);

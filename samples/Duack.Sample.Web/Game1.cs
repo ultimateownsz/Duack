@@ -34,7 +34,7 @@ public class Game1 : Game
     private int _hitSide = -1;
     private float _duckPeakHold = 1f;
 
-    private bool _started; // audio needs a user gesture on web
+    private bool _musicStarted;
 
     public Game1()
     {
@@ -48,7 +48,6 @@ public class Game1 : Game
         base.Initialize();
 
         // Web cannot enumerate directories; rebuild the library from the checked-in manifest.
-        // AudioLibrary.FromManifest is synchronous; fetch the manifest via TitleContainer.
         AudioLibraryManifest manifest;
         try
         {
@@ -76,8 +75,6 @@ public class Game1 : Game
 
         _director.TrackCompleted += finished =>
             System.Diagnostics.Debug.WriteLine($"[Sample] track finished: {finished.Name} ({finished.Context})");
-
-        // Defer Play until a user gesture (web autoplay policy).
     }
 
     protected override void LoadContent()
@@ -99,24 +96,22 @@ public class Game1 : Game
         if (_flash > 0f) _flash = Math.Max(0f, _flash - dt);
         if (_hitFlash > 0f) _hitFlash = Math.Max(0f, _hitFlash - dt);
 
-        var keyboard = Keyboard.GetState();
-
-        // Start the story on the first key press (web autoplay gesture).
-        if (!_started && (keyboard.IsKeyDown(Keys.Space) || keyboard.IsKeyDown(Keys.Enter)))
+        // Start music on first update — the user already gestured (boot-screen click), so
+        // browser autoplay policy is satisfied.
+        if (!_musicStarted)
         {
-            _started = true;
+            _musicStarted = true;
             _director.Play(StoryController.OverworldPlaylist);
         }
 
-        if (_started)
-        {
-            if (WasKeyPressed(keyboard, _previousKeyboard, Keys.Space))
-                ApplyFrame(_story.Advance());
-            else if (WasKeyPressed(keyboard, _previousKeyboard, Keys.R))
-                ApplyFrame(_story.Restart());
-            else
-                ApplyFrame(_story.Update(dt));
-        }
+        var keyboard = Keyboard.GetState();
+
+        if (WasKeyPressed(keyboard, _previousKeyboard, Keys.Space))
+            ApplyFrame(_story.Advance());
+        else if (WasKeyPressed(keyboard, _previousKeyboard, Keys.R))
+            ApplyFrame(_story.Restart());
+        else
+            ApplyFrame(_story.Update(dt));
 
         _previousKeyboard = keyboard;
         base.Update(gameTime);
@@ -126,11 +121,6 @@ public class Game1 : Game
     {
         if (frame.Music is not null)
             _director.Play(frame.Music);
-
-        if (frame.Sfx == StoryController.BattleStartCue)
-        {
-            // web has no sfx backend; nothing to stop
-        }
 
         if (frame.Sfx is not null)
         {

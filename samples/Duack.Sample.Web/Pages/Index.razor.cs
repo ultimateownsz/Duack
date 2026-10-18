@@ -10,6 +10,7 @@ public partial class Index
     [Inject] public Func<Game> GameFactory { get; set; } = default!;
 
     private Game? _game;
+    private bool _started;
 
     protected override void OnAfterRender(bool firstRender)
     {
@@ -20,9 +21,21 @@ public partial class Index
         }
     }
 
+    /// <summary>Called from JS when the user clicks "Start" on the boot screen.</summary>
+    [JSInvokable]
+    public void StartGame()
+    {
+        _started = true;
+        // Hide the boot-screen overlay now that the user has gestured (audio can play).
+        JsRuntime.InvokeVoidAsync("eval", "document.getElementById('boot-screen').style.display = 'none';");
+    }
+
+    /// <summary>Called from JS once per animation frame.</summary>
     [JSInvokable]
     public void TickDotNet()
     {
+        if (!_started) return;
+
         if (_game == null)
         {
             _game = GameFactory();

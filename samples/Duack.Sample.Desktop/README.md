@@ -33,10 +33,11 @@ dotnet run --project samples/Duack.Sample.Desktop -c Release
 - **`SfxDirector`**: plays cues by name through `SoundEffectSfxBackend` (MonoGame) and
   automatically ducks the music (`MusicDirector.Pulse`) while a cue speaks. Unknown cues and
   backend refusals never duck.
-- **Pitch variation from one sound**: every battle hit draws its pitch from a
-  `MarbleBag<float>` (±0.3 engine units, no back-to-back repeats) — the same `hit.wav`,
-  differently pitched each time. The hit cadence, HP bars, and story beats are the pure,
-  headless-pinned `StoryController` in the shared `samples/Duack.Sample.Core` (pinned by
+- **Pitch variation from one sound**: the marble bag of hit pitches was removed from the showcase
+  (it did not read well); hits now play at natural pitch. The `MarbleBag<T>` utility itself
+  remains a core feature (see `MarbleBagTests`) and is still used by the bag-shuffled `music`
+  playlist. The hit cadence, HP bars, and story beats are the pure, headless-pinned
+  `StoryController` in the shared `samples/Duack.Sample.Core` (pinned by
   `tests/Duack.Sample.Tests`) — the web sample runs the exact same storyline from that core.
 - The top strip visualizes `MusicDirector.DuckRatio` — ducking you can see.
 - `MusicPlaylistController` + `MusicDirector` crossfade scene switches over the

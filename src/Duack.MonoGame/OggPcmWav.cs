@@ -25,22 +25,25 @@ internal static class OggPcmWav
         var sampleRate = reader.SampleRate;
 
         long totalFrames = reader.TotalSamples;
-        var knownLength = totalFrames > 0;
-        if (!knownLength) totalFrames = 0;
+        if (totalFrames < 0) totalFrames = 0;
 
-        var pcm = new byte[44 + totalFrames * channels * 2];
+        // Allocate from the reported total when it is trustworthy, but always be prepared to
+        // grow: NVorbis's TotalSamples is an estimate for some streams and the decode can run
+        // past it, which previously overflowed the fixed buffer ("Index was outside the bounds").
+        var pcm = new byte[44 + Math.Max(totalFrames, 0) * channels * 2 + 4096 * channels * 2];
         WriteWavHeader(pcm, channels, sampleRate, (int)(totalFrames * channels * 2));
 
-        // NVorbis returns interleaved samples (not frames) - one float per channel-slot.
         var sampleBuffer = new float[4096 * channels];
         long writtenFrames = 0;
         int readSamples;
         while ((readSamples = reader.ReadSamples(sampleBuffer, 0, sampleBuffer.Length)) > 0)
         {
-            if (!knownLength)
+            // Ensure there is room for this chunk before writing.
+            var needed = 44 + (writtenFrames + readSamples / channels + 1) * channels * 2;
+            if (needed > pcm.Length)
             {
-                var grown = new byte[pcm.LongLength + readSamples * 2];
-                Buffer.BlockCopy(pcm, 0, grown, 0, pcm.Length);
+                var grown = new byte[Math.Max(needed, pcm.Length * 2)];
+                Buffer.BlockCopy(pcm, 0, grown, 0, Math.Min(pcm.Length, grown.Length));
                 pcm = grown;
             }
 
@@ -55,10 +58,15 @@ internal static class OggPcmWav
             writtenFrames += readSamples / channels;
         }
 
-        if (!knownLength)
-            WriteWavHeader(pcm, channels, sampleRate, (int)(writtenFrames * channels * 2));
+        // Patch the header with the actual payload size (covers both the estimate-was-wrong
+        // case and the unknown-total case).
+        WriteWavHeader(pcm, channels, sampleRate, (int)(writtenFrames * channels * 2));
 
-        return new MemoryStream(pcm, writable: false);
+        // Trim to the actual used size so SoundEffect.FromStream doesn't read trailing zeros.
+        var finalLength = 44 + (int)(writtenFrames * channels * 2);
+        var final = new byte[finalLength];
+        Buffer.BlockCopy(pcm, 0, final, 0, finalLength);
+        return new MemoryStream(final, writable: false);
     }
 
     /// <summary>Writes a canonical 44-byte RIFF/WAVE header for 16-bit PCM at the start of

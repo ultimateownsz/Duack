@@ -22,6 +22,8 @@ public class SfxDirectorTests
             Played.Add((cueName, pitch, volume));
             return Result;
         }
+
+        public void Stop() { }
     }
 
     /// <summary>Minimal music backend: the duck test only needs the director's mix math.</summary>

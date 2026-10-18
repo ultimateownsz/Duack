@@ -25,7 +25,7 @@ public class StoryControllerTests
     [Fact]
     public void A_fresh_story_starts_in_the_walk_scene()
     {
-        var story = new StoryController(new Random(1));
+        var story = new StoryController();
 
         Assert.Equal(StoryScene.Walk, story.Scene);
         Assert.Equal(0f, story.WalkProgress);
@@ -34,7 +34,7 @@ public class StoryControllerTests
     [Fact]
     public void Walking_accumulates_progress_and_fires_the_notice_cue_once_at_the_npc()
     {
-        var story = new StoryController(new Random(1));
+        var story = new StoryController();
 
         var early = story.Update(0.1f);
         Assert.Equal(StoryScene.Walk, story.Scene);
@@ -54,7 +54,7 @@ public class StoryControllerTests
     [Fact]
     public void Notice_times_out_into_the_dialog_with_the_dialog_cue()
     {
-        var story = new StoryController(new Random(1));
+        var story = new StoryController();
         story.Advance(); // -> Notice
 
         var frame = story.Update(1.5f); // past the notice pause
@@ -68,7 +68,7 @@ public class StoryControllerTests
     [Fact]
     public void Dialog_advances_line_by_line_with_the_dialog_cue_and_ends_with_battle_start()
     {
-        var story = new StoryController(new Random(1));
+        var story = new StoryController();
         story.Advance(); // -> Notice
         story.Advance(); // -> Dialog (line 0, cue fired on open)
         Assert.Equal(StoryScene.Dialog, story.Scene);
@@ -90,7 +90,7 @@ public class StoryControllerTests
     [Fact]
     public void Dialog_lines_auto_advance_on_their_timer()
     {
-        var story = new StoryController(new Random(1));
+        var story = new StoryController();
         story.Advance(); // -> Notice
         story.Advance(); // -> Dialog (line 0)
 
@@ -104,7 +104,7 @@ public class StoryControllerTests
     [Fact]
     public void The_battle_intro_starts_the_battle_playlist()
     {
-        var story = new StoryController(new Random(1));
+        var story = new StoryController();
         ToBattle_story_helper_to_intro(story);
 
         var frame = story.Update(1.5f); // past the intro beat
@@ -128,29 +128,30 @@ public class StoryControllerTests
     }
 
     [Fact]
-    public void Battle_trades_hits_player_first_with_varying_pitch()
+    public void Battle_trades_hits_player_first_at_natural_pitch()
     {
-        var story = new StoryController(new Random(1));
+        var story = new StoryController();
+
         ToBattle(story);
 
         var first = story.Update(1.5f);
         Assert.Equal("hit", first.Sfx);
         Assert.Equal(story.LastHitPitch, first.Pitch);
+        Assert.Equal(0f, first.Pitch); // no marble-bag pitch variation on hits
         Assert.Equal(0.8f, story.FoeHp, 3);   // the player's monster attacks first
         Assert.Equal(1f, story.PlayerHp, 3);
 
         var second = story.Update(1.5f);
         Assert.Equal("hit", second.Sfx);
+        Assert.Equal(0f, second.Pitch);
         Assert.Equal(0.8f, story.PlayerHp, 3); // the foe strikes back
         Assert.Equal(0.8f, story.FoeHp, 3);
-
-        Assert.NotEqual(first.Pitch, second.Pitch); // marble bag: no back-to-back repeats
     }
 
     [Fact]
-    public void Hit_pitches_come_from_the_authored_marble_bag_and_stay_in_engine_range()
+    public void Hit_pitches_are_natural_now_that_the_marble_bag_is_gone()
     {
-        var story = new StoryController(new Random(1));
+        var story = new StoryController();
         ToBattle(story);
 
         var pitches = new List<float>();
@@ -160,15 +161,13 @@ public class StoryControllerTests
             if (frame.Sfx == "hit") pitches.Add(frame.Pitch);
         }
 
-        var authored = new[] { -0.3f, -0.15f, 0f, 0.15f, 0.3f };
-        Assert.All(pitches, pitch => Assert.Contains(pitch, authored));
-        Assert.True(pitches.Distinct().Count() > 1); // seeded, but more than one value over a battle
+        Assert.All(pitches, pitch => Assert.Equal(0f, pitch));
     }
 
     [Fact]
     public void A_fainted_side_loops_the_story_back_to_the_walk_with_overworld_music()
     {
-        var story = new StoryController(new Random(1));
+        var story = new StoryController();
         ToBattle(story);
 
         var frame = default(StoryFrame);
@@ -185,7 +184,7 @@ public class StoryControllerTests
     [Fact]
     public void Restart_returns_to_the_walk_and_requests_overworld_music()
     {
-        var story = new StoryController(new Random(1));
+        var story = new StoryController();
         ToBattle(story);
         story.Update(1.5f); // one hit in
 
@@ -205,7 +204,7 @@ public class StoryControllerTests
     [Fact]
     public void Advance_skips_each_pace_break_but_never_the_battle_itself()
     {
-        var story = new StoryController(new Random(1));
+        var story = new StoryController();
 
         Assert.True(story.Advance().SceneChanged); // Walk -> Notice
         Assert.Equal(StoryScene.Notice, story.Scene);

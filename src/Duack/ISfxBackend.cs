@@ -14,4 +14,10 @@ public interface ISfxBackend
     /// clip, engine refusal).
     /// </summary>
     bool Play(string cueName, float pitch, float volume);
+
+    /// <summary>
+    /// Stops every one-shot this backend is currently playing (a hard cut). Used by the sample
+    /// to cut a long cue (e.g. dialog) when a new scene starts.
+    /// </summary>
+    void Stop();
 }

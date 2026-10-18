@@ -64,15 +64,10 @@ public sealed class StoryController
     public const float BattleIntroSeconds = 1.2f; // battle-start sting before the fight
     public const float BattleRoundSeconds = 1.2f; // one hit per round
 
-    private readonly MarbleBag<float> _hitPitches;
     private float _sceneSeconds;
 
-    public StoryController(Random? random = null)
+    public StoryController()
     {
-        _hitPitches = new MarbleBag<float>(
-            new[] { -0.3f, -0.15f, 0f, 0.15f, 0.3f },
-            random,
-            avoidImmediateRepeat: true);
     }
 
     public StoryScene Scene { get; private set; } = StoryScene.Walk;
@@ -210,7 +205,7 @@ public sealed class StoryController
         if (playerAttacks) FoeHp = Math.Max(0f, FoeHp - 0.2f);
         else PlayerHp = Math.Max(0f, PlayerHp - 0.2f);
 
-        LastHitPitch = _hitPitches.Draw();
+        LastHitPitch = 0f;
         var frame = new StoryFrame(Sfx: HitCue, Pitch: LastHitPitch);
 
         if (FoeHp > 0f && PlayerHp > 0f)

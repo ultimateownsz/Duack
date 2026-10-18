@@ -102,6 +102,37 @@ While the version is `0.x`, the API may change between minor versions.
   pinned core, so it carries no direct test (the shared behavior lives in
   `StoryController`/`SampleAudio`).
 
+#### 2026-10-18 (sample polish + probe cleanup)
+
+- **Cleanup**: removed the scratch `samples/probe2` project and `samples/Duack.Sample.Web/Probe.razor`
+  left over from the Razor `@onclick` generation investigation (they were never part of the
+  solution and are not referenced anywhere).
+- **Core: `ISfxBackend.Stop()`** (additive) — stops every one-shot the backend is playing
+  (a hard cut). Implemented in `SoundEffectSfxBackend` (stops + disposes all instances) and
+  exposed through `SfxDirector.Stop()`. Used by the desktop sample to cut the long dialog cue
+  when the battle-start sting plays, so it cannot bleed into the battle scene.
+- **Fixed: `OggPcmWav.Decode` overflow on larger Vorbis streams** — `NVorbis.TotalSamples` is an
+  estimate for some files (overworld.ogg reported fewer frames than it actually contains), so
+  the fixed-size PCM buffer overflowed with "Index was outside the bounds of the array" and
+  the track silently failed to load — which is why the battle→overworld crossfade never played
+  (the overworld clip was null and `PlayTrack` returned early, leaving the battle track
+  running). The decoder now grows the buffer on demand and rewrites the RIFF header with the
+  actual decoded length, so any Vorbis stream decodes regardless of how accurate
+  `TotalSamples` is.
+- **Core: `SfxDirector.Play(..., duck = true)`** (additive, default true) — lets a caller
+  play a cue without pulsing the music duck source. The desktop sample uses `duck: false` for
+  the fainting hit (which also switches the scene to overworld), so the cue can no longer
+  suppress the crossfade back to the overworld track; the web sample mirrors this by skipping
+  the duck pulse on cues that carry a `Music` switch.
+- **Sample: removed the marble-bag pitch variation from battle hits** — the ±0.3 engine-unit
+  jitter (one `hit.wav`, differently pitched) did not read well in the showcase, so hits now
+  play at natural pitch. `MarbleBag<T>` and the bag-shuffled `music` playlist are untouched
+  (still core features). `StoryController` no longer takes a `Random` (the parameter was only
+  there for the bag); `LastHitPitch` is now always 0. The two pins that asserted varying
+  pitches were updated to assert natural pitch.
+- **Sample: dialog cue cut on battle start** (see `ISfxBackend.Stop()` above).
+- Verified: full suite green (360 tests across 4 suites); desktop + web samples build clean.
+
 ### Known Limitations
 
 #### 2026-10-18 (shared sample core)

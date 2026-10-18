@@ -193,9 +193,10 @@
 
         if (frame.Sfx is not null)
         {
-            // Same reaction as the desktop sample's SfxDirector auto-duck: pulse the "sfx" duck
-            // source with the configured hold (the -1 default), just without the one-shot audio.
-            _director!.Pulse(SampleAudio.SfxDuckSource);
+            // Mirror the desktop: a cue that accompanies a scene switch (the fainting hit) does
+            // not pulse the duck, so it cannot suppress the crossfade back to the overworld track.
+            if (frame.Music is null)
+                _director!.Pulse(SampleAudio.SfxDuckSource);
             _lastCue = frame.Pitch == 0f
                 ? frame.Sfx
                 : $"{frame.Sfx} (pitch {(frame.Pitch > 0 ? "+" : "")}{frame.Pitch:0.00})";

@@ -49,16 +49,20 @@ public sealed class SfxDirector
     /// <summary>
     /// Plays <paramref name="cueName"/> and ducks the music for the configured hold while it
     /// speaks. Returns false — without touching the backend and without ducking — when the cue is
-    /// not in the library or the backend refuses to play it.
+    /// not in the library or the backend refuses to play it. Pass <paramref name="duck"/> = false
+    /// to play the cue without ducking the music (e.g. a cue that accompanies a scene switch).
     /// </summary>
-    public bool Play(string cueName, float pitch = 0f, float volume = 1f)
+    public bool Play(string cueName, float pitch = 0f, float volume = 1f, bool duck = true)
     {
         if (!_library.IsSfx(cueName)) return false;
         if (!_backend.Play(cueName, pitch, volume)) return false;
 
-        _music.Pulse(_duckSource);
+        if (duck) _music.Pulse(_duckSource);
         return true;
     }
+
+    /// <summary>Stops every one-shot this director's backend is currently playing.</summary>
+    public void Stop() => _backend.Stop();
 
     /// <summary>
     /// Draws the next cue from the shuffle bag (no immediate repeats) and plays it. Returns false

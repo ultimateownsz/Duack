@@ -39,8 +39,8 @@ public sealed class SoundEffectSfxBackend : ISfxBackend, IDisposable
         return true;
     }
 
-    /// <summary>Stops and disposes every instance this backend started.</summary>
-    public void Dispose()
+    /// <summary>Stops and disposes every instance this backend started (a hard cut, not a fade).</summary>
+    public void Stop()
     {
         foreach (var instance in _playing)
         {
@@ -49,6 +49,9 @@ public sealed class SoundEffectSfxBackend : ISfxBackend, IDisposable
         }
         _playing.Clear();
     }
+
+    /// <summary>Stops and disposes every instance this backend started.</summary>
+    public void Dispose() => Stop();
 
     private void ReapFinished()
     {

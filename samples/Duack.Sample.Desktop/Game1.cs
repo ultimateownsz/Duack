@@ -144,10 +144,21 @@ public class Game1 : Game
         if (frame.Music is not null)
             _director.Play(frame.Music); // single-track playlist: crossfades from whatever plays
 
-        if (frame.Sfx is not null && _sfx.Play(frame.Sfx, frame.Pitch) &&
-            frame.Sfx is StoryController.HitCue or StoryController.BattleStartCue)
+        // A scene switch (e.g. battle start) cuts any lingering one-shot (the dialog cue is long)
+        // so it cannot bleed into the new scene.
+        if (frame.Sfx == StoryController.BattleStartCue)
+            _sfx.Stop();
+
+        if (frame.Sfx is not null)
         {
-            _flash = 0.12f;
+            // Duck only when no scene switch is happening: a cue that accompanies a switch
+            // (the fainting hit) must not suppress the crossfade back to the overworld track.
+            var duck = frame.Music is null;
+            if (_sfx.Play(frame.Sfx, frame.Pitch, duck: duck) &&
+                (frame.Sfx == StoryController.HitCue || frame.Sfx == StoryController.BattleStartCue))
+            {
+                _flash = 0.12f;
+            }
         }
     }
 

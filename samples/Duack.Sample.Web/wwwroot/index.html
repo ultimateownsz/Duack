@@ -5,63 +5,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Duack — Web Sample (KNI / Blazor WASM)</title>
     <base href="./" />
-    <style>
-        html, body { margin: 0; padding: 0; height: 100%; background: #111; color: #eee;
-                     font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
-        #app { display: flex; flex-direction: column; align-items: center; padding: 2rem; }
-        .panel { background: #1a1a1a; border: 1px solid #333; border-radius: 8px;
-                 padding: 1.5rem; max-width: 420px; width: 100%; }
-        button { background: #3b82f6; color: white; border: none; border-radius: 6px;
-                 padding: 0.6rem 1rem; font-size: 1rem; cursor: pointer; margin: 0.25rem; }
-        button:hover { background: #2563eb; }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
-        .row { display: flex; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap; }
-        .muted { color: #999; font-size: 0.9rem; }
-        .chip { display: inline-block; width: 10px; height: 10px; border-radius: 50%;
-                margin-right: 0.5rem; vertical-align: middle; }
-        .chip.green { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
-        .chip.red { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
-        .chip.blue { background: #3b82f6; box-shadow: 0 0 8px #3b82f6; }
-        .meter { margin-top: 1rem; background: #111; border: 1px solid #333; border-radius: 6px; padding: 0.5rem; }
-        .meter-title { font-size: 0.8rem; color: #999; margin-bottom: 0.3rem; }
-        .meter-lane { display: flex; align-items: center; gap: 0.4rem; margin: 0.2rem 0; }
-        .meter-label { width: 1.2rem; text-align: center; font-weight: bold; font-size: 0.8rem; }
-        .meter-label.music { color: #22c55e; }
-        .meter-label.sfx { color: #f97316; }
-        .meter-bar { flex: 1; height: 10px; background: #222; border-radius: 4px; overflow: hidden; }
-        .meter-fill { height: 100%; transition: width 0.1s linear; }
-        .meter-fill.music { background: #22c55e; }
-        .meter-fill.sfx { background: #f97316; opacity: 0.3; }
-        .meter-fill.sfx.active { opacity: 1; }
-        .story { margin-top: 1rem; background: #111; border: 1px solid #333; border-radius: 6px; padding: 0.8rem; }
-        .story-row { margin-bottom: 0.5rem; }
-        .bar { height: 6px; background: #222; border-radius: 3px; margin: 0.3rem 0; overflow: hidden; }
-        .bar-fill { height: 100%; background: #3b82f6; transition: width 0.1s linear; }
-        .pips { display: flex; gap: 0.3rem; margin-top: 0.3rem; }
-        .pip { width: 12px; height: 8px; background: #333; border-radius: 2px; }
-        .pip.filled { background: #fff; }
-        .hp-row { display: flex; gap: 1rem; margin-top: 0.5rem; }
-        .hp { display: flex; align-items: center; gap: 0.4rem; flex: 1; }
-        .hp-bar { flex: 1; height: 8px; background: #222; border-radius: 4px; overflow: hidden; }
-        .hp-fill { height: 100%; transition: width 0.1s linear; }
-        .hp-fill.you { background: #3b82f6; }
-        .hp-fill.foe { background: #ef4444; }
-        .hit-flash { font-weight: bold; color: #fbbf24; animation: flash 0.25s ease-out; }
-        .hit-flash.you { color: #3b82f6; }
-        .hit-flash.foe { color: #ef4444; }
-        @keyframes flash { from { opacity: 1; transform: scale(1.2); } to { opacity: 0; transform: scale(1); } }
-    </style>
 </head>
-<body>
+<body style="margin: 0; overflow: hidden; background: #000;">
     <div id="app">Loading Duack web sample…</div>
+    <div id="blazor-error-ui" style="display:none; position:fixed; bottom:0; left:0; width:100%; padding:0.6rem 1.25rem; background:lightyellow; z-index:1000;">
+        An unhandled error has occurred.
+        <a href="" class="reload">Reload</a>
+        <a class="dismiss" style="cursor:pointer; position:absolute; right:0.75rem; top:0.5rem;">x</a>
+    </div>
 
-    <!-- Web audio autoplay policy: browsers suspend the AudioContext / pause media until a real
-         user gesture. The buttons below are that gesture — clicking one starts playback. -->
     <script src="_framework/blazor.webassembly.js"></script>
     <script>
-        window.blazorClick = function (method) {
-            DotNet.invokeMethodAsync('Duack.Sample.Web', method);
-        };
+        (function () {
+            var v = '10.0.3';
+            var shims = [
+                ['nkast.Wasm.JSInterop', 'JSObject'],
+                ['nkast.Wasm.Dom',       'Window'],
+                ['nkast.Wasm.Dom',       'Document'],
+                ['nkast.Wasm.Dom',       'Navigator'],
+                ['nkast.Wasm.Dom',       'Gamepad'],
+                ['nkast.Wasm.Dom',       'Media'],
+                ['nkast.Wasm.XHR',       'XHR'],
+                ['nkast.Wasm.Canvas',    'Canvas'],
+                ['nkast.Wasm.Canvas',    'CanvasGLContext'],
+                ['nkast.Wasm.Audio',     'Audio'],
+                ['nkast.Wasm.XR',        'XR']
+            ];
+            for (var i = 0; i < shims.length; i++) {
+                document.write('<script src="_content/' + shims[i][0] + '/js/' + shims[i][1] + '.' + v + '.js"></scr' + 'ipt>');
+            }
+        })();
     </script>
+    <script src="frb-host.js"></script>
 </body>
 </html>

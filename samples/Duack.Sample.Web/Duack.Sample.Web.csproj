@@ -3,20 +3,30 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
+    <ImplicitUsings>disable</ImplicitUsings>
     <RootNamespace>Duack.Sample.Web</RootNamespace>
     <AssemblyName>Duack.Sample.Web</AssemblyName>
-    <!-- KNI defines the web backend path (mirrors the game's BlazorGL head). -->
-    <DefineConstants>$(DefineConstants);KNI</DefineConstants>
-    <BlazorEnableCompression>false</BlazorEnableCompression>
-    <EnableDefaultCompressionFormats>false</EnableDefaultCompressionFormats>
+    <DefineConstants>$(DefineConstants);BLAZORGL</DefineConstants>
+    <BlazorEnableTimeZoneSupport>false</BlazorEnableTimeZoneSupport>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="nkast.Xna.Framework" Version="4.3.9001" />
+    <PackageReference Include="nkast.Xna.Framework.Content" Version="4.3.9001" />
+    <PackageReference Include="nkast.Xna.Framework.Graphics" Version="4.3.9001" />
+    <PackageReference Include="nkast.Xna.Framework.Audio" Version="4.3.9001" />
+    <PackageReference Include="nkast.Xna.Framework.Media" Version="4.3.9001" />
+    <PackageReference Include="nkast.Xna.Framework.Input" Version="4.3.9001" />
+    <PackageReference Include="nkast.Xna.Framework.Game" Version="4.3.9001" />
+    <PackageReference Include="nkast.Kni.Platform.Blazor.GL" Version="4.3.9001" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.11" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.11" PrivateAssets="all" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Duack\Duack.csproj" />
     <ProjectReference Include="..\..\src\Duack.KNI\Duack.KNI.csproj" />
     <ProjectReference Include="..\Duack.Sample.Core\Duack.Sample.Core.csproj" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.11" />
   </ItemGroup>
 
 </Project>

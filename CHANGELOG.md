@@ -15,6 +15,17 @@ While the version is `0.x`, the API may change between minor versions.
 
 ### Added
 
+#### 2026-10-19 (README + WP6 migration step)
+
+- **`README.md`** — project landing page: positioning statement, "why Duack exists"
+  (MonoGame issues #5472 / #6153 / #6828), code-first quickstart, music-context OBS
+  framing, feature list, scope boundary, and install line. Documents the preview
+  release channel.
+- **`MonsterProjectWeb.BlazorGL` now directly references `Duack.KNI`** (WP6 step 2):
+  the browser head gets its own explicit project reference to the KNI adapter, in
+  addition to the transitive one through `MonsterProjectWeb.Common.Kni`, so the head
+  declares its adapter dependency directly.
+
 #### 2026-10-19 (agent skills documentation)
 
 - **Agent Skills for Duack features**: added topic skills under duack-skills/ (the single

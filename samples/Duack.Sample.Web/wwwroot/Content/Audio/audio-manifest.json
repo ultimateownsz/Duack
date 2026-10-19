@@ -2,7 +2,6 @@
   "schema_version": 1,
   "sfx": [
     "battle-start",
-    "dialog",
     "hit",
     "notice-video-game-sfx"
   ],

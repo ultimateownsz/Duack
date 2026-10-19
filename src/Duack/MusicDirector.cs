@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Duack;
 
@@ -45,6 +46,11 @@ public class MusicDirector
     public float DuckRatio => _duck.EffectiveRatio;
 
     /// <summary>
+    /// Read-only snapshot of every duck source for diagnostics (live per-source ratios and targets).
+    /// </summary>
+    public IReadOnlyList<DuckSourceView> DuckSources => _duck.Sources;
+
+    /// <summary>
     /// Master bus volume (scales music and SFX alike), read live every frame so a settings
     /// slider applies without rebuilding the director; defaults to the constructor argument.
     /// </summary>
@@ -89,6 +95,13 @@ public class MusicDirector
 
     /// <summary>Ducks the named source for its configured hold (or <paramref name="holdSeconds"/>).</summary>
     public void Pulse(string source, float holdSeconds = -1f) => _duck.Pulse(source, holdSeconds);
+
+    /// <summary>
+    /// Re-applies the duck sources currently in <see cref="MusicConfig.DuckSources"/> (e.g. after a
+    /// hot reload replaced a <see cref="DuckSourceConfig"/>). Live active/pulse state survives, so a
+    /// dip in progress keeps easing instead of snapping back to full volume.
+    /// </summary>
+    public void ReloadDuckSources() => _duck.ReloadSources(_music.DuckSources);
 
     /// <summary>Immediately releases all duck sources (no easing tail) - used on scene switches.</summary>
     public void ReleaseDucks() => _duck.ReleaseAll();

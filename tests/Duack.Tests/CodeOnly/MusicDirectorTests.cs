@@ -384,6 +384,51 @@ public class MusicDirectorTests
     }
 
     [Fact]
+    public void ReloadDuckSources_preserves_active_state_and_applies_new_params()
+    {
+        // MonsterProjectWeb hot-reloads audio-config.json: the duck sources swap in place (live
+        // active/pulse state survives, so a dip in progress keeps easing) - the same contract
+        // DuckMixer.ReloadSources pins, reached through the director that owns the mixer.
+        var backend = new FakeMusicBackend(supportsOverlap: true);
+        var playlist = new MusicPlaylistController(OneTrack("solo"), new Random(1));
+        var music = new MusicConfig { CrossfadeSeconds = 0f };
+        music.DuckSources["sfx"] = new DuckSourceConfig { Ratio = 0.3f, AttackSeconds = 0f, ReleaseSeconds = 0f };
+        var director = new MusicDirector(backend, playlist, music);
+
+        director.Play("main");
+        director.Update(0.016f);
+        director.SetDuck("sfx", true);
+        director.Update(0.016f);
+        Assert.Equal(0.3f, director.DuckRatio, 3);
+
+        music.DuckSources["sfx"] = new DuckSourceConfig { Ratio = 0.6f, AttackSeconds = 0f, ReleaseSeconds = 0f };
+        director.ReloadDuckSources();
+        director.Update(0.016f);
+
+        Assert.Equal(0.6f, director.DuckRatio, 3); // new params applied
+        Assert.True(director.DuckSources.Single(s => s.Name == "sfx").IsActive); // state survived
+        Assert.Equal(0.6f, backend.ActiveVolumes.Last(), 3);
+    }
+
+    [Fact]
+    public void DuckSources_exposes_live_state_for_diagnostics()
+    {
+        var backend = new FakeMusicBackend(supportsOverlap: true);
+        var playlist = new MusicPlaylistController(OneTrack("solo"), new Random(1));
+        var music = new MusicConfig { CrossfadeSeconds = 0f };
+        music.DuckSources["sfx"] = new DuckSourceConfig { Ratio = 0.3f, AttackSeconds = 0f, ReleaseSeconds = 0f };
+        var director = new MusicDirector(backend, playlist, music);
+
+        director.SetDuck("sfx", true);
+        director.Update(0.016f);
+
+        var view = director.DuckSources.Single();
+        Assert.Equal("sfx", view.Name);
+        Assert.True(view.IsActive);
+        Assert.Equal(0.3f, view.CurrentRatio, 3);
+    }
+
+    [Fact]
     public void Master_bus_scales_the_composed_music_volume()
     {
         var backend = new FakeMusicBackend(supportsOverlap: true);

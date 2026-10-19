@@ -15,6 +15,43 @@ While the version is `0.x`, the API may change between minor versions.
 
 ### Added
 
+#### 2026-10-19 (duck diagnostics + hot-reload reload)
+
+- **`MusicDirector.DuckSources` / `MusicDirector.ReloadDuckSources()`**: the director now exposes the
+  live duck-source snapshot (`IReadOnlyList<DuckSourceView>`, delegating to `DuckMixer.Sources`) and
+  a one-call reload of the sources currently in `MusicConfig.DuckSources`, delegating to
+  `DuckMixer.ReloadSources`. Consumer migration (MonsterProjectWeb) needs both: its automation
+  surface reads `.Duck.EffectiveRatio` / `.Duck.Sources` off a central mix object it no longer owns,
+  and its hot reload mutates the duck-source dictionary in place and must re-apply it without
+  tearing down the director. Pins: 2 new tests (`ReloadDuckSources_preserves_active_state_and_applies_new_params`,
+  `DuckSources_exposes_live_state_for_diagnostics`).
+
+### Fixed
+
+#### 2026-10-19 (zero-hold duck pulse latched on forever)
+
+- **A pulse with a resolved hold of 0 stuck the duck on permanently.** Symptom: every sound effect
+  plays through `SfxDirector.Play`, which calls `MusicDirector.Pulse("sfx")` with no explicit hold -
+  so the hold comes from the `sfx` duck source's `hold_seconds`. With the shipped `hold_seconds: 0`,
+  `DuckMixer.Pulse` set `IsActive = true` and left `PulseRemaining` at 0, and `Update` only releases
+  a source while `PulseRemaining > 0`. The duck therefore never released: music stayed at the ducked
+  ratio for the rest of the session (only a scene switch's `ReleaseDucks()` or `ReleaseAll()` cleared
+  it). Reproduction: `mixer.SetSource("sfx", ratio 0.3, hold 0); mixer.Pulse("sfx"); mixer.Update(0.016f)`
+  used to leave `EffectiveRatio` pinned at 0.3 with `IsActive` true. Fix: a zero-hold pulse is a
+  no-op - it neither ducks nor cancels an explicit `Set(name, true)` hold, since "duck and release
+  immediately" is audible-free anyway once the frame's easing runs. Pins:
+  `Zero_hold_pulse_is_a_no_op`, `Zero_hold_pulse_leaves_an_explicit_hold_alone` (the pre-existing
+  `Pulse_holds_then_releases` / `Pulse_with_explicit_hold_overrides_config` cases are unchanged).
+- **`PlayerSettings.ApplyOverrides` dropped the authored cue variation.** Symptom: an authored
+  `Music.CueVariation` / `Sfx.CueVariation` (the per-play pitch/volume jitter that makes repeated
+  hits and footsteps not sound machine-gunned) vanished as soon as a player had saved any volume
+  setting, because `ApplyOverrides` rebuilds `MusicConfig`/`SfxConfig` from the saved blob and
+  carried over only master/crossfade/contexts/duck sources/tracks/extension data. Cues played dead
+  flat for those players only. Reproduction: author both cue variations, `store.Save(new
+  PlayerAudioSettings { MusicMasterVolume = 0.25f })`, then `ApplyOverrides(authored, store)` -
+  `effective.Music.CueVariation` used to be null. Pins:
+  `ApplyOverrides_preserves_authored_cue_variation`, `ApplyOverrides_leaves_cue_variation_null_when_none_is_authored`.
+
 #### 2026-10-19 (master bus)
 
 - **Master bus (three-bus terminology)**: the composition chain is now

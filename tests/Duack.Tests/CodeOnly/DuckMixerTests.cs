@@ -177,6 +177,41 @@ public class DuckMixerTests
     }
 
     [Fact]
+    public void Zero_hold_pulse_is_a_no_op()
+    {
+        // Symptom (MonsterProjectWeb adoption): every sound effect calls SfxDirector.Play, which
+        // pulses the "sfx" source with no explicit hold. The shipped source declares
+        // hold_seconds: 0, so a resolved hold of 0 landed in the old code as
+        // IsActive = true with PulseRemaining = 0 - and Update only releases a source while
+        // PulseRemaining > 0. The duck latched on forever and the music stayed quiet for the
+        // rest of the session (recovery needed a scene switch or ReleaseAll).
+        var mixer = new DuckMixer();
+        mixer.SetSource("sfx", Source(ratio: 0.3f, attack: 0f, hold: 0f, release: 0f));
+
+        mixer.Pulse("sfx");
+        mixer.Update(0.016f);
+
+        Assert.Equal(1f, mixer.EffectiveRatio, 3);
+        Assert.False(mixer.Sources.Single().IsActive);
+    }
+
+    [Fact]
+    public void Zero_hold_pulse_leaves_an_explicit_hold_alone()
+    {
+        // A zero-hold pulse must not cancel a source another caller deliberately held on
+        // (e.g. the dialogue duck Set("dialogue", true) while a cue speaks).
+        var mixer = new DuckMixer();
+        mixer.SetSource("dialogue", Source(ratio: 0.25f, attack: 0f, hold: 0f, release: 0f));
+        mixer.Set("dialogue", true);
+
+        mixer.Pulse("dialogue");
+        mixer.Update(0.016f);
+
+        Assert.Equal(0.25f, mixer.EffectiveRatio, 3);
+        Assert.True(mixer.Sources.Single().IsActive);
+    }
+
+    [Fact]
     public void Sources_exposes_live_state_for_diagnostics()
     {
         var mixer = new DuckMixer();

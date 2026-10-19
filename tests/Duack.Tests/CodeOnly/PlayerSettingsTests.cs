@@ -115,6 +115,41 @@ public class PlayerSettingsTests
     }
 
     [Fact]
+    public void ApplyOverrides_preserves_authored_cue_variation()
+    {
+        // Symptom (MonsterProjectWeb adoption): the authored cue variation (marble-bag pitch
+        // jitter for hits/footsteps) silently disappeared as soon as a player had saved volume
+        // settings, because ApplyOverrides rebuilt MusicConfig/SfxConfig from the saved blob and
+        // carried only master/crossfade/contexts/duck sources - every cue played dead flat for
+        // those players only.
+        var authored = Defaults();
+        authored.Music.CueVariation = new CueVariation(0.2f, 0.1f);
+        authored.Sfx.CueVariation = new CueVariation(0.08f, 0f);
+        var store = new InMemoryPlayerSettingsStore();
+        store.Save(new PlayerAudioSettings { MusicMasterVolume = 0.25f });
+
+        var effective = PlayerSettings.ApplyOverrides(authored, store);
+
+        Assert.NotNull(effective.Music.CueVariation);
+        Assert.Equal(0.2f, effective.Music.CueVariation!.Value.PitchRange);
+        Assert.Equal(0.1f, effective.Music.CueVariation.Value.VolumeRange);
+        Assert.NotNull(effective.Sfx.CueVariation);
+        Assert.Equal(0.08f, effective.Sfx.CueVariation!.Value.PitchRange);
+    }
+
+    [Fact]
+    public void ApplyOverrides_leaves_cue_variation_null_when_none_is_authored()
+    {
+        var store = new InMemoryPlayerSettingsStore();
+        store.Save(new PlayerAudioSettings { MusicMasterVolume = 0.25f });
+
+        var effective = PlayerSettings.ApplyOverrides(Defaults(), store);
+
+        Assert.Null(effective.Music.CueVariation);
+        Assert.Null(effective.Sfx.CueVariation);
+    }
+
+    [Fact]
     public void ApplyOverrides_clamps_corrupt_saved_values()
     {
         var store = new InMemoryPlayerSettingsStore();

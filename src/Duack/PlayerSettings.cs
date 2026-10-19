@@ -37,9 +37,14 @@ public static class PlayerSettings
                 MasterVolume = saved.MusicMasterVolume,
                 CrossfadeSeconds = saved.CrossfadeSeconds,
                 Contexts = new Dictionary<string, float>(authored.Music.Contexts),
-                DuckSources = CloneDuckSources(authored.Music.DuckSources)
+                DuckSources = CloneDuckSources(authored.Music.DuckSources),
+                CueVariation = authored.Music.CueVariation
             },
-            Sfx = new SfxConfig { MasterVolume = saved.SfxMasterVolume },
+            Sfx = new SfxConfig
+            {
+                MasterVolume = saved.SfxMasterVolume,
+                CueVariation = authored.Sfx.CueVariation
+            },
             Tracks = authored.Tracks,
             ExtensionData = authored.ExtensionData
         };

@@ -61,8 +61,17 @@ public sealed class DuckMixer
     public void Pulse(string name, float holdSeconds = -1f)
     {
         if (!_sources.TryGetValue(name, out var source)) return;
+
+        var hold = holdSeconds >= 0f ? holdSeconds : source.Config.HoldSeconds;
+        // A zero hold means "duck and release immediately", which is indistinguishable from doing
+        // nothing at all once the frame's easing runs. Latching IsActive here instead would stick the
+        // duck forever: Update only releases a source while PulseRemaining > 0, and a zero hold
+        // leaves PulseRemaining at 0 from the first frame. So a zero-hold pulse is a no-op and an
+        // explicit Set(name, true) hold is left untouched.
+        if (hold <= 0f) return;
+
         source.IsActive = true;
-        source.PulseRemaining = holdSeconds >= 0f ? holdSeconds : source.Config.HoldSeconds;
+        source.PulseRemaining = hold;
     }
 
     /// <summary>Immediately releases every duck source (no easing tail) - used on scene switches.</summary>

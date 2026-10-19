@@ -152,6 +152,11 @@ public class Game1 : Game
         if (frame.SceneChanged)
             Console.WriteLine($"[Sample] scene: {_story.Scene}");
 
+        // Release any lingering duck from the previous scene so it doesn't bleed
+        // into the incoming track's crossfade (e.g., dialog SFX still playing).
+        if (frame.SceneChanged || frame.Music is not null)
+            _director.ReleaseDucks();
+
         if (frame.Music is not null)
             _director.Play(frame.Music); // single-track playlist: crossfades from whatever plays
 

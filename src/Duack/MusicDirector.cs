@@ -68,13 +68,25 @@ public class MusicDirector
     public PlaylistTrack? CurrentTrack => _playlist.CurrentTrack;
 
     /// <summary>Starts <paramref name="playlistName"/> from the top.</summary>
-    public void Play(string playlistName) => _playlist.Play(playlistName);
+    public void Play(string playlistName)
+    {
+        _playlist.Play(playlistName);
+        // Immediately trigger the transition so the crossfade starts on this frame,
+        // not on the next Update() call.
+        Update(0f);
+    }
 
     /// <summary>Skips to the next track (honours the playlist's repeat mode).</summary>
     public void Next() => _playlist.Next();
 
     /// <summary>Ducks the named source for its configured hold (or <paramref name="holdSeconds"/>).</summary>
     public void Pulse(string source, float holdSeconds = -1f) => _duck.Pulse(source, holdSeconds);
+
+    /// <summary>Immediately releases all duck sources (no easing tail) - used on scene switches.</summary>
+    public void ReleaseDucks() => _duck.ReleaseAll();
+
+    /// <summary>True when the combined duck ratio has recovered to at least <paramref name="threshold"/>.</summary>
+    public bool IsDuckReady(float threshold = 0.99f) => _duck.IsReady(threshold);
 
     /// <summary>Holds a duck source on or off (e.g. dialogue open/close).</summary>
     public void SetDuck(string source, bool active) => _duck.Set(source, active);

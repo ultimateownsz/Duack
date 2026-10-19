@@ -147,6 +147,9 @@ public class Game1 : Game, IDisposable
 
     private void ApplyFrame(StoryFrame frame)
     {
+        if (frame.Music is not null || frame.SceneChanged)
+            _director.ReleaseDucks();
+
         if (frame.Music is not null)
             _director.Play(frame.Music);
 

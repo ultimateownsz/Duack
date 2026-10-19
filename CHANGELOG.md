@@ -169,6 +169,33 @@ While the version is `0.x`, the API may change between minor versions.
   configured hold as the desktop `SfxDirector` auto-duck, so the mix reaction matches; only the
   one-shot audio is missing.
 
+#### 2026-10-19 (duck release on scene switch)
+
+- **Fixed delayed ducking on scene switch**: when transitioning between scenes (overworld→battle),
+  any lingering duck from the previous scene's SFX (e.g., a dialog cue still playing) was bleeding
+  into the incoming track's crossfade, making the ducking feel delayed. Added `DuckMixer.ReleaseAll()`
+  and `MusicDirector.ReleaseDucks()` to immediately reset all duck sources (no easing tail) on scene
+  switches. Both desktop and web samples now call `ReleaseDucks()` when `frame.SceneChanged` is true
+  OR `frame.Music` is not null (covers the BattleStart cue, which has no Music switch but is still
+  a scene change that should release any lingering dialog duck).
+  Also added `DuckMixer.IsReady()` / `MusicDirector.IsDuckReady()` for callers that prefer to gate
+  the visual scene change on natural duck recovery instead of an immediate reset. Two complementary
+  patterns for consumers:
+  1. **Hard reset** — call `ReleaseDucks()` on scene switch; duck recovers instantly, visual changes
+     immediately. Best when you want the incoming track at full volume from frame one.
+  2. **Natural gate** — skip `ReleaseDucks()` and gate the visual transition on `IsDuckReady()`;
+     the duck eases back over its release tau, and the visual changes once it has recovered. Best
+     when you want to preserve the duck's smooth release curve.
+  Pins: `DuckMixerReleaseTests` (2), `DuckReadyTests` (3: ready when unducked, recovers after
+  release, immediate after ReleaseAll).
+
+#### 2026-10-19 (crossfade reset on Play)
+
+- **MusicDirector.Play() now triggers transition immediately**: `Play()` calls `Update(0f)` after setting the
+  playlist, so the crossfade starts on the same frame instead of waiting for the next `Update()` call.
+  This ensures the audio track plays right after the last action in the previous scene. Pins:
+  `MusicDirectorPlayResetTests` (1: Play triggers immediate transition).
+
 #### 2026-10-19 (WebAudio SFX backend)
 
 - **WebAudio SFX backend** added to `Duack.KNI` — one-shot cues now play through WebAudio

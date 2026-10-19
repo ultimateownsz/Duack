@@ -65,6 +65,21 @@ public sealed class DuckMixer
         source.PulseRemaining = holdSeconds >= 0f ? holdSeconds : source.Config.HoldSeconds;
     }
 
+    /// <summary>Immediately releases every duck source (no easing tail) - used on scene switches.</summary>
+    public void ReleaseAll()
+    {
+        foreach (var source in _sources.Values)
+        {
+            source.IsActive = false;
+            source.PulseRemaining = 0f;
+            source.CurrentRatio = 1f;
+        }
+        EffectiveRatio = 1f;
+    }
+
+    /// <summary>True when the combined duck ratio has recovered to at least <paramref name="threshold"/>.</summary>
+    public bool IsReady(float threshold = 0.99f) => EffectiveRatio >= threshold;
+
     /// <summary>Advances all sources; call once per frame with the frame delta.</summary>
     public void Update(float deltaSeconds)
     {

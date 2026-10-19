@@ -196,6 +196,12 @@ While the version is `0.x`, the API may change between minor versions.
   This ensures the audio track plays right after the last action in the previous scene. Pins:
   `MusicDirectorPlayResetTests` (1: Play triggers immediate transition).
 
+#### 2026-10-19 (ConfigScaffolder nullable fix)
+
+- **ConfigScaffolder.cs**: Fixed nullable warning CS8604 on line 35 (`tracks[key]` where `key` was inferred
+  as `string?`). Added null-forgiving operator (`key!`) since the keys are already filtered by
+  `Where(key => !string.IsNullOrEmpty(key))`. No behavior change.
+
 #### 2026-10-19 (WebAudio SFX backend)
 
 - **WebAudio SFX backend** added to `Duack.KNI` — one-shot cues now play through WebAudio

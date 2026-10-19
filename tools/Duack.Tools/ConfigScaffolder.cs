@@ -32,7 +32,7 @@ public static class ConfigScaffolder
 
         var tracks = new Dictionary<string, TrackConfig>();
         foreach (var key in keys)
-            tracks[key] = new TrackConfig();
+            tracks[key!] = new TrackConfig();
 
         if (tracks.Count > 0)
             config.Tracks = tracks;

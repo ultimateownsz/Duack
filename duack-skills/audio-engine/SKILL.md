@@ -134,7 +134,7 @@ settings.Save();
 - `VolumeCurve.ToSlider(amplitude)` — exact inverse
 
 ### Crossfades
-See the `duack-crossfades` skill for detailed crossfade and scene transition patterns.
+See the `crossfade` skill for detailed crossfade and scene transition patterns.
 
 ### Testing
 - `tests/Duack.Tests/CodeOnly` — behavior, no serialization
@@ -149,3 +149,34 @@ See the `duack-crossfades` skill for detailed crossfade and scene transition pat
 - `duack convert <input> <output>` — WAV to OGG for web
 - `duack scan <audioRoot>` — write audio-manifest.json for web hosts
 - NAudio/OggVorbisEncoder live here only. Never referenced by src/ or samples/.
+
+## Quickstart (install + wire)
+
+Install:
+`
+dotnet add package Duack
+dotnet add package Duack.MonoGame   # desktop
+# or Duack.KNI for web
+`
+
+Config (code-first):
+`csharp
+var config = AudioConfigBuilder.Create()
+    .WithMusicMasterVolume(0.9f).WithSfxMasterVolume(0.7f)
+    .WithCrossfadeSeconds(1.5f)
+    .WithContext("battle", 0.8f)
+    .WithDuckSource("sfx", new DuckSourceConfig { Ratio=0.25f, AttackSeconds=0.06f, ReleaseSeconds=0.35f })
+    .Build();
+`
+
+Wire (desktop):
+`csharp
+var clips = new SoundEffectClipLibrary(content);
+var backend = new SoundEffectMusicBackend(clips);
+var controller = new MusicPlaylistController(playlists);
+var director = new MusicDirector(backend, controller, config.Music);
+`
+
+Per-frame: director.Update(deltaSeconds); Switch: director.ReleaseDucks(); director.Play("battle"); Duck: director.Pulse("sfx");.
+
+See topic skills: ducking, playlists, sfx-variation, player-settings, audio-library, config, adapters, cli, crossfade.

@@ -15,6 +15,21 @@ While the version is `0.x`, the API may change between minor versions.
 
 ### Added
 
+#### 2026-10-19 (agent skills documentation)
+
+- **Agent Skills for Duack features**: added topic skills under duack-skills/ (the single
+  source of truth) following the agentskills.io format, documenting how to use Duack's
+  features: udio-engine, crossfade, ducking, playlists, sfx-variation,
+  player-settings, udio-library, config, dapters, cli. The duack-getting-started
+  skill was merged into udio-engine to avoid overlap. Skill names no longer carry a
+  duack- prefix; the containing directory (duack-skills/) groups them, matching the
+  FlatRedBall2 rb-skills/ convention: duack-skills/ is the single committed source of
+  truth and consumers copy it into .claude/skills/ (or their tool's location) manually,
+  exactly as the FlatRedBall2 README describes. Each skill is a single SKILL.md with YAML
+  frontmatter (
+ame, description) and focused instructions/examples. No production code
+  changed; documentation only.
+
 #### 2026-10-18 (two-directory audio convention)
 
 - **Two-directory convention with no registration**: an audio root holds `SFX/` (small

@@ -83,8 +83,8 @@ public class SampleAudioTests
         var duck = config.Music.DuckSources["sfx"];
         Assert.Equal(0.3f, duck.Ratio);
         Assert.Equal(0.06f, duck.AttackSeconds);
-        Assert.Equal(0.4f, duck.HoldSeconds);
-        Assert.Equal(0.35f, duck.ReleaseSeconds);
+        Assert.Equal(0.15f, duck.HoldSeconds);
+        Assert.Equal(0.1f, duck.ReleaseSeconds);
     }
 
     [Fact]

@@ -34,8 +34,8 @@ public static class SampleAudio
             {
                 Ratio = 0.3f,
                 AttackSeconds = 0.06f,
-                HoldSeconds = 0.4f,
-                ReleaseSeconds = 0.35f,
+                HoldSeconds = 0.15f,
+                ReleaseSeconds = 0.1f,
             })
             .WithCrossfadeSeconds(1.2f)
             .WithPlaylists(playlists)

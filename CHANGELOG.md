@@ -209,6 +209,17 @@ While the version is `0.x`, the API may change between minor versions.
   for the web sample; SFX still require a user gesture (boot-screen click) before audio plays
   due to browser autoplay policy.
 
+#### 2026-10-19 (SFX stopAll iteration fix)
+
+- **Fixed `stopAll()` in webaudio-sfx.js**: The `for...of` loop iterated over the live
+  `playingSources` array, but `source.stop()` triggers `onended` which splices the array during
+  iteration, causing some sources (e.g., the long dialog cue) to be skipped and keep playing into
+  the next scene. Now iterates over a copy (`[...playingSources]`) and clears the array at the
+  end, ensuring all one-shots are stopped before the next audio track begins.
+- **Faster duck recovery in sample config**: Reduced `HoldSeconds` (0.4→0.15) and `ReleaseSeconds`
+  (0.35→0.1) in `SampleAudio` so the music ducks briefly and recovers quickly, preventing SFX
+  overlap with the next audio track. Updated `SampleAudioTests` accordingly.
+
 #### 2026-10-18
 
 #### 2026-10-17

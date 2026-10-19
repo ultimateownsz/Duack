@@ -78,7 +78,10 @@
     }
 
     function stopAll() {
-        for (const handle of playingSources) {
+        // Iterate over a copy so source.stop() triggering onended (which splices
+        // the live array) cannot skip elements.
+        const sources = [...playingSources];
+        for (const handle of sources) {
             try { handle.source.stop(); } catch (e) {}
             try { handle.gain.disconnect(); } catch (e) {}
             try { handle.source.disconnect(); } catch (e) {}

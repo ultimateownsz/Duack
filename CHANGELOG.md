@@ -196,6 +196,19 @@ While the version is `0.x`, the API may change between minor versions.
   This ensures the audio track plays right after the last action in the previous scene. Pins:
   `MusicDirectorPlayResetTests` (1: Play triggers immediate transition).
 
+#### 2026-10-19 (crossfade documentation)
+
+- **Added `docs/Crossfades.md`**: comprehensive guide covering sequential crossfades between
+  any number of tracks, desktop (overlap) vs web (sequenced) backends, playlists for automatic
+  sequencing, ducking during transitions, the two complementary patterns (hard reset via
+  `ReleaseDucks()` vs natural gate via `IsDuckReady()`), scene transitions in practice, and
+  the full API quick reference.
+- **Added `.claude/skills/duack/` and `.claude/skills/duack-crossfades/`**: agent skills
+  (SKILL.md with YAML frontmatter) mirroring the markdown documentation for agent consumption.
+  Skills are easier to update than static docs since the library is in preview (0.x) and the
+  documented surface may change between releases. Each skill has `name` and `description`
+  metadata for agent discovery.
+
 #### 2026-10-19 (ConfigScaffolder nullable fix)
 
 - **ConfigScaffolder.cs**: Fixed nullable warning CS8604 on line 35 (`tracks[key]` where `key` was inferred

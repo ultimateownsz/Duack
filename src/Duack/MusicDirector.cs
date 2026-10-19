@@ -44,15 +44,23 @@ public class MusicDirector
     /// <summary>Combined duck ratio the music is currently multiplied by (1 = unducked).</summary>
     public float DuckRatio => _duck.EffectiveRatio;
 
+    /// <summary>
+    /// Master bus volume (scales music and SFX alike), read live every frame so a settings
+    /// slider applies without rebuilding the director; defaults to the constructor argument.
+    /// </summary>
+    public float MasterVolume { get; set; }
+
     /// <param name="backend">The platform backend that actually plays tracks.</param>
     /// <param name="playlist">The playlist sequencer to drive.</param>
     /// <param name="music">Music mix settings: master, crossfade, contexts, ducks, cue variation.</param>
     /// <param name="random">Random source for cue variation; defaults to <see cref="Random.Shared"/>.</param>
-    public MusicDirector(IMusicBackend backend, MusicPlaylistController playlist, MusicConfig? music = null, Random? random = null)
+    /// <param name="masterVolume">Master bus volume (scales music and SFX alike); defaults to full volume.</param>
+    public MusicDirector(IMusicBackend backend, MusicPlaylistController playlist, MusicConfig? music = null, Random? random = null, float masterVolume = 1f)
     {
         _backend = backend ?? throw new ArgumentNullException(nameof(backend));
         _playlist = playlist ?? throw new ArgumentNullException(nameof(playlist));
         _music = music ?? new MusicConfig();
+        MasterVolume = masterVolume;
         _random = random ?? Random.Shared;
         _duck = new DuckMixer();
         foreach (var (name, source) in _music.DuckSources)
@@ -241,7 +249,7 @@ public class MusicDirector
         if (!string.IsNullOrEmpty(context) && _music.Contexts.TryGetValue(context, out var authored))
             scale = authored;
 
-        return MusicVolumeMath.Effective(_music.MasterVolume, scale, _duck.EffectiveRatio, fade);
+        return MusicVolumeMath.Effective(MasterVolume * _music.MasterVolume, scale, _duck.EffectiveRatio, fade);
     }
 
     private float NextCuePitch() => _music.CueVariation?.Resolve(_random).Pitch ?? 0f;

@@ -9,7 +9,7 @@ description: Duack configuration — AudioConfig/AudioConfigBuilder, JSON wire f
 
 Code-first:
 ```csharp
-var config = AudioConfigBuilder.Create()
+var config = new AudioConfigBuilder()
     .WithMasterVolume(1f)
     .WithMusicMasterVolume(0.9f)
     .WithSfxMasterVolume(0.7f)

@@ -26,6 +26,9 @@ public class PlayerAudioSettings
     /// <summary>Sound-effect master volume, clamped to [0, 1].</summary>
     public float SfxMasterVolume { get; set; } = 1f;
 
+    /// <summary>Master bus volume (scales music and SFX alike), clamped to [0, 1].</summary>
+    public float MasterVolume { get; set; } = 1f;
+
     /// <summary>Fade time when switching between music tracks, clamped to [0.1, 10] seconds.</summary>
     /// <remarks>
     /// Desktop only: the KNI head plays music through a single native <c>MediaPlayer</c>, so it
@@ -36,6 +39,7 @@ public class PlayerAudioSettings
     /// <summary>Copies the tunable values out of an authored/effective config.</summary>
     public static PlayerAudioSettings FromConfig(AudioConfig config) => new()
     {
+        MasterVolume = config.MasterVolume,
         MusicMasterVolume = config.Music.MasterVolume,
         SfxMasterVolume = config.Sfx.MasterVolume,
         CrossfadeSeconds = config.Music.CrossfadeSeconds
@@ -51,6 +55,7 @@ public class PlayerAudioSettings
         if (SchemaVersion < 1)
             SchemaVersion = 1;
 
+        MasterVolume = Clamp(MasterVolume, 0f, 1f);
         MusicMasterVolume = Clamp(MusicMasterVolume, 0f, 1f);
         SfxMasterVolume = Clamp(SfxMasterVolume, 0f, 1f);
         CrossfadeSeconds = Clamp(CrossfadeSeconds, 0.1f, 10f);

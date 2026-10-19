@@ -7,7 +7,8 @@ description: Sidechain ducking in Duack — DuckMixer, named duck sources (sfx, 
 
 Duack ducks music when SFX/dialogue play, using a `DuckMixer` of named sources. Each source
 eases toward its target ratio with an exponential time constant (attack when ducking down,
-release when coming back up); active sources combine multiplicatively.
+release when coming back up); active sources combine multiplicatively. Ducks apply to the
+music bus, under the master — the master and SFX bus are unaffected.
 
 ## DuckSourceConfig
 

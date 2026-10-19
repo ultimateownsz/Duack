@@ -27,6 +27,7 @@ public class InMemoryPlayerSettingsStore : IPlayerSettingsStore
 
         var copy = new PlayerAudioSettings
         {
+            MasterVolume = settings.MasterVolume,
             MusicMasterVolume = settings.MusicMasterVolume,
             SfxMasterVolume = settings.SfxMasterVolume,
             CrossfadeSeconds = settings.CrossfadeSeconds

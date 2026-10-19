@@ -15,6 +15,32 @@ While the version is `0.x`, the API may change between minor versions.
 
 ### Added
 
+#### 2026-10-19 (master bus)
+
+- **Master bus (three-bus terminology)**: the composition chain is now
+  `master bus x bus volume x context x duck x player settings`, with the master entering
+  once at the top. `MusicDirector` takes a `masterVolume` parameter (default 1) and
+  multiplies it into the music composition; `SfxDirector` takes `masterVolume` and
+  `sfxBusVolume` and composes them into the per-play SFX volume. Both directors expose
+  the buses as live get/set properties, so a settings slider applies on the next
+  frame/play without rebuilding the director (same liveness the music bus already had
+  through its config reference). `PlayerAudioSettings`
+  gains a persisted `MasterVolume` (default 1 = full volume, backward compatible: a blob
+  saved before this change has no `master_volume` key and deserializes to full volume).
+  `PlayerSettings.ApplyOverrides` layers the saved master over the authored one, and
+  `InMemoryPlayerSettingsStore` copies it. Duck sources target the music bus, under the
+  master. Pins: 13 new tests (music composition, SFX composition, runtime bus changes,
+  player layering, persistence round-trip, backward compat). No behavior change when
+  master = 1.
+- **Bus terminology and positioning docs**: README gains a "Buses" section (three default
+  buses, the composition chain, ducks under the master), the FMOD/Wwise positioning note
+  (Duack replaces ad-hoc indie audio code, not middleware), and the "No UI, ever"
+  extensibility-boundary wording (the CLI is the first-party plugin surface).
+  `audio-engine`, `player-settings`, and `ducking` skills updated to match. Also fixed
+  the README/skill quickstarts that showed a non-existent `AudioConfigBuilder.Create()`
+  lambda API — the real builder is `new AudioConfigBuilder()` with flat `With*` methods
+  (verified against `src/Duack/AudioConfigBuilder.cs`).
+
 #### 2026-10-19 (README + WP6 migration step)
 
 - **`README.md`** — project landing page: positioning statement, "why Duack exists"

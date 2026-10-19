@@ -80,8 +80,8 @@ public class Game1 : Game
         // --- Wire the desktop adapters: music + one-shot sfx over one clip library ---
         _clips = new SoundEffectClipLibrary(_library);
         _controller = new MusicPlaylistController(playlists);
-        _director = new MusicDirector(new SoundEffectMusicBackend(_clips), _controller, config.Music);
-        _sfx = new SfxDirector(_library, new SoundEffectSfxBackend(_clips), _director);
+        _director = new MusicDirector(new SoundEffectMusicBackend(_clips), _controller, config.Music, masterVolume: config.MasterVolume);
+        _sfx = new SfxDirector(_library, new SoundEffectSfxBackend(_clips), _director, masterVolume: config.MasterVolume, sfxBusVolume: config.Sfx.MasterVolume);
 
         _director.TrackCompleted += finished =>
             Console.WriteLine($"[Sample] track finished: {finished.Name} ({finished.Context})");

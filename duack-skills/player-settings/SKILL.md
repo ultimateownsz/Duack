@@ -15,8 +15,9 @@ discards a player's volume choice and never writes back into shipped content.
 public class PlayerAudioSettings
 {
     int SchemaVersion = 1;
-    float MusicMasterVolume = 1f;   // [0,1]
-    float SfxMasterVolume = 1f;     // [0,1]
+    float MasterVolume = 1f;       // master bus [0,1]
+    float MusicMasterVolume = 1f;   // music bus [0,1]
+    float SfxMasterVolume = 1f;     // SFX bus [0,1]
     float CrossfadeSeconds = 1.2f;  // [0.1,10]
     static FromConfig(AudioConfig);
     void Sanitize();

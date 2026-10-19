@@ -56,6 +56,41 @@ public class PlayerSettingsTests
     }
 
     [Fact]
+    public void ApplyOverrides_layers_saved_master_over_authored_default()
+    {
+        var store = new InMemoryPlayerSettingsStore();
+        Assert.True(store.Save(new PlayerAudioSettings { MasterVolume = 0.4f }));
+
+        var effective = PlayerSettings.ApplyOverrides(Defaults(), store);
+
+        Assert.Equal(0.4f, effective.MasterVolume);
+    }
+
+    [Fact]
+    public void ApplyOverrides_defaults_master_to_full_volume_when_absent_in_saved_settings()
+    {
+        // Backward compatibility: settings saved before the master bus existed have no
+        // master_volume field; deserialization leaves the default (1f = full volume).
+        var store = new InMemoryPlayerSettingsStore();
+        Assert.True(store.Save(new PlayerAudioSettings { MusicMasterVolume = 0.5f }));
+
+        var effective = PlayerSettings.ApplyOverrides(Defaults(), store);
+
+        Assert.Equal(1f, effective.MasterVolume);
+    }
+
+    [Fact]
+    public void ApplyOverrides_clamps_corrupt_saved_master()
+    {
+        var store = new InMemoryPlayerSettingsStore();
+        store.Save(new PlayerAudioSettings { MasterVolume = 4f });
+
+        var effective = PlayerSettings.ApplyOverrides(Defaults(), store);
+
+        Assert.Equal(1f, effective.MasterVolume);
+    }
+
+    [Fact]
     public void ApplyOverrides_leaves_authored_defaults_unmutated()
     {
         var defaults = Defaults();
@@ -126,6 +161,19 @@ public class PlayerSettingsTests
         Assert.True(PlayerSettings.SaveOverrides(config, store));
         Assert.True(store.TryLoad(out var saved));
         Assert.Equal(1f, saved!.MusicMasterVolume);
+    }
+
+    [Fact]
+    public void SaveOverrides_stores_the_master_bus_volume()
+    {
+        var config = Defaults();
+        config.MasterVolume = 0.3f;
+        var store = new InMemoryPlayerSettingsStore();
+
+        PlayerSettings.SaveOverrides(config, store);
+
+        Assert.True(store.TryLoad(out var saved));
+        Assert.Equal(0.3f, saved!.MasterVolume);
     }
 
     [Fact]

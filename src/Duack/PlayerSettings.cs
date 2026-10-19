@@ -31,7 +31,7 @@ public static class PlayerSettings
 
         var effective = new AudioConfig
         {
-            MasterVolume = authored.MasterVolume,
+            MasterVolume = saved.MasterVolume,
             Music = new MusicConfig
             {
                 MasterVolume = saved.MusicMasterVolume,

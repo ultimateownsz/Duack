@@ -97,6 +97,34 @@ public class WebPlayerSettingsStoreTests
     }
 
     [Fact]
+    public void Master_bus_volume_round_trips_through_storage()
+    {
+        var storage = new FakeStorage();
+        var store = new WebPlayerSettingsStore(storage);
+
+        Assert.True(store.Save(new PlayerAudioSettings { MasterVolume = 0.42f }));
+
+        var reopened = new WebPlayerSettingsStore(storage);
+        Assert.True(reopened.TryLoad(out var loaded));
+        Assert.Equal(0.42f, loaded!.MasterVolume, 3);
+    }
+
+    [Fact]
+    public void Master_bus_defaults_to_full_volume_when_absent_from_saved_json()
+    {
+        // Backward compatibility: a blob saved before the master bus existed has no
+        // master_volume key; deserialization must leave the default (1f = full volume).
+        var storage = new FakeStorage();
+        storage.Items[WebPlayerSettingsStore.DefaultKey] =
+            """{"schema_version":1,"music_master_volume":0.5,"sfx_master_volume":0.6,"crossfade_seconds":2.0}""";
+
+        var reopened = new WebPlayerSettingsStore(storage);
+        Assert.True(reopened.TryLoad(out var loaded));
+        Assert.Equal(1f, loaded!.MasterVolume);
+        Assert.Equal(0.5f, loaded.MusicMasterVolume, 3);
+    }
+
+    [Fact]
     public void Save_clamps_before_writing()
     {
         var storage = new FakeStorage();

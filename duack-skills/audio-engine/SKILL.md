@@ -90,11 +90,13 @@ Every namespace → `Duack`.
 
 ```csharp
 // Config (code-first)
-var config = AudioConfigBuilder.Create()
-    .Music(m => m.Master(0.9f).Crossfade(1.5f)
-        .Context("battle", 0.8f)
-        .DuckSource("dialogue", d => d.Ratio(0.25f).Attack(0.06f).Release(0.35f)))
-    .Sfx(s => s.Master(0.7f))
+var config = new AudioConfigBuilder()
+    .WithMasterVolume(0.9f)
+    .WithMusicMasterVolume(0.9f)
+    .WithSfxMasterVolume(0.7f)
+    .WithCrossfadeSeconds(1.5f)
+    .WithContext("battle", 0.8f)
+    .WithDuckSource("dialogue", new DuckSourceConfig { Ratio = 0.25f, AttackSeconds = 0.06f, ReleaseSeconds = 0.35f })
     .Build();
 
 // Music director
@@ -133,6 +135,9 @@ settings.Save();
 - `VolumeCurve.ToAmplitude(slider)` — perceptual (quadratic, −60 dB floor at 0)
 - `VolumeCurve.ToSlider(amplitude)` — exact inverse
 
+### Buses
+Three default buses: **master**, **music**, **SFX**. The master bus scales everything (music and SFX alike) and is the top of the chain; music and SFX are the domain buses. Composition: `master bus × bus volume × context × duck × player settings`, master entering once at the top. Duck sources target the music bus, under the master.
+
 ### Crossfades
 See the `crossfade` skill for detailed crossfade and scene transition patterns.
 
@@ -161,7 +166,7 @@ dotnet add package Duack.MonoGame   # desktop
 
 Config (code-first):
 `csharp
-var config = AudioConfigBuilder.Create()
+var config = new AudioConfigBuilder()
     .WithMusicMasterVolume(0.9f).WithSfxMasterVolume(0.7f)
     .WithCrossfadeSeconds(1.5f)
     .WithContext("battle", 0.8f)

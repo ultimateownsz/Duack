@@ -184,4 +184,61 @@ public class SfxDirectorTests
         Assert.Throws<ArgumentNullException>(() => new SfxDirector(Library, null!, music));
         Assert.Throws<ArgumentNullException>(() => new SfxDirector(Library, backend, null!));
     }
+
+    [Fact]
+    public void Master_bus_and_sfx_bus_scale_the_played_volume()
+    {
+        var backend = new FakeSfxBackend();
+        var music = CreateMusicDirector();
+        var sfx = new SfxDirector(Library, backend, music, masterVolume: 0.5f, sfxBusVolume: 0.5f);
+
+        Assert.True(sfx.Play("hit", volume: 0.8f));
+
+        // master bus (0.5) x sfx bus (0.5) x per-play (0.8) = 0.2
+        Assert.Equal(("hit", 0f, 0.2f), Assert.Single(backend.Played));
+    }
+
+    [Fact]
+    public void Sfx_bus_scales_the_played_volume_alone()
+    {
+        var backend = new FakeSfxBackend();
+        var music = CreateMusicDirector();
+        var sfx = new SfxDirector(Library, backend, music, sfxBusVolume: 0.5f);
+
+        Assert.True(sfx.Play("hit", volume: 0.8f));
+
+        // sfx bus (0.5) x per-play (0.8) = 0.4
+        Assert.Equal(("hit", 0f, 0.4f), Assert.Single(backend.Played));
+    }
+
+    [Fact]
+    public void Master_bus_defaults_to_full_volume_when_omitted()
+    {
+        var backend = new FakeSfxBackend();
+        var music = CreateMusicDirector();
+        var sfx = new SfxDirector(Library, backend, music);
+
+        Assert.True(sfx.Play("hit", volume: 0.8f));
+
+        Assert.Equal(("hit", 0f, 0.8f), Assert.Single(backend.Played));
+    }
+
+    [Fact]
+    public void Buses_can_be_changed_at_runtime()
+    {
+        // Settings sliders move the buses live: the next play composes with the new values,
+        // no director rebuild required.
+        var backend = new FakeSfxBackend();
+        var music = CreateMusicDirector();
+        var sfx = new SfxDirector(Library, backend, music);
+
+        Assert.True(sfx.Play("hit", volume: 0.8f));
+        Assert.Equal(("hit", 0f, 0.8f), Assert.Single(backend.Played));
+
+        sfx.MasterVolume = 0.5f;
+        sfx.SfxBusVolume = 0.5f;
+        Assert.True(sfx.Play("hit", volume: 0.8f));
+
+        Assert.Equal(("hit", 0f, 0.2f), backend.Played.Last());
+    }
 }

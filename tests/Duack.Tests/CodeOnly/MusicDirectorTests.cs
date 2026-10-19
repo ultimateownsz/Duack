@@ -382,4 +382,53 @@ public class MusicDirectorTests
         Assert.Empty(backend.Played);
         Assert.Empty(backend.ActiveVolumes);
     }
+
+    [Fact]
+    public void Master_bus_scales_the_composed_music_volume()
+    {
+        var backend = new FakeMusicBackend(supportsOverlap: true);
+        var playlist = new MusicPlaylistController(OneTrack("solo"), new Random(1));
+        var music = new MusicConfig { CrossfadeSeconds = 0f, MasterVolume = 0.5f };
+        var director = new MusicDirector(backend, playlist, music, masterVolume: 0.5f);
+
+        director.Play("main");
+        director.Update(0.016f);
+
+        // master bus (0.5) x music bus (0.5) = 0.25
+        Assert.Equal(0.25f, backend.ActiveVolumes.Last(), 3);
+    }
+
+    [Fact]
+    public void Master_bus_defaults_to_full_volume_when_omitted()
+    {
+        var backend = new FakeMusicBackend(supportsOverlap: true);
+        var playlist = new MusicPlaylistController(OneTrack("solo"), new Random(1));
+        var music = new MusicConfig { CrossfadeSeconds = 0f, MasterVolume = 0.5f };
+        var director = new MusicDirector(backend, playlist, music);
+
+        director.Play("main");
+        director.Update(0.016f);
+
+        // no master bus passed: music bus (0.5) alone
+        Assert.Equal(0.5f, backend.ActiveVolumes.Last(), 3);
+    }
+
+    [Fact]
+    public void Master_bus_can_be_changed_at_runtime()
+    {
+        // A settings slider must move the master live, without rebuilding the director -
+        // the same live behaviour the music bus already has through its config reference.
+        var backend = new FakeMusicBackend(supportsOverlap: true);
+        var playlist = new MusicPlaylistController(OneTrack("solo"), new Random(1));
+        var director = new MusicDirector(backend, playlist, new MusicConfig { CrossfadeSeconds = 0f });
+
+        director.Play("main");
+        director.Update(0.016f);
+        Assert.Equal(1f, backend.ActiveVolumes.Last(), 3);
+
+        director.MasterVolume = 0.25f;
+        director.Update(0.016f);
+
+        Assert.Equal(0.25f, backend.ActiveVolumes.Last(), 3);
+    }
 }

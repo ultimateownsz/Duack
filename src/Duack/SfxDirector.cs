@@ -29,19 +29,34 @@ public sealed class SfxDirector
     /// <param name="music">Director whose duck source is pulsed while a cue speaks.</param>
     /// <param name="duckSource">Duck-source name in <see cref="MusicConfig.DuckSources"/> (default <c>sfx</c>).</param>
     /// <param name="random">Randomness source for <see cref="PlayNext"/>; defaults to <see cref="Random.Shared"/>.</param>
+    /// <param name="masterVolume">Master bus volume (scales music and SFX alike); defaults to full volume.</param>
+    /// <param name="sfxBusVolume">SFX bus volume; defaults to full volume.</param>
     public SfxDirector(
         AudioLibrary library,
         ISfxBackend backend,
         MusicDirector music,
         string duckSource = "sfx",
-        Random? random = null)
+        Random? random = null,
+        float masterVolume = 1f,
+        float sfxBusVolume = 1f)
     {
         _library = library ?? throw new ArgumentNullException(nameof(library));
         _backend = backend ?? throw new ArgumentNullException(nameof(backend));
         _music = music ?? throw new ArgumentNullException(nameof(music));
         _duckSource = duckSource ?? throw new ArgumentNullException(nameof(duckSource));
+        MasterVolume = masterVolume;
+        SfxBusVolume = sfxBusVolume;
         _bag = new MarbleBag<string>(library.Sfx, random, avoidImmediateRepeat: true);
     }
+
+    /// <summary>
+    /// Master bus volume (scales music and SFX alike), read live on every play so a settings
+    /// slider applies immediately; defaults to the constructor argument.
+    /// </summary>
+    public float MasterVolume { get; set; }
+
+    /// <summary>SFX bus volume, read live on every play; defaults to the constructor argument.</summary>
+    public float SfxBusVolume { get; set; }
 
     /// <summary>The discovered one-shot cue names (see <see cref="AudioLibrary.Sfx"/>).</summary>
     public IReadOnlyList<string> Names => _library.Sfx;
@@ -55,7 +70,8 @@ public sealed class SfxDirector
     public bool Play(string cueName, float pitch = 0f, float volume = 1f, bool duck = true)
     {
         if (!_library.IsSfx(cueName)) return false;
-        if (!_backend.Play(cueName, pitch, volume)) return false;
+        var composed = Math.Clamp(volume * MasterVolume * SfxBusVolume, 0f, 1f);
+        if (!_backend.Play(cueName, pitch, composed)) return false;
 
         if (duck) _music.Pulse(_duckSource);
         return true;

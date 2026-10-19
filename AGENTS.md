@@ -61,7 +61,8 @@ A change that ships with no test needs a written reason in the changelog entry.
 - `tests/Duack.Sample.Tests` — …the sample test project (references the core only; headless,
   no graphics device).
 - `samples/Duack.Sample.Web` — BlazorWASM/KNI music + storyline demo (same `Duack.Sample.Core`
-  as desktop; story cues surface as duck pulses — no web sfx backend yet); manifest-driven
+  as desktop; story cues play through `WebAudioSfxBackend` (WebAudio `AudioBufferSourceNode`),
+  overlapping music while `DuckMixer` dips the mix). Manifest-driven
   (checked-in `audio-manifest.json` from `duack scan`); kept out of `Duack.slnx` (CI may lack
   the WASM workload), so build it explicitly.
 

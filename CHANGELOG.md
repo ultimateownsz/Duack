@@ -148,7 +148,17 @@ While the version is `0.x`, the API may change between minor versions.
   readout — all driven through `MediaPlayerMusicBackend` (KNI). Story cues still surface as duck
   pulses (no web sfx backend), but the mix reaction and scene visuals now match the desktop
   sample. Added matching CSS (meter, HP bars, pips, hit-flash).
-- Verified: full suite green (360 tests across 4 suites); desktop + web samples build clean.
+- **`WebAudioSfxBackend`** (Duack.KNI): new `ISfxBackend` adapter that plays one-shot cues through
+  the browser WebAudio API (`AudioContext` + `AudioBufferSourceNode`), independent of MediaPlayer
+  so SFX overlap the music track while `DuckMixer` dips the music volume. Cue buffers are
+  preloaded at construction; `Play` stays synchronous and returns false for cues not yet loaded.
+  Exposed through `IWebAudioNative` so the adapter is unit-testable headlessly (7 pinned cases
+  in `Duack.Adapters.Tests`).
+- **Fixed boot screen start**: the game loop now starts immediately on `DOMContentLoaded` (not
+  waiting for Blazor's `initRenderJS`), and `startGame()` defers until the .NET dispatcher is
+  ready if the user clicks before Blazor finishes booting. The boot-screen "Start" button now
+  reliably launches the game and begins audio playback.
+- Verified: full suite green (367 tests across 4 suites); desktop + web samples build clean.
 
 ### Known Limitations
 
@@ -159,12 +169,14 @@ While the version is `0.x`, the API may change between minor versions.
   configured hold as the desktop `SfxDirector` auto-duck, so the mix reaction matches; only the
   one-shot audio is missing.
 
-#### 2026-10-18
+#### 2026-10-19 (WebAudio SFX backend)
 
-- The web sample is music-only: `Duack.KNI` has no `ISfxBackend` (the platform player
-  cannot overlap a one-shot over music cleanly), so no web SFX buttons and no
-  `SoundEffectSfxBackend` equivalent exist yet. The duck-pulse button demonstrates the
-  ducking mix without a real sfx backend.
+- **WebAudio SFX backend** added to `Duack.KNI` — one-shot cues now play through WebAudio
+  alongside music on the web sample. The previous "no web sfx backend" limitation is resolved
+  for the web sample; SFX still require a user gesture (boot-screen click) before audio plays
+  due to browser autoplay policy.
+
+#### 2026-10-18
 
 #### 2026-10-17
 

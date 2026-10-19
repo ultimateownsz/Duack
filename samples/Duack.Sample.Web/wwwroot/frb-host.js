@@ -10,23 +10,30 @@ function resizeCanvas() {
 }
 
 function startGame() {
+    console.log('[Duack] startGame called, dotnetHelper:', !!dotnetHelper);
     if (dotnetHelper) {
-        dotnetHelper.invokeMethodAsync('StartGame');
+        dotnetHelper.invokeMethodAsync('StartGame').catch(e => {
+            console.error('[Duack] StartGame failed:', e);
+        });
         pendingStart = false;
     } else {
-        // Blazor not ready yet — will start when initRenderJS fires.
         pendingStart = true;
+        console.log('[Duack] dotnetHelper not ready, deferring start');
     }
 }
 
 function initRenderJS(dotnetHelperRef) {
+    console.log('[Duack] initRenderJS called');
     dotnetHelper = dotnetHelperRef;
     resizeCanvas();
     if (pendingStart) {
-        dotnetHelper.invokeMethodAsync('StartGame');
+        console.log('[Duack] deferred startGame');
+        dotnetHelper.invokeMethodAsync('StartGame').catch(e => {
+            console.error('[Duack] deferred StartGame failed:', e);
+        });
         pendingStart = false;
     }
-    requestAnimationFrame(tickJS);
+    // tickJS is already running from DOMContentLoaded; don't start it again.
 }
 
 function tickJS() {
@@ -42,10 +49,23 @@ function tickJS() {
 
 window.addEventListener('resize', resizeCanvas);
 window.addEventListener('DOMContentLoaded', () => {
+    resizeCanvas();
+    requestAnimationFrame(tickJS);
+
     const btn = document.getElementById('start-btn');
-    if (btn) btn.addEventListener('click', startGame);
+    if (btn) {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            startGame();
+        });
+    }
     const boot = document.getElementById('boot-screen');
-    if (boot) boot.addEventListener('click', (e) => {
-        if (e.target === boot || e.target.closest('.start-btn')) startGame();
-    });
+    if (boot) {
+        boot.addEventListener('click', (e) => {
+            if (e.target === boot || e.target.closest('.start-btn')) {
+                e.preventDefault();
+                startGame();
+            }
+        });
+    }
 });

@@ -1,6 +1,11 @@
 {
   "schema_version": 1,
-  "sfx": [],
+  "sfx": [
+    "battle-start",
+    "dialog",
+    "hit",
+    "notice-video-game-sfx"
+  ],
   "tracks": [
     "battle",
     "hospital",

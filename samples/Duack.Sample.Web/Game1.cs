@@ -1,7 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Collections.Generic;
 using Duack;
 using Duack.KNI;
 using Duack.Sample.Core;
@@ -13,10 +13,11 @@ namespace Duack.Sample.Web;
 
 /// <summary>
 /// KNI/BlazorGL web counterpart of the desktop sample: same scripted storyline, same rendering,
-/// same duck meter — but music rides the platform <c>MediaPlayer</c> (HTML &lt;audio&gt;) and there is
-/// no one-shot sfx backend (web limitation), so story cues surface as duck pulses.
+/// same duck meter — but music rides the platform <c>MediaPlayer</c> (HTML &lt;audio&gt;) and SFX
+/// ride <see cref="WebAudioSfxBackend"/> (WebAudio <c>AudioBufferSourceNode</c>) so one-shot cues
+/// can overlap the music track while <see cref="DuckMixer"/> dips the music volume.
 /// </summary>
-public class Game1 : Game
+public class Game1 : Game, IDisposable
 {
     private readonly GraphicsDeviceManager _graphics;
     private SpriteBatch? _spriteBatch;
@@ -25,6 +26,7 @@ public class Game1 : Game
     private AudioLibrary _library = null!;
     private MusicPlaylistController _controller = null!;
     private MusicDirector _director = null!;
+    private SfxDirector? _sfx = null!;
     private readonly StoryController _story = new();
     private MarbleBag<string> _hitBag = null!;
 
@@ -51,12 +53,31 @@ public class Game1 : Game
         AudioLibraryManifest manifest;
         try
         {
-            using var stream = TitleContainer.OpenStream("Content/Audio/audio-manifest.json");
-            using var reader = new StreamReader(stream);
-            manifest = AudioLibraryManifestJson.Deserialize(reader.ReadToEnd());
+            // Try multiple paths since KNI TitleContainer resolution varies by platform.
+            Stream? stream = null;
+            string[] paths = { "Audio/audio-manifest.json", "Content/Audio/audio-manifest.json" };
+            foreach (var p in paths)
+            {
+                try
+                {
+                    stream = TitleContainer.OpenStream(p);
+                    break;
+                }
+                catch { }
+            }
+            if (stream == null)
+                throw new FileNotFoundException("audio-manifest.json not found");
+
+            using (stream)
+            using (var reader = new StreamReader(stream))
+            {
+                manifest = AudioLibraryManifestJson.Deserialize(reader.ReadToEnd());
+            }
+            Console.WriteLine($"[Duack] Loaded manifest: {manifest.Sfx.Count} sfx, {manifest.Tracks.Count} tracks");
         }
-        catch
+        catch (Exception ex)
         {
+            Console.WriteLine($"[Duack] Failed to load manifest: {ex.Message}");
             manifest = new AudioLibraryManifest { Sfx = new List<string>(), Tracks = new List<string>() };
         }
         _library = AudioLibrary.FromManifest(manifest);
@@ -67,11 +88,18 @@ public class Game1 : Game
         var playlists = SampleAudio.BuildPlaylists(_library);
         var config = SampleAudio.BuildConfig(playlists);
 
-        // KNI adapter: platform MediaPlayer (HTML <audio> on BlazorGL).
+        // KNI adapter: platform MediaPlayer (HTML <audio>) for music.
         var backend = new MediaPlayerMusicBackend(
             new KniMediaPlayerHost(), contentRoot: "Content/Audio/Tracks", extension: ".ogg");
         _controller = new MusicPlaylistController(playlists);
         _director = new MusicDirector(backend, _controller, config.Music);
+
+        // WebAudio SFX backend: one-shots overlap the music track while DuckMixer dips music.
+        // Cue URLs are relative to the app root; WAV files live in wwwroot/Content/Audio/SFX/.
+        var sfxUrls = _library.Sfx.Select(cue => new KeyValuePair<string, string>(
+            cue, $"Content/Audio/SFX/{cue}.wav"));
+        var sfxBackend = new WebAudioSfxBackend(new WebAudioNative(), sfxUrls);
+        _sfx = new SfxDirector(_library, sfxBackend, _director, "sfx");
 
         _director.TrackCompleted += finished =>
             System.Diagnostics.Debug.WriteLine($"[Sample] track finished: {finished.Name} ({finished.Context})");
@@ -122,16 +150,19 @@ public class Game1 : Game
         if (frame.Music is not null)
             _director.Play(frame.Music);
 
+        if (frame.Sfx == StoryController.BattleStartCue)
+        {
+            // Cut any lingering one-shot (e.g. long dialog) when a scene switch happens.
+            _sfx?.Stop();
+        }
+
         if (frame.Sfx is not null)
         {
+            // Duck only when no scene switch is happening: a cue that accompanies a switch
+            // must not suppress the crossfade back to the overworld track.
             var duck = frame.Music is null;
-            if (duck) _director.Pulse(SampleAudio.SfxDuckSource);
-
-            var cueName = frame.Sfx;
-            if (frame.Sfx == StoryController.HitCue && _hitBag is not null)
-                cueName = _hitBag.Draw();
-
-            if (frame.Sfx == StoryController.HitCue || frame.Sfx == StoryController.BattleStartCue)
+            if (_sfx!.Play(frame.Sfx, 0f, 1f, duck: duck) &&
+                (frame.Sfx == StoryController.HitCue || frame.Sfx == StoryController.BattleStartCue))
             {
                 _flash = 0.12f;
                 if (frame.Sfx == StoryController.HitCue)
@@ -354,4 +385,10 @@ public class Game1 : Game
 
     private static bool WasKeyPressed(KeyboardState current, KeyboardState previous, Keys key) =>
         current.IsKeyDown(key) && previous.IsKeyUp(key);
+
+    /// <inheritdoc />
+    public new void Dispose()
+    {
+        base.Dispose();
+    }
 }

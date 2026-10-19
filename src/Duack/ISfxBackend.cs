@@ -1,23 +1,19 @@
 namespace Duack;
 
 /// <summary>
-/// Backend abstraction for one-shot sound effects. Adapters implement this over engine-specific
-/// playback (MonoGame <c>SoundEffectInstance</c>, a host's sample player, ...); the core
-/// <see cref="SfxDirector"/> owns cue validation and the automatic music ducking and only calls
-/// through after a cue is known, keeping the adapter a thin play-this-now layer.
+/// Platform playback layer for one-shot sound effects. The core's SfxDirector
+/// validates cues and triggers music ducking; a backend only plays what the
+/// core hands it. Implementations: MonoGame (desktop), WebAudio (browser).
 /// </summary>
 public interface ISfxBackend
 {
     /// <summary>
-    /// Starts the one-shot cue <paramref name="cueName"/> with the given pitch (engine units,
-    /// 0 = natural) and volume (0..1). Returns false when the cue cannot be played (missing
-    /// clip, engine refusal).
+    /// Plays a cue. Pitch is in XNA units (-1..1, 0 = natural); volume is 0..1.
+    /// Returns false when nothing played (unknown cue, not loaded, engine refusal),
+    /// which also tells SfxDirector not to duck the music.
     /// </summary>
     bool Play(string cueName, float pitch, float volume);
 
-    /// <summary>
-    /// Stops every one-shot this backend is currently playing (a hard cut). Used by the sample
-    /// to cut a long cue (e.g. dialog) when a new scene starts.
-    /// </summary>
+    /// <summary>Hard-stops all currently playing one-shots (scene changes).</summary>
     void Stop();
 }

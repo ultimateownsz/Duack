@@ -26,9 +26,9 @@ While the version is `0.x`, the API may change between minor versions.
   the caller re-implementing the copy step. Pins: `Convert_copies_a_pre_encoded_ogg_through`,
   `Convert_keeps_a_newer_ogg_output_instead_of_copying_over_it`.
 
-#### 2026-10-22 (phase 1: code-only)
+#### 2026-10-22 (code-only)
 
-- **Phase 1 is code-only: the JSON wire format moves to the provisional `Duack.Config` package.**
+- **Code-only: the JSON wire format moves to the provisional `Duack.Config` package.**
   The mix is authored in C# via `AudioConfigBuilder` / `PlaylistConfigBuilder` (the core API).
   `AudioConfigJson`, `PlaylistJson`, the snake_case source-generated serialization contexts, and
   `AudioConfigBuilderJsonExtensions.WithPlaylists` move to the new `src/Duack.Config` project. The

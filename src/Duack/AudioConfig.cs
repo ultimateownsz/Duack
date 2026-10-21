@@ -135,7 +135,7 @@ public class TrackConfig
 /// This is the CODE surface: the mix (masters, per-context scales, crossfade, duck sources, cue
 /// variation) is a plain object graph with no serialization logic attached. The JSON door for the
 /// <c>audio-config.json</c> wire format lives in the separate <c>Duack.Config</c> package, which is
-/// provisional in phase 1 (code only) and becomes the published, documented door with the preview.
+/// provisional in this preview (code only) and may be published/documented later.
 /// </para>
 /// <para>
 /// The file may also carry a build-only "tracks" section consumed by tools; that section is ignored

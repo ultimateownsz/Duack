@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- The JSON wire format lives in the provisional Duack.Config package (phase 1 is
+    <!-- The JSON wire format lives in the provisional Duack.Config package (this preview is
          code-only), so its pins live here and NOT in tests/Duack.Tests: that project stays a
          pure-core suite, which is what proves the core itself needs no JSON layer. -->
     <ProjectReference Include="..\..\src\Duack.Config\Duack.Config.csproj" />

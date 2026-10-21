@@ -11,7 +11,7 @@ namespace Duack;
 /// what <see cref="FromConfig"/> reads and <see cref="Embed"/> writes. Hand edits are tolerated:
 /// snake_case keys, string or numeric enum values, comments, and trailing commas.
 /// <para>
-/// Part of the provisional JSON layer (phase 1 is code-only): this lives in the separate
+/// Part of the provisional JSON layer (not shipped in this preview): this lives in the separate
 /// <c>Duack.Config</c> package and becomes the published, documented door with the preview.
 /// </para>
 /// </summary>

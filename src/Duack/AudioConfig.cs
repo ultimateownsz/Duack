@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Diagnostics;
 
 namespace Duack;
 
@@ -132,9 +130,17 @@ public class TrackConfig
 }
 
 /// <summary>
-/// Audio mix configuration read from Content/Audio/audio-config.json. The same file carries a
-/// build-only "tracks" section consumed by tools; that section is ignored at runtime by the game
-/// but preserved on save.
+/// The audio mix configuration, authored in code (see <see cref="AudioConfigBuilder"/>).
+/// <para>
+/// This is the CODE surface: the mix (masters, per-context scales, crossfade, duck sources, cue
+/// variation) is a plain object graph with no serialization logic attached. The JSON door for the
+/// <c>audio-config.json</c> wire format lives in the separate <c>Duack.Config</c> package, which is
+/// provisional in phase 1 (code only) and becomes the published, documented door with the preview.
+/// </para>
+/// <para>
+/// The file may also carry a build-only "tracks" section consumed by tools; that section is ignored
+/// at runtime by the game but preserved on save.
+/// </para>
 /// </summary>
 public class AudioConfig
 {
@@ -170,84 +176,13 @@ public class AudioConfig
     /// <summary>
     /// Build-only JSON sections the runtime model does not describe. Captured on load and
     /// re-emitted on save so a save never drops them.
+    /// <para>
+    /// The code-only surface never touches this: it exists so the JSON door can carry unknown
+    /// sections through a load/save cycle without losing them.
+    /// </para>
     /// </summary>
     [JsonExtensionData]
     public Dictionary<string, JsonElement>? ExtensionData { get; set; }
-
-    /// <summary>
-    /// Stream source for <see cref="Load"/>/<see cref="TryLoad"/>, keyed by content-relative path.
-    /// Defaults to plain file IO (enough for desktop tools); the game replaces this with
-    /// TitleContainer.OpenStream so the same relative path resolves on DesktopGL and Blazor.
-    /// </summary>
-    public static Func<string, Stream> OpenStream { get; set; } = File.OpenRead;
-
-    /// <summary>
-    /// Loads the config from Content/Audio/audio-config.json via <see cref="OpenStream"/>.
-    /// Falls back to defaults when the file is missing. Values are clamped by
-    /// <see cref="Sanitize"/> exactly as <see cref="TryLoad"/> does, so a hand-edited file is
-    /// clamped identically at boot and on hot reload.
-    /// </summary>
-    public static AudioConfig Load()
-    {
-        try
-        {
-            using var stream = OpenStream("Content/Audio/audio-config.json");
-            using var reader = new StreamReader(stream);
-            var config = Parse(reader.ReadToEnd());
-            config.Sanitize();
-            return config;
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"[AudioConfig] audio-config.json unavailable, using defaults: {ex.Message}");
-            return new AudioConfig();
-        }
-    }
-
-    /// <summary>
-    /// Like Load but returns null when the file is missing or unreadable.
-    /// </summary>
-    public static AudioConfig? TryLoad()
-    {
-        try
-        {
-            using var stream = OpenStream("Content/Audio/audio-config.json");
-            using var reader = new StreamReader(stream);
-            var config = Parse(reader.ReadToEnd());
-            config.Sanitize();
-            return config;
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"[AudioConfig] audio-config.json unreadable: {ex.Message}");
-            return null;
-        }
-    }
-
-    /// <summary>Deserializes from JSON (snake_case keys, case-insensitive).</summary>
-    public static AudioConfig Parse(string json) =>
-        JsonSerializer.Deserialize(json, AudioConfigJsonContext.Default.AudioConfig) ?? new AudioConfig();
-
-    /// <summary>
-    /// Like <see cref="Parse"/> but returns false (instead of throwing) when the JSON is malformed ï¿½ï¿½ï¿½
-    /// used by the raw-JSON editor in tools to reject bad edits without crashing.
-    /// </summary>
-    public static bool TryParse(string json, out AudioConfig? config)
-    {
-        try
-        {
-            config = Parse(json);
-            return config != null;
-        }
-        catch (JsonException)
-        {
-            config = null;
-            return false;
-        }
-    }
-
-    /// <summary>Serializes to JSON (snake_case keys; build-only sections preserved).</summary>
-    public string Serialize() => JsonSerializer.Serialize(this, AudioConfigJsonContext.Default.AudioConfig);
 
     /// <summary>Clamps values to safe ranges and normalizes the schema stamp.</summary>
     public void Sanitize()
@@ -276,32 +211,4 @@ public class AudioConfig
         if (Sfx.CueVariation is { } sfxVariation)
             Sfx.CueVariation = new CueVariation(sfxVariation.PitchRange, sfxVariation.VolumeRange);
     }
-
-    /// <summary>Writes the config back to disk (no-op on Browser).</summary>
-    public static void Save(AudioConfig config, string? path = null)
-    {
-        if (OperatingSystem.IsBrowser()) return;
-
-        try
-        {
-            var target = path ?? "Content/Audio/audio-config.json";
-            File.WriteAllText(target, config.Serialize());
-            Debug.WriteLine($"[AudioConfig] Saved audio config to {target}");
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"[AudioConfig] Save failed: {ex.Message}");
-        }
-    }
 }
-
-/// <summary>
-/// Source-generated serialization metadata for <see cref="AudioConfig"/>. Source generation rather
-/// than reflection because the engine builds with <c>IsAotCompatible</c>.
-/// </summary>
-[JsonSourceGenerationOptions(
-    PropertyNameCaseInsensitive = true,
-    PropertyNamingPolicy = JsonKnownNamingPolicy.SnakeCaseLower,
-    WriteIndented = true)]
-[JsonSerializable(typeof(AudioConfig))]
-internal partial class AudioConfigJsonContext : JsonSerializerContext;

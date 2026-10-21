@@ -24,7 +24,9 @@ duack scan     <audioRoot> [--out <file>]
   authoritative song list**, so a playlist source is **required**; output is skipped when
   the OGG already exists and is at least as new as its WAV, and `--force` re-encodes anyway.
   `--all` is the explicit opt-in to convert **every** WAV (SFX included) and is mutually
-  exclusive with a playlist source.
+  exclusive with a playlist source. A content directory may also hold **already-encoded
+  `.ogg` files** (a cue with no WAV master): those are copied through verbatim rather than
+  re-encoded, and an output that is already newer is left alone.
 - **scan** reads the two-directory audio convention (`<audioRoot>/SFX/*` for one-shot
   sounds, `<audioRoot>/Tracks/*` for loops/songs) and writes `audio-manifest.json` (default
   `<audioRoot>/audio-manifest.json`) listing the discovered cue names — the checked-in file

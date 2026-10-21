@@ -81,7 +81,7 @@ public static class Cli
 
         var wavs = EnumerateWavs(contentDir);
         var config = ConfigScaffolder.Build(wavs);
-        WriteAllText(outPath, config.Serialize());
+        WriteAllText(outPath, AudioConfigJson.Serialize(config));
         output.WriteLine($"[duack] wrote {outPath} ({config.Tracks?.Count ?? 0} tracks, {wavs.Count} wavs).");
         return 0;
     }
@@ -212,7 +212,24 @@ public static class Cli
             }
         }
 
-        output.WriteLine($"[duack] converted={converted} up-to-date={upToDate} not-song={notSong} ({outDir})");
+        // A content directory may hold an ALREADY-encoded .ogg (a cue that ships no WAV master).
+        // There is nothing to encode, and dropping it would lose the cue, so it is copied through
+        // verbatim - unless the output already holds a newer copy of the same file.
+        var copied = 0;
+        foreach (var oggPath in EnumerateOggs(contentDir))
+        {
+            var target = Path.Combine(outDir, Path.GetFileName(oggPath));
+            if (File.Exists(target) &&
+                File.GetLastWriteTimeUtc(target) >= File.GetLastWriteTimeUtc(oggPath))
+            {
+                continue;
+            }
+
+            File.Copy(oggPath, target, overwrite: true);
+            copied++;
+        }
+
+        output.WriteLine($"[duack] converted={converted} copied={copied} up-to-date={upToDate} not-song={notSong} ({outDir})");
         return 0;
     }
 
@@ -275,6 +292,12 @@ public static class Cli
             .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
+    /// <summary>Pre-encoded OGG files in <paramref name="directory"/> (copied through, not re-encoded).</summary>
+    private static List<string> EnumerateOggs(string directory) =>
+        Directory.EnumerateFiles(directory, "*.ogg")
+            .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
     private static bool TryReadConfig(string path, out AudioConfig? config, out string errorMessage)
     {
         config = null;
@@ -284,7 +307,7 @@ public static class Cli
             return false;
         }
 
-        if (!AudioConfig.TryParse(File.ReadAllText(path), out config) || config is null)
+        if (!AudioConfigJson.TryParse(File.ReadAllText(path), out config) || config is null)
         {
             errorMessage = $"could not parse config: {path}";
             return false;

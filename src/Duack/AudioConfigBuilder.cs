@@ -65,17 +65,6 @@ public sealed class AudioConfigBuilder
         return this;
     }
 
-    /// <summary>
-    /// Attaches code-authored <paramref name="playlists"/> to the config by embedding them under the
-    /// <c>playlists</c> key, so <see cref="Build"/> then <see cref="AudioConfig.Serialize"/> emits a
-    /// config the tooling can read back with <see cref="PlaylistJson.FromConfig"/>.
-    /// </summary>
-    public AudioConfigBuilder WithPlaylists(PlaylistConfig playlists)
-    {
-        PlaylistJson.Embed(_config, playlists);
-        return this;
-    }
-
     /// <summary>Returns the assembled config, clamped by <see cref="AudioConfig.Sanitize"/>.</summary>
     public AudioConfig Build()
     {

@@ -1,6 +1,8 @@
 using Duack;
 
-namespace Duack.Tests.JsonRoundTrip;
+namespace Duack.Config.Tests;
+
+/// <summary>
 
 /// <summary>
 /// Pins the playlist wire format: a code-built <see cref="PlaylistConfig"/> serializes to snake_case
@@ -101,7 +103,7 @@ public class PlaylistJsonTests
         var config = new AudioConfigBuilder().WithPlaylists(CodeBuilt()).Build();
 
         // The playlist map rides as an unknown build-only section and survives a save/reload.
-        var reparsed = AudioConfig.Parse(config.Serialize());
+        var reparsed = AudioConfigJson.Parse(AudioConfigJson.Serialize(config));
         var playlists = PlaylistJson.FromConfig(reparsed);
 
         Assert.NotNull(playlists);
@@ -115,13 +117,13 @@ public class PlaylistJsonTests
     {
         var config = new AudioConfigBuilder().WithPlaylists(CodeBuilt()).Build();
 
-        Assert.Contains("\"playlists\"", config.Serialize());
+        Assert.Contains("\"playlists\"", AudioConfigJson.Serialize(config));
     }
 
     [Fact]
     public void FromConfig_returns_null_when_the_config_has_no_playlists()
     {
-        Assert.Null(PlaylistJson.FromConfig(AudioConfig.Parse("""{ "master_volume": 1.0 }""")));
+        Assert.Null(PlaylistJson.FromConfig(AudioConfigJson.Parse("""{ "master_volume": 1.0 }""")));
     }
 
     [Fact]

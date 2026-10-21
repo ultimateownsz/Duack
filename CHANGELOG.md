@@ -15,6 +15,38 @@ While the version is `0.x`, the API may change between minor versions.
 
 ### Added
 
+#### 2026-10-22
+
+- **`duack convert` now passes pre-encoded `.ogg` files through.** A content directory may hold a
+  cue that ships no WAV master (only an already-encoded OGG). There is nothing to encode, and
+  dropping the file would lose the cue entirely, so `convert` copies such a file into the output
+  verbatim; an output that already holds a newer copy of the same file is left alone. The summary
+  line gained a `copied=<n>` counter next to `converted=`. This is what lets a build pipeline
+  point the CLI at a whole `SFX/` or `Tracks/` directory and get a complete OGG set back, without
+  the caller re-implementing the copy step. Pins: `Convert_copies_a_pre_encoded_ogg_through`,
+  `Convert_keeps_a_newer_ogg_output_instead_of_copying_over_it`.
+
+#### 2026-10-22 (phase 1: code-only)
+
+- **Phase 1 is code-only: the JSON wire format moves to the provisional `Duack.Config` package.**
+  The mix is authored in C# via `AudioConfigBuilder` / `PlaylistConfigBuilder` (the core API).
+  `AudioConfigJson`, `PlaylistJson`, the snake_case source-generated serialization contexts, and
+  `AudioConfigBuilderJsonExtensions.WithPlaylists` move to the new `src/Duack.Config` project. The
+  core (`src/Duack`) no longer exposes `AudioConfig.Parse/TryParse/Serialize/Load/TryLoad/Save`
+  or `AudioConfig.OpenStream`; it keeps `AudioConfig`, `MusicConfig`, `SfxConfig`, `DuckSourceConfig`,
+  `TrackConfig`/`LoudnormConfig`/`CompressConfig`, `ExtensionData` and `[JsonExtensionData]` for
+  unknown-section preservation, and `Sanitize()` only. JSON round-trip tests live in
+  `tests/Duack.Config.Tests`; the core suite (`tests/Duack.Tests`) runs with no `Duack.Config`
+  reference and stays pure BCL (proven against an empty NuGet package cache). `Duack.Config` is
+  `IsPackable=false` in this preview (consumed by project reference by the tooling and consumers
+  that need file I/O). The CLI and samples now reference `Duack.Config` explicitly. AGENTS.md and
+  README reframe the library as code-first with JSON as a secondary/provisional door.
+- **The sample embeds playlists via the JSON extension method.**
+  `SampleAudio.BuildConfig` now calls `WithPlaylists(playlists)` through `Duack.Config`'s
+  extension; the desktop sample prints the serialized playlists via `PlaylistJson`.
+
+### Changed
+
 #### 2026-10-19 (duck diagnostics + hot-reload reload)
 
 - **`MusicDirector.DuckSources` / `MusicDirector.ReloadDuckSources()`**: the director now exposes the

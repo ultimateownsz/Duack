@@ -22,7 +22,9 @@ var config = new AudioConfigBuilder()
     .Build();
 ```
 
-Or edit `audio-config.json` and hot-reload it while the game runs. Either door, same objects, same behavior.
+Phase 1 is **code-first**: build your mix in C#. An optional JSON file (`audio-config.json`)
+exists as a secondary door via the separate `Duack.Config` package (provisional for this
+preview) for tooling and file-based overlays; it is not required to use the library.
 
 ## Music contexts
 
@@ -56,4 +58,5 @@ Duack owns the mix and produces the numbers; your engine plays the sound. Deskto
 
 ## Install
 
-NuGet: `Duack` (core), `Duack.MonoGame`, `Duack.KNI`. (Published after the playlist milestone; see roadmap.)
+NuGet: `Duack` (core, code-first), `Duack.MonoGame`, `Duack.KNI`. `Duack.Config` and `Duack.Tools`
+are provisional in this preview. (Published after the playlist milestone; see roadmap.)

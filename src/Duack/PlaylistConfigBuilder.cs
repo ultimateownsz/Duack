@@ -6,8 +6,8 @@ namespace Duack;
 /// <summary>
 /// Fluent helper for assembling a <see cref="PlaylistConfig"/> in code, mirroring
 /// <see cref="AudioConfigBuilder"/>: a game can define its playlists in C# and either hand them to
-/// <see cref="MusicPlaylistController"/> directly or serialize them to JSON with
-/// <see cref="PlaylistJson"/> for the tooling path.
+/// <see cref="MusicPlaylistController"/> directly or serialize them to JSON with the provisional
+/// JSON layer (<c>PlaylistJson</c> in the <c>Duack.Config</c> package) for the tooling path.
 /// </summary>
 public sealed class PlaylistConfigBuilder
 {

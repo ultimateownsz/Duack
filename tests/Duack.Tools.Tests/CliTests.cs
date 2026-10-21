@@ -231,6 +231,36 @@ public class CliTests : IDisposable
     }
 
     [Fact]
+    public void Convert_copies_a_pre_encoded_ogg_through()
+    {
+        // A content directory may hold an already-encoded .ogg (a cue with no WAV master).
+        // Re-encoding it is impossible and dropping it loses the cue, so it is copied through.
+        File.WriteAllBytes(Path2("fire.ogg"), new byte[] { 1, 2, 3, 4 });
+
+        var (code, outText, _) = Run("convert", _dir, Path2("out"), "--all");
+
+        Assert.Equal(0, code);
+        Assert.True(File.Exists(Path2("out", "fire.ogg")));
+        Assert.Equal(new byte[] { 1, 2, 3, 4 }, File.ReadAllBytes(Path2("out", "fire.ogg")));
+        Assert.Contains("copied=1", outText);
+    }
+
+    [Fact]
+    public void Convert_keeps_a_newer_ogg_output_instead_of_copying_over_it()
+    {
+        File.WriteAllBytes(Path2("fire.ogg"), new byte[] { 1, 2, 3, 4 });
+        Directory.CreateDirectory(Path2("out"));
+        File.WriteAllBytes(Path2("out", "fire.ogg"), new byte[] { 9, 9 });
+        File.SetLastWriteTimeUtc(Path2("out", "fire.ogg"), DateTime.UtcNow.AddMinutes(1));
+
+        var (code, outText, _) = Run("convert", _dir, Path2("out"), "--all");
+
+        Assert.Equal(0, code);
+        Assert.Equal(new byte[] { 9, 9 }, File.ReadAllBytes(Path2("out", "fire.ogg")));
+        Assert.Contains("copied=0", outText);
+    }
+
+    [Fact]
     public void Convert_reads_playlists_from_a_config()
     {
         TestWav.WriteSine(Path2("theme_a.wav"));
@@ -263,7 +293,7 @@ public class CliTests : IDisposable
             .Build();
         var config = new AudioConfigBuilder().WithPlaylists(playlists).Build();
         var configPath = Path2("audio-config.json");
-        File.WriteAllText(configPath, config.Serialize());
+        File.WriteAllText(configPath, AudioConfigJson.Serialize(config));
 
         var (code, _, _) = Run("convert", _dir, Path2("out"), "--config", configPath);
 

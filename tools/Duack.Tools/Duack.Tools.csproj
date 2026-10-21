@@ -20,6 +20,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Duack\Duack.csproj" />
+    <!-- The provisional JSON layer (phase 1 is code-only, but the CLI IS a file tool). -->
+    <ProjectReference Include="..\..\src\Duack.Config\Duack.Config.csproj" />
   </ItemGroup>
 
   <ItemGroup>

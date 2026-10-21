@@ -10,6 +10,10 @@ namespace Duack;
 /// the same map may also be embedded in <c>audio-config.json</c> under a <c>playlists</c> key, which is
 /// what <see cref="FromConfig"/> reads and <see cref="Embed"/> writes. Hand edits are tolerated:
 /// snake_case keys, string or numeric enum values, comments, and trailing commas.
+/// <para>
+/// Part of the provisional JSON layer (phase 1 is code-only): this lives in the separate
+/// <c>Duack.Config</c> package and becomes the published, documented door with the preview.
+/// </para>
 /// </summary>
 public static class PlaylistJson
 {
@@ -76,7 +80,7 @@ public static class PlaylistJson
 
     /// <summary>
     /// Stores <paramref name="playlists"/> in an audio config's <see cref="AudioConfig.ExtensionData"/>
-    /// under the <c>playlists</c> key, so a later <see cref="AudioConfig.Serialize"/> emits it and
+    /// under the <c>playlists</c> key, so a later <c>AudioConfigJson.Serialize</c> emits it and
     /// <see cref="FromConfig"/> reads it back. This is how code-authored playlists reach the CLI.
     /// </summary>
     public static void Embed(AudioConfig config, PlaylistConfig playlists)

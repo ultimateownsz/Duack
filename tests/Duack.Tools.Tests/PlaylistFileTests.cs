@@ -57,7 +57,7 @@ public class PlaylistFileTests
             }
             """;
 
-        var config = AudioConfig.Parse(json);
+        var config = AudioConfigJson.Parse(json);
         var playlists = PlaylistFile.FromConfig(config);
 
         Assert.NotNull(playlists);
@@ -67,7 +67,7 @@ public class PlaylistFileTests
     [Fact]
     public void An_audio_config_without_playlists_yields_null()
     {
-        var config = AudioConfig.Parse("""{ "master_volume": 1.0 }""");
+        var config = AudioConfigJson.Parse("""{ "master_volume": 1.0 }""");
         Assert.Null(PlaylistFile.FromConfig(config));
     }
 }

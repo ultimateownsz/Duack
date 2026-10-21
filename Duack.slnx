@@ -1,9 +1,11 @@
 <Solution>
   <Project Path="src/Duack/Duack.csproj" />
+  <Project Path="src/Duack.Config/Duack.Config.csproj" />
   <Project Path="src/Duack.MonoGame/Duack.MonoGame.csproj" />
   <Project Path="src/Duack.KNI/Duack.KNI.csproj" />
   <Project Path="tools/Duack.Tools/Duack.Tools.csproj" />
   <Project Path="tests/Duack.Tests/Duack.Tests.csproj" />
+  <Project Path="tests/Duack.Config.Tests/Duack.Config.Tests.csproj" />
   <Project Path="tests/Duack.Adapters.Tests/Duack.Adapters.Tests.csproj" />
   <Project Path="tests/Duack.Tools.Tests/Duack.Tools.Tests.csproj" />
   <Project Path="tests/Duack.Sample.Tests/Duack.Sample.Tests.csproj" />

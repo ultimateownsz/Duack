@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Duack.Config.Tests</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.*" />
+    <PackageReference Include="xunit" Version="2.*" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.*">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The JSON wire format lives in the provisional Duack.Config package (phase 1 is
+         code-only), so its pins live here and NOT in tests/Duack.Tests: that project stays a
+         pure-core suite, which is what proves the core itself needs no JSON layer. -->
+    <ProjectReference Include="..\..\src\Duack.Config\Duack.Config.csproj" />
+  </ItemGroup>
+
+</Project>

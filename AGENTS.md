@@ -31,12 +31,21 @@ A change that ships with no test needs a written reason in the changelog entry.
 - `src/Duack` is **pure BCL** (`System.Text.Json` only). It must build and test with no
   engine/XNA/MonoGame/KNI package present. Never add a package or project reference to it.
 - Backend glue (engine, XNA, browser interop) lives in adapter packages, not the core.
-- The JSON wire format is part of the public contract: `JsonRoundTrip` tests pin it,
-  and unknown sections/fields must survive a load→save cycle (`[JsonExtensionData]`).
+- **Phase 1 is code-only.** The configuration surface is the C# API
+  (`AudioConfigBuilder`, `PlaylistConfigBuilder`, model objects). The JSON wire format lives
+  in the separate **provisional** package `src/Duack.Config` (not part of the `Duack` package's
+  public contract for this preview): `AudioConfigJson` / `PlaylistJson`, the snake_case
+  serialization contexts, and the playlist-embedding builder extension. The tooling
+  (`tools/Duack.Tools`) and consumers that need file-based config reference `Duack.Config`
+  explicitly; the core stays serialization-free beyond the attributes it already carries for
+  extension-data preservation. JSON round-trip tests live in `tests/Duack.Config.Tests`; the
+  core test suite (`tests/Duack.Tests`) must not require `Duack.Config`. When the preview ships
+  the JSON door will become a documented, supported surface (and may be folded back into the
+  core or published as its own package at that time).
 - Playlists have their OWN source-generated context (`Duack.PlaylistJson`), so the AOT web
   head can read them at runtime; a game may author them in code with `PlaylistConfigBuilder`
-  and embed them via `AudioConfigBuilder.WithPlaylists`. The CLI's `PlaylistFile` delegates
-  to `PlaylistJson`, so tool and runtime never drift on the format.
+  and embed them via `AudioConfigBuilderJsonExtensions.WithPlaylists` (Duack.Config). The CLI's
+  `PlaylistFile` delegates to `PlaylistJson`, so tool and runtime never drift on the format.
 
 ## Layout
 

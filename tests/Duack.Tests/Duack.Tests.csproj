@@ -17,6 +17,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Duack\Duack.csproj" />
+    <!-- Phase 1 is code-only; the JSON door lives in Duack.Config and its tests live in
+         tests/Duack.Config.Tests, so this suite can prove the core needs no serialization layer. -->
   </ItemGroup>
 
 </Project>

@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- PHASE 1 IS CODE-ONLY. This package holds the JSON door (the audio-config.json and
+         playlist wire format) and is deliberately NOT part of the published contract: it is not
+         packed, and the published `Duack` package exposes no JSON API at all. The tooling
+         (tools/Duack.Tools) and the dogfood consumer (MonsterProjectWeb) use it; when the
+         preview ships, this becomes the documented, published JSON door.
+
+         Pure BCL (System.Text.Json only), like the core: no engine/XNA/MonoGame/KNI reference. -->
+    <RootNamespace>Duack</RootNamespace>
+    <AssemblyName>Duack.Config</AssemblyName>
+    <PackageId>Duack.Config</PackageId>
+    <Description>Provisional JSON layer for Duack: the audio-config.json and playlist wire format.</Description>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Duack\Duack.csproj" />
+  </ItemGroup>
+
+</Project>

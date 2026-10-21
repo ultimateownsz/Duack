@@ -7,6 +7,7 @@ description: Duack CLI (tools/Duack.Tools) — duack init, validate, convert, sc
 
 `tools/Duack.Tools` is desktop-only .NET. NAudio and OggVorbisEncoder live here only — never
 referenced by `src/` or `samples/`. Ships commands: `init`, `validate`, `convert`, `scan`.
+The CLI references `Duack` and the provisional `Duack.Config` package.
 
 ## Commands
 
@@ -18,9 +19,12 @@ contexts/defaults.
 Schema + range validation with clear messages. Checks SchemaVersion, clamping bounds, unknown
 fields preserved. Exit non-zero on failure.
 
-### `duack convert <input> <output>`
-WAV → OGG for web. SFX stay WAV, songs become OGG. Supports `--all` to convert a whole
-directory tree. Used for web build pipeline (WAV masters → OGG tracks).
+### `duack convert <contentDir> <outDir> ...`
+
+WAV → OGG for web. SFX stay WAV by default unless `--all` is used (playlist is the
+authoritative song list). A content directory may also hold pre-encoded `.ogg` files (a cue
+with no WAV master): `convert` copies them through verbatim (`copied=` in the summary).
+Outputs newer than their source are skipped.
 
 ```
 dotnet run --project tools/Duack.Tools -- convert samples/.../_masters samples/.../Content/Audio/Tracks --all

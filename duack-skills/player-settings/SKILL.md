@@ -37,8 +37,11 @@ bool ok = PlayerSettings.SaveOverrides(config, store);
 PlayerSettings.ClearOverrides();               // drop saved prefs
 ```
 
-`ApplyOverrides` carries over authored sections the player can't edit (contexts, duck sources,
-tracks, extension data). A store that fails to load yields authored values.
+`PlayerSettings.ApplyOverrides` carries over authored sections the player can't edit (contexts, duck sources,
+tracks, extension data). A store that fails to load yields authored values. `PlayerSettings` lives
+in the core (`Duack`); the JSON serialization of `PlayerAudioSettings` is also in the core
+(SnakeCaseLower, source-generated context) — only the `AudioConfig` document serialization moved
+to `Duack.Config`.
 
 ## Stores
 

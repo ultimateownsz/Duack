@@ -22,7 +22,7 @@ var config = new AudioConfigBuilder()
     .Build();
 ```
 
-Phase 1 is **code-first**: build your mix in C#. An optional JSON file (`audio-config.json`)
+This preview is **code-first**: build your mix in C#. An optional JSON file (`audio-config.json`)
 exists as a secondary door via the separate `Duack.Config` package (provisional for this
 preview) for tooling and file-based overlays; it is not required to use the library.
 

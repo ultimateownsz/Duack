@@ -58,7 +58,8 @@ semantics must not be assumed on web).
 - Browser autoplay: `AudioContext`/`MediaPlayer` must resume from a real first gesture.
   Document in README; do not solve silently.
 - Web sample uses manifest-driven music (no directory enumeration).
-- `OperatingSystem.IsBrowser()` gates desktop-only behavior (e.g. `AudioConfig.Save` no-op).
+- `OperatingSystem.IsBrowser()` gates browser-only behavior; `AudioConfigJson.Save` is a
+  no-op on browser (in `Duack.Config`).
 
 ## Wiring example
 

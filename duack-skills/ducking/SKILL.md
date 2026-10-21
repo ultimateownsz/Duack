@@ -1,6 +1,6 @@
 ---
 name: ducking
-description: Sidechain ducking in Duack — DuckMixer, named duck sources (sfx, dialogue), attack/hold/release, Pulse/SetDuck/ReleaseDucks/IsDuckReady, hot-reload-safe ReloadSources, and gating scene transitions on duck recovery. Use when implementing music ducking, sidechain compression, dialogue ducking, or scene-switch duck handling.
+description: Sidechain ducking in Duack - DuckMixer, named duck sources (sfx, dialogue), attack/hold/release, Pulse/SetDuck/ReleaseDucks/IsDuckReady, ReloadSources (host-driven), and gating scene transitions on duck recovery. Use when implementing music ducking, sidechain compression, dialogue ducking, or scene-switch duck handling.
 ---
 
 # Duack — Sidechain Ducking
@@ -29,7 +29,7 @@ Configured under `MusicConfig.DuckSources` (keyed by source name: "sfx", "dialog
 | Method | Purpose |
 |---|---|
 | `SetSource(name, config)` | Register/replace a source. |
-| `ReloadSources(IEnumerable<KVP>)` | Hot-reload: swaps params in place, preserves active/pulse/current-ratio; adds new, drops removed. |
+| `ReloadSources(IEnumerable<KVP>)` | Host-driven: swaps params in place, preserves active/pulse/current-ratio; adds new, drops removed. |
 | `Set(name, active)` | Hold a source ducked on/off (dialogue open/close). |
 | `Pulse(name, holdSeconds = -1)` | Duck for hold (or configured hold), then release. |
 | `ReleaseAll()` | Immediately release every source (no easing tail). |
@@ -87,9 +87,10 @@ if (story.Scene != displayedScene && director.IsDuckReady())
 Final music volume = `MusicVolumeMath.Effective(master, contextScale, duckRatio, fade)`,
 clamped [0,1]. Duck ratio multiplies whatever track is active, including during crossfades.
 
-## Hot reload
+## Hot reload (host integration)
 
-After re-parsing config, rebuild duck sources without losing state:
+Duack has **no built-in file watching**. A host that wants live editing can re-parse the
+config and rebuild duck sources without losing state:
 ```csharp
 var newSources = config.Music.DuckSources;   // IEnumerable<KVP>
 // DuckMixer.ReloadSources(newSources) — or rebuild MusicDirector and call ReloadSources on its mixer

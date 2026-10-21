@@ -17,9 +17,13 @@ variation. Duack owns the mix and produces numbers; the user's engine owns playb
 - `src/Duack` is **pure BCL** (`System.Text.Json` only). Zero engine/XNA/MonoGame/KNI references.
   Never add a package or project reference to it.
 - Backend glue lives in adapter packages: `Duack.MonoGame` (desktop) and `Duack.KNI` (web).
-- JSON wire format is public contract — `JsonRoundTrip` tests pin it. Unknown sections/fields
-  survive load→save via `[JsonExtensionData]`.
+- **This preview is code-only.** The JSON wire format lives in the separate **provisional**
+  package `Duack.Config` (`AudioConfigJson` / `PlaylistJson`). The core has no JSON API;
+  unknown sections are preserved via `[JsonExtensionData]`.
 - Playlists have their own source-generated context (`Duack.PlaylistJson`), AOT-safe for WASM.
+- Hot reload is **not built in**: hosts can re-parse config and call
+  `MusicDirector.ReloadDuckSources()` to swap duck params in place (duck state preserved);
+  file watching is the host's responsibility.
 
 ## Namespace migration
 
@@ -41,9 +45,11 @@ Every namespace → `Duack`.
 - `SfxConfig` — master, cueVariation
 - `DuckSourceConfig` — ratio, attackSeconds, holdSeconds, releaseSeconds
 - `TrackConfig` — build-only loudness/compress targets
-- `AudioConfigBuilder` — fluent code-first config builder
+- `AudioConfigBuilder` — fluent code-first config builder (core)
 - `PlaylistConfig`, `PlaylistDefinition`, `PlaylistTrack` — playlist data model
 - `PlaylistConfigBuilder` — fluent playlist authoring
+- `AudioConfigJson` - JSON door in **Duack.Config** (provisional, not shipped in this preview)
+- `PlaylistJson` — playlist wire format in **Duack.Config**
 
 ### Playlists
 - `MusicPlaylistController` — backend-agnostic sequencing (Play, Next, Stop, CurrentTrack, TrackCompleted)
@@ -143,7 +149,8 @@ See the `crossfade` skill for detailed crossfade and scene transition patterns.
 
 ### Testing
 - `tests/Duack.Tests/CodeOnly` — behavior, no serialization
-- `tests/Duack.Tests/JsonRoundTrip` — wire format pins
+- `tests/Duack.Tests/JsonRoundTrip` — player-settings wire format pins
+- `tests/Duack.Config.Tests` — config/playlist JSON wire format pins (Duack.Config)
 - `tests/Duack.Adapters.Tests` — adapter behavior via headless seams
 - `tests/Duack.Sample.Tests` — sample StoryController + SampleAudio pins
 - `tests/Duack.Tools.Tests` — CLI end-to-end

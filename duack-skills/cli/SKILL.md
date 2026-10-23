@@ -35,6 +35,12 @@ Writes `<audioRoot>/audio-manifest.json` (or `--out`) from the two-directory lay
 on missing root. Warns (without failing) about files the loader can never open (wrong type
 or upper-cased extension).
 
+### `duack normalize <dir> [<outDir>]`
+Measures each WAV track's RMS/peak loudness, reports the loudest track, and (when an output
+directory is given) writes gain-normalized WAV copies so every track matches the loudest
+track's RMS level. Aliases: `loudness`, `analyze`, `analyse`, `measure`, `loudnorm`.
+Use `--write-config` / `--config` to refresh the build-only `tracks` loudnorm targets.
+
 ## ExtensionData round-trip contract
 
 For anyone building an external editor against the tooling layer:

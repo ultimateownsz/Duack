@@ -15,6 +15,15 @@ While the version is `0.x`, the API may change between minor versions.
 
 ### Added
 
+#### 2026-10-23
+
+- **Fade in/out support for music playback.**
+  - Added `Play(string playlistName, float? fadeInSeconds = null)` and `Stop(float? fadeOutSeconds = null)` to `MusicManager` (formerly `MusicDirector`).
+  - `PlaylistTrack` now supports per-track `FadeInSeconds` / `FadeOutSeconds`; `MusicManager` applies them automatically. `PlaylistConfigBuilder.Track(...)` accepts optional fade durations.
+  - Fades use the equal-power curve; fade-in on play and fade-out on stop work across both overlap (desktop) and sequenced (web) backends.
+  - Updated skills (`playlists`, `crossfade`) to document the new API.
+  - Pins: full test suite passes.
+
 #### 2026-10-22
 
 - **Gain, fade up/down, and gain reduction audio terminology in code.**

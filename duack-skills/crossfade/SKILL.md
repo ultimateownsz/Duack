@@ -162,6 +162,35 @@ private void ApplyFrame(StoryFrame frame)
 }
 ```
 
+## 7. Clean transitions: no leftover audio on the new screen
+
+A scene change should never let the previous track or SFX bleed into the new screen. Two
+complementary tools:
+
+1. **Cut lingering SFX** on every scene change:
+   ```csharp
+   if (frame.SceneChanged) sfx.Stop();   // hard cut, one-shots never bleed
+   ```
+2. **Music** — choose one of:
+   - **Crossfade early**: start the new track during the outgoing screen's tail so it is
+     already playing (and the old one gone) when the new screen appears. Example: on the
+     battle-start cue, crossfade overworld→battle over the 1.2s intro:
+     ```csharp
+     if (frame.Sfx == BattleStartCue && director.CurrentTrack?.Name != "battle")
+         director.Play("battle", fadeInSeconds: BattleIntroSeconds);
+     ```
+   - **Hard stop + fade in**: when an early crossfade is not possible, stop the old track
+     instantly and fade the new one in:
+     ```csharp
+     if (frame.Music is not null && director.CurrentTrack?.Name != frame.Music)
+     {
+         director.Stop();                       // old track gone this frame
+         director.Play(frame.Music, fadeInSeconds: 0.8f);
+     }
+     ```
+
+The `CurrentTrack?.Name` guard prevents re-triggering a track that is already playing.
+
 ## 7. Key insight: Play() triggers transition immediately
 
 `MusicManager.Play()` calls `Update(0f)` internally, so the crossfade starts on the same

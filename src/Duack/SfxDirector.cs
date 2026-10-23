@@ -11,9 +11,11 @@ namespace Duack;
 /// layer never plays the same cue back-to-back.
 ///
 /// <para>
-/// Pitch is passed through untouched in engine units (MonoGame: -1..1, 0 = natural), which is what
-/// makes "the same sound, differently pitched" a one-line call (see the sample's marble bag of
-/// hit pitches).
+/// Pitch is passed through in engine units (MonoGame: -1..1, 0 = natural), which is what makes "the
+/// same sound, differently pitched" a one-line call (see the sample's marble bag of hit pitches).
+/// When <see cref="SfxConfig.CueVariation"/> is authored, each play resolves a <see cref="CuePlay"/>
+/// jitter on top of the caller's pitch and volume (pitch jitter added, volume jitter scaling) so
+/// repeated cues do not sound machine-gunned.
 /// </para>
 /// </summary>
 public sealed class SfxDirector
@@ -21,16 +23,19 @@ public sealed class SfxDirector
     private readonly AudioLibrary _library;
     private readonly ISfxBackend _backend;
     private readonly MusicDirector _music;
+    private readonly SfxConfig? _sfxConfig;
     private readonly string _duckSource;
     private readonly MarbleBag<string> _bag;
+    private readonly Random _random;
 
     /// <param name="library">Discovered cues; only names in <see cref="AudioLibrary.Sfx"/> are playable.</param>
     /// <param name="backend">Engine playback adapter.</param>
     /// <param name="music">Director whose duck source is pulsed while a cue speaks.</param>
     /// <param name="duckSource">Duck-source name in <see cref="MusicConfig.DuckSources"/> (default <c>sfx</c>).</param>
-    /// <param name="random">Randomness source for <see cref="PlayNext"/>; defaults to <see cref="Random.Shared"/>.</param>
+    /// <param name="random">Randomness source for <see cref="PlayNext"/> and cue variation; defaults to <see cref="Random.Shared"/>.</param>
     /// <param name="masterVolume">Master bus volume (scales music and SFX alike); defaults to full volume.</param>
     /// <param name="sfxBusVolume">SFX bus volume; defaults to full volume.</param>
+    /// <param name="sfxConfig">SFX mix settings; carries the optional <see cref="SfxConfig.CueVariation"/> jitter applied per play.</param>
     public SfxDirector(
         AudioLibrary library,
         ISfxBackend backend,
@@ -38,12 +43,15 @@ public sealed class SfxDirector
         string duckSource = "sfx",
         Random? random = null,
         float masterVolume = 1f,
-        float sfxBusVolume = 1f)
+        float sfxBusVolume = 1f,
+        SfxConfig? sfxConfig = null)
     {
         _library = library ?? throw new ArgumentNullException(nameof(library));
         _backend = backend ?? throw new ArgumentNullException(nameof(backend));
         _music = music ?? throw new ArgumentNullException(nameof(music));
         _duckSource = duckSource ?? throw new ArgumentNullException(nameof(duckSource));
+        _sfxConfig = sfxConfig;
+        _random = random ?? Random.Shared;
         MasterVolume = masterVolume;
         SfxBusVolume = sfxBusVolume;
         _bag = new MarbleBag<string>(library.Sfx, random, avoidImmediateRepeat: true);
@@ -70,8 +78,16 @@ public sealed class SfxDirector
     public bool Play(string cueName, float pitch = 0f, float volume = 1f, bool duck = true)
     {
         if (!_library.IsSfx(cueName)) return false;
-        var composed = Math.Clamp(volume * MasterVolume * SfxBusVolume, 0f, 1f);
-        if (!_backend.Play(cueName, pitch, composed)) return false;
+
+        // Per-play jitter from the authored cue variation, resolved fresh on every play so a live
+        // settings change applies without rebuilding the director; added on top of the caller's
+        // pitch and scaling the caller's volume, then composed with the buses.
+        var variation = _sfxConfig?.CueVariation;
+        var cuePlay = variation?.Resolve(_random) ?? new CuePlay(0f, 1f);
+        var finalPitch = variation is null ? pitch : Math.Clamp(pitch + cuePlay.Pitch, -1f, 1f);
+        var finalVolume = Math.Clamp(volume * cuePlay.VolumeScale, 0f, 1f) * MasterVolume * SfxBusVolume;
+
+        if (!_backend.Play(cueName, finalPitch, Math.Clamp(finalVolume, 0f, 1f))) return false;
 
         if (duck) _music.Pulse(_duckSource);
         return true;

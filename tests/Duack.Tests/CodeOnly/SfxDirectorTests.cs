@@ -93,6 +93,64 @@ public class SfxDirectorTests
     }
 
     [Fact]
+    public void Sfx_cue_variation_applies_pitch_jitter_per_play()
+    {
+        var backend = new FakeSfxBackend();
+        var music = CreateMusicDirector();
+        var sfx = new SfxDirector(
+            Library,
+            backend,
+            music,
+            sfxConfig: new SfxConfig { CueVariation = new CueVariation(pitchRange: 0.5f, volumeRange: 0f) },
+            random: new Random(42));
+
+        Assert.True(sfx.Play("hit"));
+
+        // Half-width pitch jitter (0.5) applied around the natural pitch; pitch-range-only jitter
+        // leaves the volume untouched, and the master/bus defaults compose a full-volume play.
+        var played = Assert.Single(backend.Played);
+        Assert.Equal("hit", played.Cue);
+        Assert.InRange(played.Pitch, -0.5f, 0.5f);
+        Assert.Equal(1f, played.Volume);
+    }
+
+    [Fact]
+    public void Sfx_cue_variation_adds_jitter_on_top_of_an_explicit_per_play_pitch()
+    {
+        var backend = new FakeSfxBackend();
+        var music = CreateMusicDirector();
+        var sfx = new SfxDirector(
+            Library,
+            backend,
+            music,
+            sfxConfig: new SfxConfig { CueVariation = new CueVariation(pitchRange: 0.5f, volumeRange: 0.2f) },
+            random: new Random(42));
+
+        Assert.True(sfx.Play("hit", pitch: 0.25f, volume: 0.8f));
+
+        var played = Assert.Single(backend.Played);
+        Assert.Equal("hit", played.Cue);
+        // The caller's authored pitch (0.25) is the base; the jitter (±0.5) is added on top, clamped
+        // to the engine's [-1, 1] range.
+        Assert.InRange(played.Pitch, -0.25f, 0.75f);
+        // Volume jitter (±20%) scales the caller's volume around its own value.
+        Assert.InRange(played.Volume, 0.64f, 0.96f);
+    }
+
+    [Fact]
+    public void Without_sfx_cue_variation_the_cue_plays_at_its_base_pitch_and_volume()
+    {
+        var backend = new FakeSfxBackend();
+        var music = CreateMusicDirector();
+        var sfx = new SfxDirector(Library, backend, music);
+
+        Assert.True(sfx.Play("hit", pitch: 0.25f, volume: 0.8f));
+
+        // No authored variation: the caller's pitch/volume pass straight through untouched.
+        Assert.Equal(("hit", 0.25f, 0.8f), Assert.Single(backend.Played));
+    }
+
+    [Fact]
     public void An_unknown_cue_neither_reaches_the_backend_nor_ducks()
     {
         var backend = new FakeSfxBackend();

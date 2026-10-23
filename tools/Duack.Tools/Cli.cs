@@ -29,6 +29,7 @@ public static class Cli
                 "validate" => RunValidate(args[1..], output, error),
                 "convert" => RunConvert(args[1..], output, error),
                 "scan" => RunScan(args[1..], output, error),
+                "normalize" or "loudness" or "analyze" or "analyse" or "measure" or "loudnorm" => RunNormalize(args[1..], output, error),
                 "-h" or "--help" or "help" => PrintUsage(output),
                 _ => Unknown(args[0], error),
             };
@@ -58,6 +59,8 @@ public static class Cli
         writer.WriteLine("           (a playlist source is required; --all converts every WAV)");
         writer.WriteLine("  scan     <audioRoot> [--out <file>]");
         writer.WriteLine("           (writes an audio-manifest.json of the SFX/ + Tracks/ cues)");
+        writer.WriteLine("  normalize <dir> [<outDir>] [--out <dir>] [--config <file>] [--write-config]");
+        writer.WriteLine("           (measures track loudness, finds the loudest, and writes gain-normalized WAVs)");
         return 0;
     }
 
@@ -284,6 +287,111 @@ public static class Cli
             }
         }
     }
+
+    // ---- normalize / loudness ----
+
+    private static int RunNormalize(string[] args, TextWriter output, TextWriter error)
+    {
+        if (!TryParseArgs(
+                args,
+                valueOptions: new[] { "--out", "--config" },
+                flags: new[] { "--write-config" },
+                out var parsed,
+                out var errorMessage))
+            return Fail(error, errorMessage);
+
+        if (parsed.Positional.Count < 1 || parsed.Positional.Count > 2)
+            return Fail(error, "normalize requires <dir> and an optional <outDir>.");
+
+        var inputDir = parsed.Positional[0];
+        if (!Directory.Exists(inputDir))
+            return Fail(error, $"directory not found: {inputDir}");
+
+        var outDir = parsed.Positional.Count == 2 ? parsed.Positional[1] : parsed.Value("--out");
+
+        var wavPaths = Directory.EnumerateFiles(inputDir, "*.wav")
+            .OrderBy(p => p, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (wavPaths.Count == 0)
+            return Fail(error, $"no WAV files found in: {inputDir}");
+
+        var measurements = wavPaths.Select(LoudnessAnalyzer.Measure).ToList();
+        var reference = LoudnessAnalyzer.Loudest(measurements);
+
+        output.WriteLine($"[duack] measured {measurements.Count} track(s); loudest: {reference?.Name} " +
+                        $"(RMS {FormatDb(reference?.RmsDb ?? double.NegativeInfinity)} dBFS)");
+
+        foreach (var m in measurements)
+        {
+            var gain = reference is null ? 1.0 : LoudnessAnalyzer.GainToMatch(m, reference);
+            var gainDb = LoudnessAnalyzer.GainDbToMatch(m, reference!);
+            output.WriteLine($"  {m.Name}: RMS {FormatDb(m.RmsDb)} dBFS, peak {FormatDb(m.PeakDb)} dBFS, " +
+                            $"gain {gainDb:+0.00;-0.00} dB (x{gain:0.000})");
+        }
+
+        if (!string.IsNullOrWhiteSpace(outDir))
+        {
+            LoudnessAnalyzer.NormalizeDirectory(inputDir, outDir!);
+            output.WriteLine($"[duack] wrote normalized WAVs to {outDir}");
+        }
+
+        if (parsed.Has("--write-config"))
+        {
+            var configPath = parsed.Value("--config");
+            if (string.IsNullOrWhiteSpace(configPath))
+                configPath = Path.Combine(inputDir, "audio-config.json");
+
+            AudioConfig? config = null;
+            if (File.Exists(configPath))
+            {
+                if (!TryReadConfig(configPath, out config, out errorMessage))
+                    return Fail(error, errorMessage);
+            }
+            else
+            {
+                config = ConfigScaffolder.Build(wavPaths.Select(Path.GetFileName).Where(n => n is not null).Select(n => n!));
+            }
+
+            config!.Tracks ??= new Dictionary<string, TrackConfig>();
+            foreach (var m in measurements)
+            {
+                if (!config.Tracks.TryGetValue(m.Name, out var track))
+                {
+                    track = new TrackConfig();
+                    config.Tracks[m.Name] = track;
+                }
+                track.Loudnorm.I = double.IsFinite(m.RmsDb) ? Math.Round(m.RmsDb, 2) : track.Loudnorm.I;
+            }
+
+            WriteAllText(configPath!, AudioConfigJson.Serialize(config));
+            output.WriteLine($"[duack] updated tracks in {configPath}");
+        }
+        else if (parsed.Value("--config") is { } explicitConfigPath)
+        {
+            if (!TryReadConfig(explicitConfigPath, out var config, out errorMessage))
+                return Fail(error, errorMessage);
+
+            config!.Tracks ??= new Dictionary<string, TrackConfig>();
+            foreach (var m in measurements)
+            {
+                if (!config.Tracks.TryGetValue(m.Name, out var track))
+                {
+                    track = new TrackConfig();
+                    config.Tracks[m.Name] = track;
+                }
+                track.Loudnorm.I = double.IsFinite(m.RmsDb) ? Math.Round(m.RmsDb, 2) : track.Loudnorm.I;
+            }
+
+            WriteAllText(explicitConfigPath, AudioConfigJson.Serialize(config));
+            output.WriteLine($"[duack] updated tracks in {explicitConfigPath}");
+        }
+
+        return 0;
+    }
+
+    private static string FormatDb(double db) =>
+        double.IsNegativeInfinity(db) ? "-inf" : db.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
 
     // ---- helpers ----
 

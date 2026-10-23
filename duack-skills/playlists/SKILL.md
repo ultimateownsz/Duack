@@ -12,7 +12,7 @@ modifiable at runtime, absent on web).
 ## Data model
 
 ```csharp
-public class PlaylistTrack { string Name; string Context; }
+public class PlaylistTrack { string Name; string Context; float? FadeInSeconds; float? FadeOutSeconds; }
 public class PlaylistDefinition
 {
     List<PlaylistTrack> Tracks;
@@ -42,7 +42,7 @@ var playlists = new PlaylistConfigBuilder()
         .Repeat(PlaylistRepeatMode.Off)
         .Shuffle(PlaylistShuffleMode.Off))
     .WithPlaylist("overworld", p => p
-        .Track("overworld", "Overworld")
+        .Track("overworld", "Overworld", fadeInSeconds: 1.0f, fadeOutSeconds: 0.5f)
         .Repeat(PlaylistRepeatMode.Track))
     .Build();
 ```
@@ -53,9 +53,11 @@ var playlists = new PlaylistConfigBuilder()
 var controller = new MusicPlaylistController(playlists, random /*optional*/);
 var director = new MusicManager(backend, controller, config.Music);
 
-director.Play("battle-sequence");  // starts from top, triggers crossfade
-director.Next();                  // skip track (breaks track-repeat)
-director.Stop();                  // stop, no TrackCompleted event
+director.Play("battle-sequence");                // starts from top, triggers crossfade
+director.Play("battle-sequence", fadeInSeconds: 1.0f); // optional fade in
+director.Next();                                // skip track (breaks track-repeat)
+director.Stop();                                // stop, no TrackCompleted event
+director.Stop(fadeOutSeconds: 0.5f);            // stop with fade out
 ```
 
 Properties: `IsPlaying`, `CurrentPlaylistName`, `CurrentTrack`.

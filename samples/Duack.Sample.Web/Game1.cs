@@ -37,6 +37,8 @@ public class Game1 : Game, IDisposable
     private float _duckPeakHold = 1f;
 
     private bool _musicStarted;
+    private string? _currentMusic;
+    private string? _pendingMusic;
 
     public Game1()
     {
@@ -121,6 +123,14 @@ public class Game1 : Game, IDisposable
 
         _director.Update(dt);
 
+        if (_pendingMusic is not null && !_director.IsPlaying)
+        {
+            var next = _pendingMusic;
+            _pendingMusic = null;
+            _director.Play(next, fadeInSeconds: 0.8f);
+            _currentMusic = next;
+        }
+
         if (_flash > 0f) _flash = Math.Max(0f, _flash - dt);
         if (_hitFlash > 0f) _hitFlash = Math.Max(0f, _hitFlash - dt);
 
@@ -130,6 +140,7 @@ public class Game1 : Game, IDisposable
         {
             _musicStarted = true;
             _director.Play(StoryController.OverworldPlaylist, fadeInSeconds: 1.0f);
+            _currentMusic = StoryController.OverworldPlaylist;
         }
 
         var keyboard = Keyboard.GetState();
@@ -150,8 +161,19 @@ public class Game1 : Game, IDisposable
         if (frame.Music is not null || frame.SceneChanged)
             _director.ReleaseDucks();
 
-        if (frame.Music is not null)
-            _director.Play(frame.Music, fadeInSeconds: 0.8f);
+        if (frame.Music is not null && frame.Music != _currentMusic)
+        {
+            _currentMusic = frame.Music;
+            if (_director.IsPlaying)
+            {
+                _director.Stop(0.2f);
+                _pendingMusic = frame.Music;
+            }
+            else
+            {
+                _director.Play(frame.Music, fadeInSeconds: 0.8f);
+            }
+        }
 
         if (frame.Sfx == StoryController.BattleStartCue)
         {

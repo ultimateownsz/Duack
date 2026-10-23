@@ -38,6 +38,8 @@ public class Game1 : Game
     private MusicPlaylistController _controller = null!;
     private MusicManager _director = null!;
     private SfxManager _sfx = null!;
+    private string? _currentMusic;
+    private string? _pendingMusic;
     private readonly StoryController _story = new();
     private MarbleBag<string> _hitBag = null!;
 
@@ -87,6 +89,7 @@ public class Game1 : Game
             Console.WriteLine($"[Sample] track finished: {finished.Name} ({finished.Context})");
 
         _director.Play(StoryController.OverworldPlaylist, fadeInSeconds: 1.0f);
+        _currentMusic = StoryController.OverworldPlaylist;
     }
 
     protected override void LoadContent()
@@ -107,6 +110,16 @@ public class Game1 : Game
         }
 
         _director.Update(dt);
+
+        // A pending track switch completes only once the prior track has fully faded out,
+        // so the new screen never starts with the old track still audible.
+        if (_pendingMusic is not null && !_director.IsPlaying)
+        {
+            var next = _pendingMusic;
+            _pendingMusic = null;
+            _director.Play(next, fadeInSeconds: 0.8f);
+            _currentMusic = next;
+        }
 
         if (_flash > 0f)
             _flash = Math.Max(0f, _flash - dt);
@@ -157,8 +170,21 @@ public class Game1 : Game
         if (frame.SceneChanged || frame.Music is not null)
             _director.ReleaseDucks();
 
-        if (frame.Music is not null)
-            _director.Play(frame.Music, fadeInSeconds: 0.8f); // single-track playlist: crossfades from whatever plays
+        if (frame.Music is not null && frame.Music != _currentMusic)
+        {
+            // Fade the prior track out completely before the new track fades in, so the new
+            // screen never starts with the old track still audible.
+            _currentMusic = frame.Music;
+            if (_director.IsPlaying)
+            {
+                _director.Stop(0.2f);
+                _pendingMusic = frame.Music;
+            }
+            else
+            {
+                _director.Play(frame.Music, fadeInSeconds: 0.8f);
+            }
+        }
 
         // A scene switch (e.g. battle start) cuts any lingering one-shot (the dialog cue is long)
         // so it cannot bleed into the new scene.

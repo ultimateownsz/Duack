@@ -17,6 +17,10 @@ While the version is `0.x`, the API may change between minor versions.
 
 #### 2026-10-23
 
+- **Samples fade out the prior track fully before the next one starts.** Scene switches no
+  longer overlap: `ApplyFrame` stops the current track with a short fade-out and defers the
+  new `Play` until `IsPlaying` goes false, so the new screen never starts with the old track
+  still audible. (Desktop and web.)
 - **Faster fade-out on scene switches.** The prior track now fades out over a short fixed
   window (0.2 s) while the incoming track fades in over its configured duration, so the new
   track is heard sooner. Regression tests:

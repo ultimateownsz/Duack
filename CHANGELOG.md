@@ -17,6 +17,10 @@ While the version is `0.x`, the API may change between minor versions.
 
 #### 2026-10-23
 
+- **Samples crossfade the overworld out during battle intro.** On `BattleStartCue`, the sample
+  starts crossfading overworld→battle over `BattleIntroSeconds` (1.2 s) so the overworld is
+  already gone by the time the battle screen appears; other music switches hard-stop the
+  previous track before fading the new one in.
 - **Samples hard-stop the previous track on a scene switch.** `ApplyFrame` now calls
   `_manager.Stop()` before `_manager.Play(...)`, so the old track is never heard fading out on
   the new screen; the incoming track then fades in from silence over 0.8 s. (Desktop and web.)

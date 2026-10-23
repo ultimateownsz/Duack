@@ -150,16 +150,17 @@ public class Game1 : Game, IDisposable
         if (frame.Music is not null || frame.SceneChanged)
             _manager.ReleaseDucks();
 
-        if (frame.Music is not null)
+        if (frame.Sfx == StoryController.BattleStartCue)
+        {
+            _sfx?.Stop();
+            if (_manager.CurrentTrack?.Name != StoryController.BattlePlaylist)
+                _manager.Play(StoryController.BattlePlaylist, fadeInSeconds: StoryController.BattleIntroSeconds);
+        }
+
+        if (frame.Music is not null && _manager.CurrentTrack?.Name != frame.Music)
         {
             _manager.Stop();
             _manager.Play(frame.Music, fadeInSeconds: 0.8f);
-        }
-
-        if (frame.Sfx == StoryController.BattleStartCue)
-        {
-            // Cut any lingering one-shot (e.g. long dialog) when a scene switch happens.
-            _sfx?.Stop();
         }
 
         if (frame.Sfx is not null)

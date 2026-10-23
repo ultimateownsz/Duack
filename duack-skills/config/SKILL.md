@@ -84,4 +84,4 @@ with `TitleContainer.OpenStream` so the same relative path resolves on DesktopGL
 - `Load()` falls back to defaults when file missing.
 - Save is no-op on browser (`OperatingSystem.IsBrowser()`).
 
-See also: `cli` (validate), `player-settings`, `audio-engine`.
+See also: `cli` (validate), `player-settings`, `audio-core`.

@@ -110,4 +110,9 @@ audible and correct mid-transition. See `crossfade`.
 - `Play(null)` throws `ArgumentNullException`.
 - Empty library → `BuildPlaylists` yields no playlists.
 
-See also: `crossfade`, `audio-library`, `audio-engine`.
+## Studio & broadcast concepts
+
+- **Playlist**: The playlist concept comes from broadcast and sequencing (radio rotations / broadcast playlists, whereas DAWs historically use *sessions*). Duack retains `Playlist` as the explicit term for authoring multi-track loops and rotations.
+- **Context**: Represents the **scene / snapshot** or saved console mix state (similar to scene memory on digital mixing consoles like Yamaha/X32, or snapshots in DAWs/mixers). Each track or game situation declares its context (e.g., `"Overworld"`, `"Battle"`), scaling music levels according to the active snapshot.
+
+See also: `crossfade`, `audio-library`, `audio-core`.

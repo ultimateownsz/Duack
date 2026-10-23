@@ -1,5 +1,5 @@
 ---
-name: audio-engine
+name: audio-core
 description: Duack audio library — core types, namespaces, quick reference. Use when working with Duack's audio mixing, ducking, crossfades, playlists, SFX variation, player settings, or the two-directory audio convention. Triggers on: Duack, DuckMixer, MusicDirector, MusicVolumeMath, AudioConfig, SfxDirector, MarbleBag, AudioLibrary, ISfxBackend, IMusicBackend, PlayerSettings.
 ---
 
@@ -58,8 +58,9 @@ Every namespace → `Duack`.
 
 ### SFX variation
 - `MarbleBag<T>` — draw-without-replacement randomizer (swap-remove, refill on empty, optional avoidImmediateRepeat, injectable Random)
-- `CueVariation` / `CuePlay` — per-play pitch/volume jitter
-- `SfxDirector` — cue-name one-shot playback with automatic music ducking
+- `CueVariation` / `CuePlay` — per-play pitch/volume jitter (`MusicDirector.NextCuePitch()` /
+  `SfxDirector` per-play resolve)
+- `SfxDirector` — cue-name one-shot playback with automatic music ducking and per-play cue jitter
 
 ### Settings
 - `PlayerAudioSettings`, `PlayerSettings` — player volume settings
@@ -68,7 +69,7 @@ Every namespace → `Duack`.
 - `PlayerSettingsStoreSelector.Select(isBrowser, fileStore, browserStore)` — pure store selector
 
 ### Utilities
-- `VolumeCurve` — perceptual slider-to-amplitude mapping (quadratic, −60 dB floor at 0)
+- `Gain` / `VolumeCurve` — perceptual slider/fader-to-amplitude mapping (quadratic, −60 dB floor at 0)
 - `AudioLibrary` — two-directory convention (SFX/ + Tracks/), classification, candidate paths, manifest
 - `AudioLibraryManifest` / `AudioLibraryManifestJson` — checked-in manifest for web hosts
 
@@ -114,8 +115,8 @@ director.IsDuckReady(0.99f);         // true when duck recovered
 director.Update(deltaSeconds);       // per-frame update
 
 // SFX director
-var sfx = new SfxDirector(library, backend, director);
-sfx.Play("hit", pitch: 0.25f);     // play cue + auto-duck
+var sfx = new SfxDirector(library, backend, director, sfxConfig: config.Sfx);
+sfx.Play("hit", pitch: 0.25f);     // play cue + auto-duck + apply authored jitter
 sfx.PlayNext();                     // draw from MarbleBag (no repeats)
 sfx.Stop();                         // cut all one-shots
 
@@ -126,7 +127,9 @@ var next = bag.Draw();              // draw without replacement
 
 ### SFX variation pattern
 A cue may declare multiple variants plus per-play pitch/volume ranges. Pure data + pure math
-in core; adapters apply pitch at play time. Use `MarbleBag<T>` for variant selection.
+in core; the music and SFX directors resolve the authored `CueVariation` at play time (music via
+`MusicDirector.NextCuePitch()`, SFX via its `SfxConfig.CueVariation`). Use `MarbleBag<T>` for variant
+selection.
 
 ### Player settings
 ```csharp
@@ -143,6 +146,28 @@ settings.Save();
 
 ### Buses
 Three default buses: **master**, **music**, **SFX**. The master bus scales everything (music and SFX alike) and is the top of the chain; music and SFX are the domain buses. Composition: `master bus × bus volume × context × duck × player settings`, master entering once at the top. Duck sources target the music bus, under the master.
+
+### Studio & engineering terminology
+
+Duack's design aligns with native professional audio engineering, DAW, digital console, and sampler concepts:
+
+| Concept | Studio / engineering term | Notes |
+| --- | --- | --- |
+| duck source | sidechain compressor | Compressor with a sidechain input triggered by an external signal (e.g. dialogue or SFX) |
+| attack, hold, release | attack, hold, release | Verbatim compressor envelope timing parameters |
+| ratio | ratio | Verbatim compressor ratio ($n:1$) defining target gain reduction |
+| context | scene, snapshot | Saved console mix states (Yamaha/X32 scene memory, Pro Tools mix snapshots); per-scene music volumes |
+| master | master fader, 2-mix, main mix | Stereo master bus / top of the fader chain |
+| music/SFX bus | group, aux, VCA, matrix | Console signal grouping; bus remains the umbrella term (bus master) |
+| crossfade | crossfade, fade, ramp | Automation ramps and track transitions |
+| fade in/out | fade up, fade down | Broadcast / studio verb forms for volume automation |
+| playlist | playlist (broadcast / rotation) | Kept as playlist; radio rotations and broadcast sequences (DAWs use sessions) |
+| cue | cue (production), cue mix (studio) | Production / theatrical sense of triggering sound assets (distinct from headphone cue mix) |
+| one-shot | one-shot | Native sampler term for non-looping sample playback |
+| MarbleBag variation | round-robin | Sample library articulation cycling / shuffled round-robin to eliminate the machine-gun effect |
+| player settings | monitor level, monitor chain | The mix is the program; listener volume is the monitor level / chain |
+| VolumeCurve | gain, fader law | Mixer fader response curve (audio-taper / logarithmic vs linear slider law) |
+| attenuation | attenuation, gain reduction (GR) | Metered gain reduction applied by compressors and duckers |
 
 ### Crossfades
 See the `crossfade` skill for detailed crossfade and scene transition patterns.

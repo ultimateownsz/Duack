@@ -1,7 +1,7 @@
 # Duack Skills
 
 Plain-Markdown guides covering common Duack tasks (ducking, playlists, SFX variation,
-player settings, audio library, config, adapters, CLI, crossfades, and the audio-engine
+player settings, audio library, config, adapters, CLI, crossfades, and the audio-core
 quick reference). This directory is the **single source of truth** for the skill content.
 
 Duack ships these the way FlatRedBall2 ships `frb-skills/`: as plain Markdown you copy

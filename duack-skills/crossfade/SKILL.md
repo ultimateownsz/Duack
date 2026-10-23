@@ -181,6 +181,11 @@ right after the last action in the previous scene.
 - **Dialog SFX overlap**: Long SFX (like dialog cues) should be cut with `sfx.Stop()` on
   scene switch to prevent audio overlap with the next track's crossfade.
 
+## Studio & DAW concepts
+
+- **Crossfade / Ramp**: In DAWs and mixing consoles, transitions between signals and automation ramps are drawn as fades/crossfades. Duack's equal-power crossfade curve preserves acoustic power across track transitions.
+- **Fade up / Fade down**: Studio/broadcast verbs corresponding to track fade-in and fade-out automation.
+
 ## 9. API quick reference
 
 | Method | Description |
@@ -194,5 +199,6 @@ right after the last action in the previous scene.
 | `MusicDirector.ReleaseDucks()` | Immediately release all duck sources |
 | `MusicDirector.IsDuckReady(threshold)` | True when duck ratio ≥ threshold |
 | `MusicDirector.DuckRatio` | Current combined duck ratio |
+| `MusicDirector.GainReduction` / `Attenuation` | Current combined gain reduction (1 − DuckRatio) |
 | `MusicDirector.CurrentTrack` | The track that should be playing |
 | `MusicDirector.IsPlaying` | True while a playlist is running |

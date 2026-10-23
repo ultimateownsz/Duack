@@ -69,7 +69,7 @@ var clips = new SoundEffectClipLibrary(content, library);
 var musicBackend = new SoundEffectMusicBackend(clips);
 var sfxBackend = new SoundEffectSfxBackend(clips);
 var director = new MusicDirector(musicBackend, controller, config.Music);
-var sfx = new SfxDirector(library, sfxBackend, director);
+var sfx = new SfxDirector(library, sfxBackend, director, sfxConfig: config.Sfx);
 ```
 
 Web:
@@ -87,4 +87,4 @@ var director = new MusicDirector(musicBackend, controller, config.Music);
 - Adapters reference `src/Duack` + one engine framework with wide version range (e.g.
   `MonoGame.Framework.DesktopGL` `3.8.*`), never pinned.
 
-See also: `audio-engine`, `crossfade`, `audio-library`.
+See also: `audio-core`, `crossfade`, `audio-library`.

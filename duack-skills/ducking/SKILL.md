@@ -36,6 +36,7 @@ Configured under `MusicConfig.DuckSources` (keyed by source name: "sfx", "dialog
 | `IsReady(threshold = 0.99)` | True when combined ratio >= threshold. |
 | `Update(deltaSeconds)` | Advance all sources; call per frame. |
 | `EffectiveRatio` | Combined ratio applied to music (1 = no ducking). |
+| `GainReduction` / `Attenuation` | Combined gain reduction / attenuation applied to music ($1 - \text{EffectiveRatio}$). |
 
 ## MusicDirector ducking facade
 
@@ -47,6 +48,7 @@ director.SetDuck("dialogue", false);   // release
 director.ReleaseDucks();               // instant release (scene switch)
 director.IsDuckReady(0.99f);           // recovered?
 director.DuckRatio;                    // current combined ratio
+director.GainReduction;                // current gain reduction (1 - DuckRatio)
 ```
 
 ## Typical patterns
@@ -103,4 +105,12 @@ var newSources = config.Music.DuckSources;   // IEnumerable<KVP>
 - `ReleaseAll` snaps `CurrentRatio` to 1 and `EffectiveRatio` to 1 (no easing tail).
 - `IsReady` defaults to 0.99 threshold (~inaudible duck).
 
-See also: `crossfade` (ducking during transitions), `audio-engine`.
+## Studio & sound engineering concepts
+
+Duack's ducking model maps directly to classical audio engineering:
+- **Duck source**: Sidechain compressor (a compressor triggered by an external sidechain input signal such as dialogue or SFX).
+- **Attack, hold, release**: Verbatim compressor envelope timing parameters (attack time constant easing down, hold window, release time constant easing back up).
+- **Ratio**: Compressor ratio ($n:1$) determining target gain reduction / attenuation while triggered.
+- **Attenuation / Gain Reduction (GR)**: The effective reduction in amplitude applied to the music bus.
+
+See also: `crossfade` (ducking during transitions), `audio-core`.

@@ -60,15 +60,16 @@ PlayerSettings.Store = PlayerSettingsStoreSelector.Select(
 // or Select(fileStore, browserStore) uses OperatingSystem.IsBrowser()
 ```
 
-## VolumeCurve (perceptual sliders)
+## Gain / VolumeCurve (perceptual sliders & fader law)
 
 ```csharp
-float amplitude = VolumeCurve.ToAmplitude(slider);   // slider [0,1] -> amplitude [0,1], quadratic
-float slider   = VolumeCurve.ToSlider(amplitude);    // exact inverse
+float gain     = Gain.ToGain(slider);               // slider [0,1] -> gain [0,1], quadratic fader law
+float amplitude = VolumeCurve.ToAmplitude(slider);   // slider [0,1] -> amplitude [0,1]
+float slider   = Gain.ToSlider(gain);               // exact inverse
 ```
 
 Human loudness is closer to logarithmic; quadratic makes midpoint noticeably quieter
-(0.5 slider -> 0.25 amplitude). Use for any volume control. NaN -> 0.
+(0.5 slider -> 0.25 amplitude/gain). Use for any volume or mixer gain control. NaN -> 0.
 
 ## Settings overlay flow
 
@@ -95,4 +96,9 @@ and storage availability are environment concerns — document, don't solve sile
 - Failed writes log via `Console.WriteLine` (not Debug) so they survive Release/browser builds.
 - `ClearOverrides` makes next `ApplyOverrides` use authored values.
 
-See also: `audio-engine`, `audio-engine`.
+## Studio & sound engineering concepts
+
+- **Player settings**: In studio terminology, the player settings act as the **monitor chain / monitor level**. The mix / program is authored by the game, while what the end listener actually hears passes through the user's monitor chain (the volume knob / monitor level).
+- **VolumeCurve**: Represents the **fader law** (or audio-taper / logarithmic vs linear response curve) mapping perceptual user slider positions to physical signal amplitudes.
+
+See also: `audio-core`, `config`.

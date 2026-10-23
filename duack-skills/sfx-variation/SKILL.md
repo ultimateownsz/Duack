@@ -38,23 +38,26 @@ CuePlay play = variation.Resolve(random);
 `CueVariation.None` = no jitter. Non-finite/negative ranges become 0.
 
 `MusicConfig.CueVariation` / `SfxConfig.CueVariation` (nullable; omitted from JSON when null).
-`MusicDirector` applies `NextCuePitch()` to track plays.
+`MusicDirector` applies `NextCuePitch()` to track plays; `SfxDirector` applies its own
+`SfxConfig.CueVariation` per play (jitter added on top of the passed pitch, volume scaled).
 
 ## SfxDirector
 
 Plays one-shot cues by name against an `AudioLibrary`; auto-ducks music on success.
 
 ```csharp
-var sfx = new SfxDirector(library, backend, director, duckSource: "sfx", random);
+var sfx = new SfxDirector(library, backend, director, sfxConfig: new SfxConfig { CueVariation = variation });
 IReadOnlyList<string> names = sfx.Names;
-bool played = sfx.Play("hit", pitch: 0.25f, volume: 1f, duck: true);
+bool played = sfx.Play("hit", pitch: 0.25f, volume: 1f, duck: true); // jitter applied on top of the passed values
 sfx.PlayNext(pitch, volume);   // marble-bag draw, no immediate repeats
 sfx.Stop();                    // hard cut all one-shots
 ```
 
 - Returns false (no backend call, no duck) when cue not in library or backend refuses.
 - `duck: false` plays without ducking (e.g. scene-switch cues).
-- Pitch passed through in engine units (MonoGame -1..1, 0 = natural).
+- Pitch passed through in engine units (MonoGame -1..1, 0 = natural); with an authored
+  `SfxConfig.CueVariation` the resolved jitter is added on top, clamped to [-1, 1].
+- Volume is the caller's value scaled by the authored jitter (volume half-width), then master × bus.
 
 ## SFX variation pattern (XACT successor)
 
@@ -84,4 +87,10 @@ public interface ISfxBackend
 }
 ```
 
-See also: `audio-library`, `ducking`, `audio-engine`.
+## Studio & sound design concepts
+
+- **MarbleBag variation**: Corresponds to **round-robin** cycling in professional sampler libraries (cycling articulations or shuffled round-robin to avoid the "machine-gun effect" of repetitive sample playback).
+- **One-shot**: Native sampler terminology for a sample triggered from start to finish without looping.
+- **Cue**: Production cue triggering (the theatrical/game production sense of firing sound assets).
+
+See also: `audio-library`, `ducking`, `audio-core`.

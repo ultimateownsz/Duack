@@ -85,4 +85,4 @@ fail) about files the loader can never open (wrong type or upper-cased extension
 - `ScanDirectory` throws on missing root; missing subdir is fine.
 - Manifest round-trips through `ToManifest`/`FromManifest`.
 
-See also: `playlists`, `cli`, `audio-engine`.
+See also: `playlists`, `cli`, `audio-core`.

@@ -17,6 +17,16 @@ While the version is `0.x`, the API may change between minor versions.
 
 #### 2026-10-23
 
+- **CLI loudness normalization (`duack normalize`).** New command measures each WAV track's RMS and
+  peak loudness, reports the loudest track, and writes gain-normalized WAV copies (matching every
+  track to the loudest track's RMS) so crossfades and playlists play at equal loudness without
+  re-encoding. Supports `--out`/positional out dir, `--config` and `--write-config` to refresh the
+  build-only `tracks` loudnorm targets. Pure helpers live in `LoudnessAnalyzer` (plus
+  `LoudnessMeter`/`Loudness`/etc. aliases) in `tools/Duack.Tools`. Aliases: `loudness`, `analyze`,
+  `analyse`, `measure`, `loudnorm`.
+
+#### 2026-10-23
+
 - **Samples stop the previous SFX before playing the next.** `ApplyFrame` now calls
   `_sfx.Stop()` / `_sfx?.Stop()` immediately before every `_sfx.Play(...)`, so a long
   one-shot (e.g. a dialog cue) can never bleed into the next cue or screen.

@@ -42,6 +42,8 @@ public class MusicManager
     private bool _stoppingWithFade;
     private float _stopFadeElapsed;
     private float _stopFadeDuration;
+    private float? _fadeInDurationOverride;
+    private float? _fadeOutDurationOverride;
 
     /// <summary>Raised after the playlist advanced: carries the track that just completed.</summary>
     public event Action<PlaylistTrack>? TrackCompleted;
@@ -166,7 +168,7 @@ public class MusicManager
     /// <param name="fadeOutSeconds">Optional fade out duration in seconds.</param>
     public void Stop(float? fadeOutSeconds = null)
     {
-        var duration = fadeOutSeconds ?? 0f;
+        var duration = fadeOutSeconds ?? _fadeOutDurationOverride ?? 0f;
         if (duration > 0f && (_active != null || _outgoing != null || _backend.IsTrackPlaying))
         {
             _stoppingWithFade = true;
@@ -176,13 +178,15 @@ public class MusicManager
             _isCrossfading = false;
             _crossfadeElapsed = 0f;
             _pending = null;
-            // Don't stop backend yet, let Update handle fading out
+            _fadeOutDurationOverride = null;
             return;
         }
 
         _stoppingWithFade = false;
         _stopFadeElapsed = 0f;
         _stopFadeDuration = 0f;
+        _fadeInDurationOverride = null;
+        _fadeOutDurationOverride = null;
         _playlist.Stop();
         _sequencer.Cancel();
         _isCrossfading = false;
@@ -204,26 +208,19 @@ public class MusicManager
         {
             _stopFadeElapsed += deltaSeconds;
             var progress = _stopFadeDuration <= 0f ? 1f : Math.Clamp(_stopFadeElapsed / _stopFadeDuration, 0f, 1f);
-            var fadeOut = CrossfadeMath.EqualPower(progress).Out;
-            // When fading out to silence, use fadeOut as inverse? EqualPower gives us the ramp
-            // For fade out, we want volume going from 1 to 0
             var fade = 1f - progress;
-            // Use equal power curve for fade out
-            var (_, outGain) = CrossfadeMath.EqualPower(progress);
-            // Actually easier: fade = 1 - progress mapped through curve? Or just use (1, outGain)
-            // CrossfadeMath.EqualPower(progress): at progress=0 -> (In:~0, Out:~1), at progress=1 -> (In:~1, Out:~0)
-            // So for fade out only, we want Out gain decreasing? Or we need to fade the active track
+            var (fadeIn, fadeOutGain) = CrossfadeMath.EqualPower(progress);
             if (_backend.SupportsOverlap)
             {
                 if (_active != null)
-                    _backend.SetActiveVolume(Compose(CrossfadeMath.EqualPower(1f - progress).In, _active.Context));
+                    _backend.SetActiveVolume(Compose(1f - progress, _active.Context));
                 if (_outgoing != null)
-                    _backend.SetOutgoingVolume(Compose(CrossfadeMath.EqualPower(progress).Out, _outgoing.Context));
+                    _backend.SetOutgoingVolume(Compose(fadeOutGain, _outgoing.Context));
             }
             else
             {
                 if (_active != null)
-                    _backend.SetActiveVolume(Compose(CrossfadeMath.EqualPower(1f - progress).In, _active.Context));
+                    _backend.SetActiveVolume(Compose(1f - progress, _active.Context));
             }
 
             if (progress >= 1f)
@@ -231,6 +228,8 @@ public class MusicManager
                 _stoppingWithFade = false;
                 _stopFadeElapsed = 0f;
                 _stopFadeDuration = 0f;
+                _fadeInDurationOverride = null;
+                _fadeOutDurationOverride = null;
                 _playlist.Stop();
                 _sequencer.Cancel();
                 _isCrossfading = false;
@@ -262,6 +261,11 @@ public class MusicManager
         var desired = _playlist.CurrentTrack;
         if (desired != null && !ReferenceEquals(desired, _pending ?? _active))
         {
+            if (desired != null)
+            {
+                _fadeInDurationOverride = desired.FadeInSeconds;
+                _fadeOutDurationOverride = desired.FadeOutSeconds;
+            }
             BeginTransition(desired);
         }
 

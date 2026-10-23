@@ -35,9 +35,9 @@ public sealed class PlaylistDefinitionBuilder
     private readonly PlaylistDefinition _definition = new();
 
     /// <summary>Appends a track (its cue/file name and the music-context tag it plays under).</summary>
-    public PlaylistDefinitionBuilder Track(string name, string context)
+    public PlaylistDefinitionBuilder Track(string name, string context, float? fadeInSeconds = null, float? fadeOutSeconds = null)
     {
-        _definition.Tracks.Add(new PlaylistTrack { Name = name, Context = context });
+        _definition.Tracks.Add(new PlaylistTrack { Name = name, Context = context, FadeInSeconds = fadeInSeconds, FadeOutSeconds = fadeOutSeconds });
         return this;
     }
 

@@ -17,6 +17,8 @@ While the version is `0.x`, the API may change between minor versions.
 
 #### 2026-10-23
 
+- **Samples use the new fade-in on first play.** Both desktop and web samples now start the
+  overworld track with `Play(..., fadeInSeconds: 1.0f)` instead of an instant start.
 - **Wired fade durations into the first-play fade-in.** `Play(playlistName, fadeInSeconds)` and a
   track's `FadeInSeconds` now drive the duration of the initial silence-to-full ramp on both
   overlap (desktop) and sequenced (web) backends (`_transitionDuration`); previously the value

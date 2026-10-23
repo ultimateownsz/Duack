@@ -86,7 +86,7 @@ public class Game1 : Game
         _director.TrackCompleted += finished =>
             Console.WriteLine($"[Sample] track finished: {finished.Name} ({finished.Context})");
 
-        _director.Play(StoryController.OverworldPlaylist);
+        _director.Play(StoryController.OverworldPlaylist, fadeInSeconds: 1.0f);
     }
 
     protected override void LoadContent()

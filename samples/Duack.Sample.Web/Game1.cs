@@ -129,7 +129,7 @@ public class Game1 : Game, IDisposable
         if (!_musicStarted)
         {
             _musicStarted = true;
-            _director.Play(StoryController.OverworldPlaylist);
+            _director.Play(StoryController.OverworldPlaylist, fadeInSeconds: 1.0f);
         }
 
         var keyboard = Keyboard.GetState();

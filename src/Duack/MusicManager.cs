@@ -45,6 +45,7 @@ public class MusicManager
     private float? _fadeInDurationOverride;
     private float? _fadeOutDurationOverride;
     private float _transitionDuration;
+    private float _fadeOutDuration = 0.2f;
 
     /// <summary>Raised after the playlist advanced: carries the track that just completed.</summary>
     public event Action<PlaylistTrack>? TrackCompleted;
@@ -286,13 +287,14 @@ public class MusicManager
 
     private void UpdateOverlapCrossfade(float deltaSeconds)
     {
-        var duration = _transitionDuration;
         _crossfadeElapsed += deltaSeconds;
-        var progress = duration <= 0f ? 1f : Math.Clamp(_crossfadeElapsed / duration, 0f, 1f);
-        var (fadeIn, fadeOut) = CrossfadeMath.EqualPower(progress);
+        var inProgress = _transitionDuration <= 0f ? 1f : Math.Clamp(_crossfadeElapsed / _transitionDuration, 0f, 1f);
+        var outProgress = (_transitionDuration <= 0f || _fadeOutDuration <= 0f) ? 1f : Math.Clamp(_crossfadeElapsed / _fadeOutDuration, 0f, 1f);
+        var (fadeIn, _) = CrossfadeMath.EqualPower(inProgress);
+        var (_, fadeOut) = CrossfadeMath.EqualPower(outProgress);
         ApplyVolumes(fadeIn, fadeOut);
 
-        if (progress >= 1f)
+        if (inProgress >= 1f && outProgress >= 1f)
         {
             _backend.StopOutgoing();
             _outgoing = null;
@@ -303,8 +305,9 @@ public class MusicManager
 
     private void UpdateSequencedCrossfade(float deltaSeconds)
     {
-        var duration = _transitionDuration;
-        var fadeOutCompleted = _sequencer.Advance(deltaSeconds, duration);
+        _sequencer.FadeOutDuration = _fadeOutDuration;
+        _sequencer.FadeInDuration = _transitionDuration;
+        var fadeOutCompleted = _sequencer.Advance(deltaSeconds);
 
         if (fadeOutCompleted && _pending != null)
         {
@@ -339,16 +342,13 @@ public class MusicManager
     {
         if (_backend.SupportsOverlap)
         {
-            var isFirstTrack = _active == null;
             _outgoing = _active;
             _active = desired;
             _pending = null;
             _backend.PlayTrack(desired.Name, Compose(0f, desired.Context), NextCuePitch());
             _isCrossfading = true;
             _crossfadeElapsed = 0f;
-            _transitionDuration = isFirstTrack
-                ? (_fadeInDurationOverride ?? _music.CrossfadeSeconds)
-                : _music.CrossfadeSeconds;
+            _transitionDuration = _fadeInDurationOverride ?? _music.CrossfadeSeconds;
         }
         else if (_backend.IsTrackPlaying)
         {
@@ -356,7 +356,7 @@ public class MusicManager
             _pending = desired;
             _sequencer.BeginFadeOut();
             _isCrossfading = true;
-            _transitionDuration = _music.CrossfadeSeconds;
+            _transitionDuration = _fadeInDurationOverride ?? _music.CrossfadeSeconds;
         }
         else
         {
@@ -408,6 +408,7 @@ public class MusicManager
             _active = after;
             _pending = null;
             _backend.PlayTrack(after.Name, Compose(0f, after.Context), NextCuePitch());
+            _sequencer.FadeInDuration = _fadeInDurationOverride ?? _music.CrossfadeSeconds;
             _sequencer.BeginFadeIn();
             _isCrossfading = true;
             _crossfadeElapsed = 0f;

@@ -9,6 +9,7 @@ duack init     <contentDir> [--out <file>] [--force]
 duack validate <config.json> [--playlists <file>]
 duack convert  <contentDir> <outDir> [--config <file>] [--playlists <file>] [--quality <0..1>] [--force] [--all]
 duack scan     <audioRoot> [--out <file>]
+duack normalize <dir> [<outDir>] [--out <dir>] [--config <file>] [--write-config]
 ```
 
 - **init** scans `<contentDir>` for `*.wav` and writes a starting `audio-config.json`
@@ -27,6 +28,12 @@ duack scan     <audioRoot> [--out <file>]
   exclusive with a playlist source. A content directory may also hold **already-encoded
   `.ogg` files** (a cue with no WAV master): those are copied through verbatim rather than
   re-encoded, and an output that is already newer is left alone.
+- **normalize** measures each WAV track's RMS and peak loudness, reports the loudest track,
+  and (when an output directory is given) writes gain-normalized WAV copies so every track
+  matches the loudest track's RMS level - handy for making crossfades and playlists play at
+  equal loudness without re-encoding. Aliases: `loudness`, `analyze`, `analyse`, `measure`,
+  `loudnorm`. `--write-config` / `--config` refresh the build-only `tracks` loudnorm
+  targets. Pure helpers live in `LoudnessAnalyzer` (`LoudnessMeter`/`Loudness`/etc. aliases).
 - **scan** reads the two-directory audio convention (`<audioRoot>/SFX/*` for one-shot
   sounds, `<audioRoot>/Tracks/*` for loops/songs) and writes `audio-manifest.json` (default
   `<audioRoot>/audio-manifest.json`) listing the discovered cue names — the checked-in file

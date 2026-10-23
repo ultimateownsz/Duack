@@ -40,6 +40,22 @@ public class MusicManagerFadeTests
         }
     }
 
+    private static PlaylistConfig TwoTracks(string first, string second, PlaylistRepeatMode repeat = PlaylistRepeatMode.Off) => new()
+    {
+        Playlists =
+        {
+            ["main"] = new PlaylistDefinition
+            {
+                Tracks =
+                {
+                    new PlaylistTrack { Name = first, Context = "Overworld" },
+                    new PlaylistTrack { Name = second, Context = "Overworld" },
+                },
+                Repeat = repeat,
+            },
+        },
+    };
+
     private static PlaylistConfig OneTrack(string name, PlaylistRepeatMode repeat = PlaylistRepeatMode.Off) => new()
     {
         Playlists =
@@ -190,6 +206,43 @@ public class MusicManagerFadeTests
         director.Update(0.2f);
         Assert.False(director.IsPlaying);
         Assert.True(backend.StopCalls > 0);
+    }
+
+    [Fact]
+    public void Overlap_transition_fades_out_the_prior_track_faster_than_it_fades_in_the_new_one()
+    {
+        var backend = new FakeMusicBackend(supportsOverlap: true);
+        var playlist = new MusicPlaylistController(TwoTracks("a", "b"), new Random(1));
+        var director = new MusicManager(backend, playlist, new MusicConfig { CrossfadeSeconds = 1f });
+
+        director.Play("main");
+        director.Update(0.016f);
+        director.Next();
+        director.Update(0.016f);
+
+        // The prior (outgoing) track is already silent while the incoming track is still fading in.
+        director.Update(0.25f);
+        Assert.True(backend.OutgoingVolumes.Count > 0);
+        Assert.Equal(0f, backend.OutgoingVolumes.Last(), 3);
+        Assert.True(backend.ActiveVolumes.Last() < 1f);
+        Assert.True(backend.ActiveVolumes.Last() > 0f);
+    }
+
+    [Fact]
+    public void Sequenced_transition_switches_to_the_new_track_before_the_fade_in_completes()
+    {
+        var backend = new FakeMusicBackend(supportsOverlap: false);
+        var playlist = new MusicPlaylistController(TwoTracks("a", "b"), new Random(1));
+        var director = new MusicManager(backend, playlist, new MusicConfig { CrossfadeSeconds = 1f });
+
+        director.Play("main");
+        director.Update(0.016f);
+        director.Next();
+        director.Update(0.25f);
+
+        Assert.Equal(2, backend.Played.Count);
+        Assert.Equal("b", backend.Played[^1].Name);
+        Assert.True(backend.ActiveVolumes.Last() < 1f);
     }
 
     [Fact]

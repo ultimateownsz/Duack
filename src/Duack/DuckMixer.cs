@@ -17,6 +17,12 @@ public sealed class DuckMixer
     /// <summary>The combined ratio applied to the music each frame (1 = no ducking).</summary>
     public float EffectiveRatio { get; private set; } = 1f;
 
+    /// <summary>Combined gain reduction / attenuation currently applied to music (0 = no reduction, 1 = full silence).</summary>
+    public float GainReduction => 1f - EffectiveRatio;
+
+    /// <summary>Alias for <see cref="GainReduction"/>.</summary>
+    public float Attenuation => GainReduction;
+
     /// <summary>Read-only snapshot of every registered source for diagnostics (live per-source ratios).</summary>
     public IReadOnlyList<DuckSourceView> Sources =>
         _sources.Select(kv => new DuckSourceView(

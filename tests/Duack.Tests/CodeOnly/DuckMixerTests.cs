@@ -225,4 +225,19 @@ public class DuckMixerTests
         Assert.Equal(0.4f, view.CurrentRatio, 2);
         Assert.Equal(0.4f, view.TargetRatio, 2);
     }
+
+    [Fact]
+    public void GainReduction_and_Attenuation_track_effective_ratio()
+    {
+        var mixer = new DuckMixer();
+        Assert.Equal(0f, mixer.GainReduction, 3);
+        Assert.Equal(0f, mixer.Attenuation, 3);
+
+        mixer.SetSource("sfx", Source(ratio: 0.3f, attack: 0f, release: 0f));
+        mixer.Set("sfx", true);
+        mixer.Update(0.016f);
+
+        Assert.Equal(0.7f, mixer.GainReduction, 3);
+        Assert.Equal(0.7f, mixer.Attenuation, 3);
+    }
 }

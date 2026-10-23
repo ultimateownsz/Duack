@@ -151,7 +151,7 @@ public class Game1 : Game, IDisposable
             _director.ReleaseDucks();
 
         if (frame.Music is not null)
-            _director.Play(frame.Music);
+            _director.Play(frame.Music, fadeInSeconds: 0.8f);
 
         if (frame.Sfx == StoryController.BattleStartCue)
         {

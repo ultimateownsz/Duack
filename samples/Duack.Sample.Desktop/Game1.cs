@@ -158,7 +158,7 @@ public class Game1 : Game
             _director.ReleaseDucks();
 
         if (frame.Music is not null)
-            _director.Play(frame.Music); // single-track playlist: crossfades from whatever plays
+            _director.Play(frame.Music, fadeInSeconds: 0.8f); // single-track playlist: crossfades from whatever plays
 
         // A scene switch (e.g. battle start) cuts any lingering one-shot (the dialog cue is long)
         // so it cannot bleed into the new scene.

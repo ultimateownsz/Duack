@@ -17,6 +17,17 @@ While the version is `0.x`, the API may change between minor versions.
 
 #### 2026-10-23
 
+- **Faster fade-out on scene switches.** The prior track now fades out over a short fixed
+  window (0.2 s) while the incoming track fades in over its configured duration, so the new
+  track is heard sooner. Regression tests:
+  `Overlap_transition_fades_out_the_prior_track_faster_than_it_fades_in_the_new_one` and
+  `Sequenced_transition_switches_to_the_new_track_before_the_fade_in_completes` (verified red
+  by forcing the slow fade-out back, 2 failures).
+- **Scene switches now fade.** `MusicManager` transitions (overlap and sequenced) use the incoming
+  track's fade-in duration (`_fadeInDurationOverride ?? CrossfadeSeconds`) instead of always
+  `CrossfadeSeconds`, so `Play(..., fadeInSeconds:)` and per-track `FadeInSeconds` now shape
+  scene switches too — the prior track fades out while the new track fades in. Samples pass
+  `fadeInSeconds: 0.8f` on scene music switches (in addition to 1.0f on the initial play).
 - **Samples use the new fade-in on first play.** Both desktop and web samples now start the
   overworld track with `Play(..., fadeInSeconds: 1.0f)` instead of an instant start.
 - **Wired fade durations into the first-play fade-in.** `Play(playlistName, fadeInSeconds)` and a

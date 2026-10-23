@@ -8,11 +8,17 @@ public enum MusicFadePhase
     /// <summary>Nothing fading; the current track plays at the full mix volume.</summary>
     Steady,
 
-    /// <summary>The current track is ramping to silence before the next one starts.</summary>
+    /// <summary>The current track is ramping to silence before the next one starts (fade out / fade down).</summary>
     FadingOut,
 
-    /// <summary>The new track is ramping up from silence.</summary>
+    /// <summary>The new track is ramping up from silence (fade in / fade up).</summary>
     FadingIn,
+
+    /// <summary>Studio alias for <see cref="FadingOut"/>.</summary>
+    FadingDown = FadingOut,
+
+    /// <summary>Studio alias for <see cref="FadingIn"/>.</summary>
+    FadingUp = FadingIn,
 }
 
 /// <summary>
@@ -50,6 +56,9 @@ public sealed class MusicTransitionSequencer
 
     public bool IsFadingOut => Phase == MusicFadePhase.FadingOut;
 
+    /// <summary>Studio alias for <see cref="IsFadingOut"/>.</summary>
+    public bool IsFadingDown => IsFadingOut;
+
     /// <summary>Level the outgoing track started from, so a fade-out interrupted mid-fade-in does not jump.</summary>
     private float _outStart = 1f;
 
@@ -65,6 +74,9 @@ public sealed class MusicTransitionSequencer
         Recompute();
     }
 
+    /// <summary>Studio alias for <see cref="BeginFadeIn"/>.</summary>
+    public void BeginFadeUp() => BeginFadeIn();
+
     /// <summary>Starts fading the current track out. Idempotent while already fading out.</summary>
     public void BeginFadeOut()
     {
@@ -77,6 +89,9 @@ public sealed class MusicTransitionSequencer
         _splitFadeIn = false;
         Recompute();
     }
+
+    /// <summary>Studio alias for <see cref="BeginFadeOut"/>.</summary>
+    public void BeginFadeDown() => BeginFadeOut();
 
     /// <summary>
     /// Advances the active phase by <paramref name="deltaSeconds"/>. Returns <c>true</c> exactly once,

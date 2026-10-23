@@ -132,4 +132,18 @@ public class MusicTransitionSequencerTests
         Assert.Equal(MusicFadePhase.Steady, sequencer.Phase);
         Assert.Equal(1f, sequencer.InGain);
     }
+
+    [Fact]
+    public void Studio_fade_up_and_down_aliases_match_fade_in_and_out()
+    {
+        var sequencer = new MusicTransitionSequencer();
+        sequencer.BeginFadeDown();
+
+        Assert.Equal(MusicFadePhase.FadingDown, sequencer.Phase);
+        Assert.True(sequencer.IsFadingDown);
+
+        sequencer.Cancel();
+        sequencer.BeginFadeUp();
+        Assert.Equal(MusicFadePhase.FadingUp, sequencer.Phase);
+    }
 }

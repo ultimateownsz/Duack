@@ -150,9 +150,11 @@ public class Game1 : Game, IDisposable
         if (frame.Music is not null || frame.SceneChanged)
             _manager.ReleaseDucks();
 
+        if (frame.SceneChanged)
+            _sfx?.Stop();
+
         if (frame.Sfx == StoryController.BattleStartCue)
         {
-            _sfx?.Stop();
             if (_manager.CurrentTrack?.Name != StoryController.BattlePlaylist)
                 _manager.Play(StoryController.BattlePlaylist, fadeInSeconds: StoryController.BattleIntroSeconds);
         }

@@ -157,11 +157,15 @@ public class Game1 : Game
         if (frame.SceneChanged || frame.Music is not null)
             _manager.ReleaseDucks();
 
+        // Any scene change: cut lingering one-shots (e.g. a long dialog cue) so they cannot
+        // bleed into the new screen.
+        if (frame.SceneChanged)
+            _sfx.Stop();
+
         // Battle-start sting: crossfade the overworld track out during the intro so it is
         // already gone by the time the battle screen appears.
         if (frame.Sfx == StoryController.BattleStartCue)
         {
-            _sfx.Stop();
             if (_manager.CurrentTrack?.Name != StoryController.BattlePlaylist)
                 _manager.Play(StoryController.BattlePlaylist, fadeInSeconds: StoryController.BattleIntroSeconds);
         }

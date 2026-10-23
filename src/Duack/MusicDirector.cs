@@ -45,6 +45,12 @@ public class MusicDirector
     /// <summary>Combined duck ratio the music is currently multiplied by (1 = unducked).</summary>
     public float DuckRatio => _duck.EffectiveRatio;
 
+    /// <summary>Combined gain reduction / attenuation currently applied to music (0 = no reduction, 1 = full silence).</summary>
+    public float GainReduction => _duck.GainReduction;
+
+    /// <summary>Alias for <see cref="GainReduction"/>.</summary>
+    public float Attenuation => GainReduction;
+
     /// <summary>
     /// Read-only snapshot of every duck source for diagnostics (live per-source ratios and targets).
     /// </summary>

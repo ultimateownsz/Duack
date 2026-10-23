@@ -476,4 +476,23 @@ public class MusicDirectorTests
 
         Assert.Equal(0.25f, backend.ActiveVolumes.Last(), 3);
     }
+
+    [Fact]
+    public void GainReduction_and_Attenuation_track_duck_ratio()
+    {
+        var backend = new FakeMusicBackend(supportsOverlap: true);
+        var playlist = new MusicPlaylistController(OneTrack("solo"), new Random(1));
+        var music = new MusicConfig { CrossfadeSeconds = 0f };
+        music.DuckSources["sfx"] = new DuckSourceConfig { Ratio = 0.3f, AttackSeconds = 0f, ReleaseSeconds = 0f };
+        var director = new MusicDirector(backend, playlist, music);
+
+        Assert.Equal(0f, director.GainReduction, 3);
+        Assert.Equal(0f, director.Attenuation, 3);
+
+        director.SetDuck("sfx", true);
+        director.Update(0.016f);
+
+        Assert.Equal(0.7f, director.GainReduction, 3);
+        Assert.Equal(0.7f, director.Attenuation, 3);
+    }
 }

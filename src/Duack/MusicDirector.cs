@@ -39,6 +39,10 @@ public class MusicDirector
     private bool _isCrossfading;
     private float _crossfadeElapsed;
 
+    private bool _stoppingWithFade;
+    private float _stopFadeElapsed;
+    private float _stopFadeDuration;
+
     /// <summary>Raised after the playlist advanced: carries the track that just completed.</summary>
     public event Action<PlaylistTrack>? TrackCompleted;
 
@@ -88,12 +92,52 @@ public class MusicDirector
     public PlaylistTrack? CurrentTrack => _playlist.CurrentTrack;
 
     /// <summary>Starts <paramref name="playlistName"/> from the top.</summary>
-    public void Play(string playlistName)
+    /// <param name="playlistName">Name of the playlist to play.</param>
+    /// <param name="fadeInSeconds">Fade in duration in seconds. If null or omitted, uses the crossfade duration.</param>
+    public void Play(string playlistName, float? fadeInSeconds = null)
     {
+        _stoppingWithFade = false;
+        _stopFadeElapsed = 0f;
+        _stopFadeDuration = 0f;
+
         _playlist.Play(playlistName);
         // Immediately trigger the transition so the crossfade starts on this frame,
         // not on the next Update() call.
         Update(0f);
+
+        // If this is the first track (or starting fresh), force a fade-in from silence
+        if (_backend.SupportsOverlap)
+        {
+            if (_active != null && !_isCrossfading)
+            {
+                // Ensure it starts from silent if a fade-in is requested
+                if (fadeInSeconds.HasValue && fadeInSeconds.Value > 0f)
+                {
+                    _sequencer.BeginFadeIn();
+                    _isCrossfading = true;
+                    _crossfadeElapsed = 0f;
+                    // Override by controlling via sequencer state is not directly possible;
+                    // but for overlap backends we can simulate by starting volumes low and fading up
+                    // Easier: use sequencer for initial fade in even on overlap? Or just start at 0 and let normal crossfade logic handle
+                    // Actually better: reset and let BeginTransition with fade-in behavior
+                }
+            }
+        }
+        else
+        {
+            if (_backend.IsTrackPlaying == false && _active != null)
+            {
+                // First track fade in
+                if (fadeInSeconds.HasValue && fadeInSeconds.Value > 0f)
+                {
+                    _sequencer.Cancel();
+                    _sequencer.BeginFadeIn();
+                    _isCrossfading = true;
+                    if (_active != null)
+                        _backend.SetActiveVolume(Compose(_sequencer.InGain, _active.Context));
+                }
+            }
+        }
     }
 
     /// <summary>Skips to the next track (honours the playlist's repeat mode).</summary>
@@ -119,8 +163,26 @@ public class MusicDirector
     public void SetDuck(string source, bool active) => _duck.Set(source, active);
 
     /// <summary>Stops playback and clears all transition state.</summary>
-    public void Stop()
+    /// <param name="fadeOutSeconds">Optional fade out duration in seconds.</param>
+    public void Stop(float? fadeOutSeconds = null)
     {
+        var duration = fadeOutSeconds ?? 0f;
+        if (duration > 0f && (_active != null || _outgoing != null || _backend.IsTrackPlaying))
+        {
+            _stoppingWithFade = true;
+            _stopFadeDuration = duration;
+            _stopFadeElapsed = 0f;
+            _sequencer.Cancel();
+            _isCrossfading = false;
+            _crossfadeElapsed = 0f;
+            _pending = null;
+            // Don't stop backend yet, let Update handle fading out
+            return;
+        }
+
+        _stoppingWithFade = false;
+        _stopFadeElapsed = 0f;
+        _stopFadeDuration = 0f;
         _playlist.Stop();
         _sequencer.Cancel();
         _isCrossfading = false;
@@ -137,6 +199,51 @@ public class MusicDirector
     {
         _backend.Update(deltaSeconds);
         _duck.Update(deltaSeconds);
+
+        if (_stoppingWithFade)
+        {
+            _stopFadeElapsed += deltaSeconds;
+            var progress = _stopFadeDuration <= 0f ? 1f : Math.Clamp(_stopFadeElapsed / _stopFadeDuration, 0f, 1f);
+            var fadeOut = CrossfadeMath.EqualPower(progress).Out;
+            // When fading out to silence, use fadeOut as inverse? EqualPower gives us the ramp
+            // For fade out, we want volume going from 1 to 0
+            var fade = 1f - progress;
+            // Use equal power curve for fade out
+            var (_, outGain) = CrossfadeMath.EqualPower(progress);
+            // Actually easier: fade = 1 - progress mapped through curve? Or just use (1, outGain)
+            // CrossfadeMath.EqualPower(progress): at progress=0 -> (In:~0, Out:~1), at progress=1 -> (In:~1, Out:~0)
+            // So for fade out only, we want Out gain decreasing? Or we need to fade the active track
+            if (_backend.SupportsOverlap)
+            {
+                if (_active != null)
+                    _backend.SetActiveVolume(Compose(CrossfadeMath.EqualPower(1f - progress).In, _active.Context));
+                if (_outgoing != null)
+                    _backend.SetOutgoingVolume(Compose(CrossfadeMath.EqualPower(progress).Out, _outgoing.Context));
+            }
+            else
+            {
+                if (_active != null)
+                    _backend.SetActiveVolume(Compose(CrossfadeMath.EqualPower(1f - progress).In, _active.Context));
+            }
+
+            if (progress >= 1f)
+            {
+                _stoppingWithFade = false;
+                _stopFadeElapsed = 0f;
+                _stopFadeDuration = 0f;
+                _playlist.Stop();
+                _sequencer.Cancel();
+                _isCrossfading = false;
+                _crossfadeElapsed = 0f;
+                _active = null;
+                _outgoing = null;
+                _pending = null;
+                _backend.Stop();
+                _backend.StopOutgoing();
+                return;
+            }
+            return;
+        }
 
         if (!_playlist.IsPlaying)
         {

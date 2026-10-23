@@ -38,6 +38,9 @@ var config = new AudioConfigBuilder()
 
 var director = new MusicManager(backend, new MusicPlaylistController(playlists), config.Music);
 
+director.Play("overworld", fadeInSeconds: 1.0f);
+director.Stop(fadeOutSeconds: 0.5f);
+
 // Each Play() is an independent crossfade:
 director.Play("overworld");   // overworld track plays (loops)
 director.Play("battle");      // crossfade overworld → battle (1.5s)

@@ -167,9 +167,10 @@ private void ApplyFrame(StoryFrame frame)
 A scene change should never let the previous track or SFX bleed into the new screen. Two
 complementary tools:
 
-1. **Cut lingering SFX** on every scene change:
+1. **Cut lingering SFX** before playing the next one (and on every scene change):
    ```csharp
-   if (frame.SceneChanged) sfx.Stop();   // hard cut, one-shots never bleed
+   if (frame.Sfx is not null) sfx.Stop();   // hard cut, previous one-shot never bleeds
+   if (frame.SceneChanged) sfx.Stop();
    ```
 2. **Music** — choose one of:
    - **Crossfade early**: start the new track during the outgoing screen's tail so it is

@@ -17,6 +17,9 @@ While the version is `0.x`, the API may change between minor versions.
 
 #### 2026-10-23
 
+- **Samples stop the previous SFX before playing the next.** `ApplyFrame` now calls
+  `_sfx.Stop()` / `_sfx?.Stop()` immediately before every `_sfx.Play(...)`, so a long
+  one-shot (e.g. a dialog cue) can never bleed into the next cue or screen.
 - **Samples crossfade the overworld out during battle intro.** On `BattleStartCue`, the sample
   starts crossfading overworld→battle over `BattleIntroSeconds` (1.2 s) so the overworld is
   already gone by the time the battle screen appears; other music switches hard-stop the

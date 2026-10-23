@@ -167,6 +167,9 @@ public class Game1 : Game, IDisposable
 
         if (frame.Sfx is not null)
         {
+            // Never let a previous one-shot (e.g. a long dialog cue) bleed into the next cue.
+            _sfx?.Stop();
+
             // Duck only when no scene switch is happening: a cue that accompanies a switch
             // must not suppress the crossfade back to the overworld track.
             var duck = frame.Music is null;

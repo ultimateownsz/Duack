@@ -22,7 +22,7 @@ public sealed class SfxManager
 {
     private readonly AudioLibrary _library;
     private readonly ISfxBackend _backend;
-    private readonly MusicDirector _music;
+    private readonly MusicManager _music;
     private readonly SfxConfig? _sfxConfig;
     private readonly string _duckSource;
     private readonly MarbleBag<string> _bag;
@@ -39,7 +39,7 @@ public sealed class SfxManager
     public SfxManager(
         AudioLibrary library,
         ISfxBackend backend,
-        MusicDirector music,
+        MusicManager music,
         string duckSource = "sfx",
         Random? random = null,
         float masterVolume = 1f,

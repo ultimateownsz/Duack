@@ -35,8 +35,8 @@ public sealed class DuckMixer
 
     /// <summary>
     /// Re-applies a fresh config set (e.g. after a hot reload). Existing sources swap to the new
-    /// parameters in place ÔÇö preserving their live active/pulse/current-ratio state so ducking
-    /// stays continuous ÔÇö new sources are added, and removed ones dropped.
+    /// parameters in place preserving their live active/pulse/current-ratio state so ducking
+    /// stays continuous new sources are added, and removed ones dropped.
     /// </summary>
     public void ReloadSources(IEnumerable<KeyValuePair<string, DuckSourceConfig>> sources)
     {

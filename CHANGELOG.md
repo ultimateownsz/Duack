@@ -17,6 +17,13 @@ While the version is `0.x`, the API may change between minor versions.
 
 #### 2026-10-23
 
+- **Wired fade durations into the first-play fade-in.** `Play(playlistName, fadeInSeconds)` and a
+  track's `FadeInSeconds` now drive the duration of the initial silence-to-full ramp on both
+  overlap (desktop) and sequenced (web) backends (`_transitionDuration`); previously the value
+  was stored but ignored. `Stop` already honored `fadeOutSeconds` / `FadeOutSeconds`.
+  Regression tests: 6 new cases in `MusicManagerFadeTests` (explicit and per-track fade-in
+  duration, per-track fade-out duration on stop) verified red by forcing `_transitionDuration`
+  back to `CrossfadeSeconds` (4 failures) then green after restore.
 - **Fixed CS8604 nullable warning in `MusicManager.Update`.** `desired` is now pattern-matched
   (`is not null`) so the compiler tracks non-null before `BeginTransition(desired)`; no behavior
   change.

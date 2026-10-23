@@ -52,6 +52,18 @@ public class MusicManagerFadeTests
         },
     };
 
+    private static PlaylistConfig OneTrackWithFade(string name, float? fadeIn = null, float? fadeOut = null, PlaylistRepeatMode repeat = PlaylistRepeatMode.Off) => new()
+    {
+        Playlists =
+        {
+            ["main"] = new PlaylistDefinition
+            {
+                Tracks = { new PlaylistTrack { Name = name, Context = "Overworld", FadeInSeconds = fadeIn, FadeOutSeconds = fadeOut } },
+                Repeat = repeat,
+            },
+        },
+    };
+
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
@@ -111,6 +123,71 @@ public class MusicManagerFadeTests
 
         director.Stop();
 
+        Assert.False(director.IsPlaying);
+        Assert.True(backend.StopCalls > 0);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void Play_fade_in_duration_controls_the_ramp(bool supportsOverlap)
+    {
+        var backend = new FakeMusicBackend(supportsOverlap);
+        var playlist = new MusicPlaylistController(OneTrack("solo"), new Random(1));
+        var director = new MusicManager(backend, playlist, new MusicConfig { CrossfadeSeconds = 1f });
+
+        director.Play("main", fadeInSeconds: 0.25f);
+        director.Update(0.016f);
+
+        director.Update(0.1f);
+        Assert.True(backend.ActiveVolumes.Last() < 1f);
+        Assert.True(backend.ActiveVolumes.Last() > 0f);
+
+        director.Update(0.2f);
+        Assert.Equal(1f, backend.ActiveVolumes.Last(), 3);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void Per_track_fade_in_duration_controls_the_first_play_ramp(bool supportsOverlap)
+    {
+        var backend = new FakeMusicBackend(supportsOverlap);
+        var playlist = new MusicPlaylistController(OneTrackWithFade("solo", fadeIn: 0.25f), new Random(1));
+        var director = new MusicManager(backend, playlist, new MusicConfig { CrossfadeSeconds = 1f });
+
+        director.Play("main");
+        director.Update(0.016f);
+
+        director.Update(0.1f);
+        Assert.True(backend.ActiveVolumes.Last() < 1f);
+        Assert.True(backend.ActiveVolumes.Last() > 0f);
+
+        director.Update(0.2f);
+        Assert.Equal(1f, backend.ActiveVolumes.Last(), 3);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void Per_track_fade_out_duration_controls_stop(bool supportsOverlap)
+    {
+        var backend = new FakeMusicBackend(supportsOverlap);
+        var playlist = new MusicPlaylistController(OneTrackWithFade("solo", fadeOut: 0.25f), new Random(1));
+        var director = new MusicManager(backend, playlist, new MusicConfig { CrossfadeSeconds = 1f });
+
+        director.Play("main");
+        director.Update(0.016f);
+
+        director.Stop();
+        Assert.True(director.IsPlaying);
+        Assert.Equal(0, backend.StopCalls);
+
+        director.Update(0.1f);
+        Assert.True(backend.ActiveVolumes.Last() < 1f);
+        Assert.Equal(0, backend.StopCalls);
+
+        director.Update(0.2f);
         Assert.False(director.IsPlaying);
         Assert.True(backend.StopCalls > 0);
     }

@@ -44,6 +44,7 @@ public class MusicManager
     private float _stopFadeDuration;
     private float? _fadeInDurationOverride;
     private float? _fadeOutDurationOverride;
+    private float _transitionDuration;
 
     /// <summary>Raised after the playlist advanced: carries the track that just completed.</summary>
     public event Action<PlaylistTrack>? TrackCompleted;
@@ -78,6 +79,7 @@ public class MusicManager
         _backend = backend ?? throw new ArgumentNullException(nameof(backend));
         _playlist = playlist ?? throw new ArgumentNullException(nameof(playlist));
         _music = music ?? new MusicConfig();
+        _transitionDuration = _music.CrossfadeSeconds;
         MasterVolume = masterVolume;
         _random = random ?? Random.Shared;
         _duck = new DuckMixer();
@@ -101,6 +103,9 @@ public class MusicManager
         _stoppingWithFade = false;
         _stopFadeElapsed = 0f;
         _stopFadeDuration = 0f;
+
+        if (fadeInSeconds.HasValue)
+            _fadeInDurationOverride = fadeInSeconds;
 
         _playlist.Play(playlistName);
         // Immediately trigger the transition so the crossfade starts on this frame,
@@ -261,8 +266,10 @@ public class MusicManager
         var desired = _playlist.CurrentTrack;
         if (desired is not null && !ReferenceEquals(desired, _pending ?? _active))
         {
-            _fadeInDurationOverride = desired.FadeInSeconds;
-            _fadeOutDurationOverride = desired.FadeOutSeconds;
+            if (desired.FadeInSeconds.HasValue)
+                _fadeInDurationOverride = desired.FadeInSeconds;
+            if (desired.FadeOutSeconds.HasValue)
+                _fadeOutDurationOverride = desired.FadeOutSeconds;
             BeginTransition(desired);
         }
 
@@ -279,7 +286,7 @@ public class MusicManager
 
     private void UpdateOverlapCrossfade(float deltaSeconds)
     {
-        var duration = _music.CrossfadeSeconds;
+        var duration = _transitionDuration;
         _crossfadeElapsed += deltaSeconds;
         var progress = duration <= 0f ? 1f : Math.Clamp(_crossfadeElapsed / duration, 0f, 1f);
         var (fadeIn, fadeOut) = CrossfadeMath.EqualPower(progress);
@@ -296,7 +303,7 @@ public class MusicManager
 
     private void UpdateSequencedCrossfade(float deltaSeconds)
     {
-        var duration = _music.CrossfadeSeconds;
+        var duration = _transitionDuration;
         var fadeOutCompleted = _sequencer.Advance(deltaSeconds, duration);
 
         if (fadeOutCompleted && _pending != null)
@@ -332,12 +339,16 @@ public class MusicManager
     {
         if (_backend.SupportsOverlap)
         {
+            var isFirstTrack = _active == null;
             _outgoing = _active;
             _active = desired;
             _pending = null;
             _backend.PlayTrack(desired.Name, Compose(0f, desired.Context), NextCuePitch());
             _isCrossfading = true;
             _crossfadeElapsed = 0f;
+            _transitionDuration = isFirstTrack
+                ? (_fadeInDurationOverride ?? _music.CrossfadeSeconds)
+                : _music.CrossfadeSeconds;
         }
         else if (_backend.IsTrackPlaying)
         {
@@ -345,6 +356,7 @@ public class MusicManager
             _pending = desired;
             _sequencer.BeginFadeOut();
             _isCrossfading = true;
+            _transitionDuration = _music.CrossfadeSeconds;
         }
         else
         {
@@ -353,6 +365,7 @@ public class MusicManager
             _sequencer.BeginFadeIn();
             _backend.PlayTrack(desired.Name, Compose(_sequencer.InGain, desired.Context), NextCuePitch());
             _isCrossfading = true;
+            _transitionDuration = _fadeInDurationOverride ?? _music.CrossfadeSeconds;
         }
     }
 
@@ -398,6 +411,7 @@ public class MusicManager
             _sequencer.BeginFadeIn();
             _isCrossfading = true;
             _crossfadeElapsed = 0f;
+            _transitionDuration = _fadeInDurationOverride ?? _music.CrossfadeSeconds;
         }
     }
 }

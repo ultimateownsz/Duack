@@ -45,7 +45,15 @@ Then open the launched URL (e.g. https://localhost:5000) and click a button.
 
 `wwwroot/Content/Audio/Tracks/` holds OGG versions of the desktop sample's songs
 (`overworld`, `battle`, `hospital`), produced from the gitignored desktop WAV masters with
-`duack convert`. After changing the tracks, regenerate the manifest:
+`duack convert`. To keep the tracks at equal loudness, normalize the masters first:
+
+```
+dotnet run --project tools/Duack.Tools -- normalize samples/Duack.Sample.Desktop/_masters samples/Duack.Sample.Desktop/_masters_normalized
+dotnet run --project tools/Duack.Tools -- convert samples/Duack.Sample.Desktop/_masters_normalized samples/Duack.Sample.Web/wwwroot/Content/Audio/Tracks --all
+dotnet run --project tools/Duack.Tools -- scan samples/Duack.Sample.Web/wwwroot/Content/Audio
+```
+
+After changing the tracks, regenerate the manifest:
 
 ```
 dotnet run --project tools/Duack.Tools -- scan samples/Duack.Sample.Web/wwwroot/Content/Audio

@@ -7,7 +7,7 @@ namespace Duack;
 /// played) and a sound-effect variant pool (footstep/hit variants do not repeat back-to-back).
 /// </summary>
 /// <typeparam name="T">Element type.</typeparam>
-public sealed class MarbleBag<T>
+public class MarbleBag<T>
 {
     private readonly List<T> _items;
     private readonly Random _random;

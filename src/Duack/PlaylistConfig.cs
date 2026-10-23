@@ -41,6 +41,12 @@ public class PlaylistTrack
 
     /// <summary>The music-context tag this track plays under (a key in <see cref="MusicConfig.Contexts"/>).</summary>
     public string Context { get; set; } = string.Empty;
+
+    /// <summary>Optional fade-in duration in seconds for this track when it starts.</summary>
+    public float? FadeInSeconds { get; set; }
+
+    /// <summary>Optional fade-out duration in seconds for this track when it stops/leaves.</summary>
+    public float? FadeOutSeconds { get; set; }
 }
 
 /// <summary>A named, ordered list of tracks plus its repeat and shuffle behavior.</summary>

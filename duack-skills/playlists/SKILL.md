@@ -51,7 +51,7 @@ var playlists = new PlaylistConfigBuilder()
 
 ```csharp
 var controller = new MusicPlaylistController(playlists, random /*optional*/);
-var director = new MusicDirector(backend, controller, config.Music);
+var director = new MusicManager(backend, controller, config.Music);
 
 director.Play("battle-sequence");  // starts from top, triggers crossfade
 director.Next();                  // skip track (breaks track-repeat)
@@ -64,7 +64,7 @@ Events: `TrackCompleted` (raised after advance; handler sees successor or null).
 
 ## Completion flow
 
-Adapter fires `IMusicBackend.TrackEnded` when active track ends → `MusicDirector` calls
+Adapter fires `IMusicBackend.TrackEnded` when active track ends → `MusicManager` calls
 `controller.NotifyTrackCompleted()` → controller advances per repeat/shuffle → raises
 `TrackCompleted` → director begins transition (crossfade) on next `Update`.
 

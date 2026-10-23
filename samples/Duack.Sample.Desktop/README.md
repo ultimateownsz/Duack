@@ -31,7 +31,7 @@ dotnet run --project samples/Duack.Sample.Desktop -c Release
   playlist per discovered track (scene music addressed by track name) plus the bag-shuffled
   `music` playlist over all of them.
 - **`SfxManager`**: plays cues by name through `SoundEffectSfxBackend` (MonoGame) and
-  automatically ducks the music (`MusicDirector.Pulse`) while a cue speaks. Unknown cues and
+  automatically ducks the music (`MusicManager.Pulse`) while a cue speaks. Unknown cues and
   backend refusals never duck.
 - **Pitch variation from one sound**: the marble bag of hit pitches was removed from the showcase
   (it did not read well); hits now play at natural pitch. The `MarbleBag<T>` utility itself
@@ -39,8 +39,8 @@ dotnet run --project samples/Duack.Sample.Desktop -c Release
   playlist. The hit cadence, HP bars, and story beats are the pure, headless-pinned
   `StoryController` in the shared `samples/Duack.Sample.Core` (pinned by
   `tests/Duack.Sample.Tests`) — the web sample runs the exact same storyline from that core.
-- The top strip visualizes `MusicDirector.DuckRatio` — ducking you can see.
-- `MusicPlaylistController` + `MusicDirector` crossfade scene switches over the
+- The top strip visualizes `MusicManager.DuckRatio` — ducking you can see.
+- `MusicPlaylistController` + `MusicManager` crossfade scene switches over the
   `Duack.MonoGame` `IMusicBackend` (overlapping `SoundEffectInstance`s).
 - Console logs the discovered cues, the auto-built playlist JSON, and each scene change.
 

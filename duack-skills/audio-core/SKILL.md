@@ -1,6 +1,6 @@
 ---
 name: audio-core
-description: Duack audio library — core types, namespaces, quick reference. Use when working with Duack's audio mixing, ducking, crossfades, playlists, SFX variation, player settings, or the two-directory audio convention. Triggers on: Duack, DuckMixer, MusicDirector, MusicVolumeMath, AudioConfig, SfxManager, MarbleBag, AudioLibrary, ISfxBackend, IMusicBackend, PlayerSettings.
+description: Duack audio library — core types, namespaces, quick reference. Use when working with Duack's audio mixing, ducking, crossfades, playlists, SFX variation, player settings, or the two-directory audio convention. Triggers on: Duack, DuckMixer, MusicManager, MusicVolumeMath, AudioConfig, SfxManager, MarbleBag, AudioLibrary, ISfxBackend, IMusicBackend, PlayerSettings.
 ---
 
 # Duack — Audio Library for XNA-Family Engines
@@ -22,7 +22,7 @@ variation. Duack owns the mix and produces numbers; the user's engine owns playb
   unknown sections are preserved via `[JsonExtensionData]`.
 - Playlists have their own source-generated context (`Duack.PlaylistJson`), AOT-safe for WASM.
 - Hot reload is **not built in**: hosts can re-parse config and call
-  `MusicDirector.ReloadDuckSources()` to swap duck params in place (duck state preserved);
+  `MusicManager.ReloadDuckSources()` to swap duck params in place (duck state preserved);
   file watching is the host's responsibility.
 
 ## Namespace migration
@@ -36,7 +36,7 @@ Every namespace → `Duack`.
 - `DuckMixer` — sidechain ducking with attack/hold/release per named source
 - `MusicVolumeMath` — effective volume math (master × context × duck × fade)
 - `CrossfadeMath` — equal-power crossfade curve
-- `MusicDirector` — owns playlist sequencing, crossfade realization, ducking, context scales
+- `MusicManager` — owns playlist sequencing, crossfade realization, ducking, context scales
 - `MusicTransitionSequencer` — deferred fade-out → swap → fade-in for single-track players (web)
 
 ### Config
@@ -58,7 +58,7 @@ Every namespace → `Duack`.
 
 ### SFX variation
 - `MarbleBag<T>` — draw-without-replacement randomizer (swap-remove, refill on empty, optional avoidImmediateRepeat, injectable Random)
-- `CueVariation` / `CuePlay` — per-play pitch/volume jitter (`MusicDirector.NextCuePitch()` /
+- `CueVariation` / `CuePlay` — per-play pitch/volume jitter (`MusicManager.NextCuePitch()` /
   `SfxManager` per-play resolve)
 - `SfxManager` — cue-name one-shot playback with automatic music ducking and per-play cue jitter
 
@@ -107,7 +107,7 @@ var config = new AudioConfigBuilder()
     .Build();
 
 // Music director
-var director = new MusicDirector(backend, playlistController, config.Music);
+var director = new MusicManager(backend, playlistController, config.Music);
 director.Play("overworld");           // start playlist
 director.Pulse("sfx");               // duck music
 director.ReleaseDucks();             // immediately release all ducks
@@ -128,7 +128,7 @@ var next = bag.Draw();              // draw without replacement
 ### SFX variation pattern
 A cue may declare multiple variants plus per-play pitch/volume ranges. Pure data + pure math
 in core; the music and SFX directors resolve the authored `CueVariation` at play time (music via
-`MusicDirector.NextCuePitch()`, SFX via its `SfxConfig.CueVariation`). Use `MarbleBag<T>` for variant
+`MusicManager.NextCuePitch()`, SFX via its `SfxConfig.CueVariation`). Use `MarbleBag<T>` for variant
 selection.
 
 ### Player settings
@@ -211,7 +211,7 @@ Wire (desktop):
 var clips = new SoundEffectClipLibrary(content);
 var backend = new SoundEffectMusicBackend(clips);
 var controller = new MusicPlaylistController(playlists);
-var director = new MusicDirector(backend, controller, config.Music);
+var director = new MusicManager(backend, controller, config.Music);
 `
 
 Per-frame: director.Update(deltaSeconds); Switch: director.ReleaseDucks(); director.Play("battle"); Duck: director.Pulse("sfx");.

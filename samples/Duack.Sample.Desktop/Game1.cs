@@ -36,7 +36,7 @@ public class Game1 : Game
     private AudioLibrary _library = null!;
     private SoundEffectClipLibrary _clips = null!;
     private MusicPlaylistController _controller = null!;
-    private MusicDirector _director = null!;
+    private MusicManager _director = null!;
     private SfxManager _sfx = null!;
     private readonly StoryController _story = new();
     private MarbleBag<string> _hitBag = null!;
@@ -80,7 +80,7 @@ public class Game1 : Game
         // --- Wire the desktop adapters: music + one-shot sfx over one clip library ---
         _clips = new SoundEffectClipLibrary(_library);
         _controller = new MusicPlaylistController(playlists);
-        _director = new MusicDirector(new SoundEffectMusicBackend(_clips), _controller, config.Music, masterVolume: config.MasterVolume);
+        _director = new MusicManager(new SoundEffectMusicBackend(_clips), _controller, config.Music, masterVolume: config.MasterVolume);
         _sfx = new SfxManager(_library, new SoundEffectSfxBackend(_clips), _director, masterVolume: config.MasterVolume, sfxBusVolume: config.Sfx.MasterVolume, sfxConfig: config.Sfx);
 
         _director.TrackCompleted += finished =>
@@ -230,7 +230,7 @@ public class Game1 : Game
     }
 
     /// <summary>
-    /// Top strip visualizing <see cref="MusicDirector.DuckRatio"/> — the sidechain ducking meter.
+    /// Top strip visualizing <see cref="MusicManager.DuckRatio"/> — the sidechain ducking meter.
     /// 1.0 = music at full volume; lower = the music is ducked (quieter) while a sound effect speaks.
     /// </summary>
     private void DrawDuckBar(Viewport viewport)

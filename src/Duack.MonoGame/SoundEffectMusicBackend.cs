@@ -5,7 +5,7 @@ namespace Duack.MonoGame;
 /// <summary>
 /// Desktop (MonoGame) <see cref="IMusicBackend"/>: caches decoded <see cref="IAudioClip"/>s and
 /// plays them through <see cref="IAudioInstance"/>s. It supports overlap, so the core
-/// <see cref="MusicDirector"/> crossfades the outgoing track against the incoming one.
+/// <see cref="MusicManager"/> crossfades the outgoing track against the incoming one.
 ///
 /// <para>
 /// All mixing decisions (master / context / duck / fade composition, crossfade curves, playlist

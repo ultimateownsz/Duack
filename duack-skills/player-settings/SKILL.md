@@ -77,7 +77,7 @@ Human loudness is closer to logarithmic; quadratic makes midpoint noticeably qui
 // Load
 var authored = AudioConfig.Load();
 var effective = PlayerSettings.ApplyOverrides(authored);
-director = new MusicDirector(backend, controller, effective.Music);
+director = new MusicManager(backend, controller, effective.Music);
 
 // Save
 settings.MusicVolume = VolumeCurve.ToAmplitude(sliderMusic);

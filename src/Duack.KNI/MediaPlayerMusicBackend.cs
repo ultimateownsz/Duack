@@ -10,7 +10,7 @@ namespace Duack.KNI;
 ///
 /// <para>
 /// The player cannot overlap two tracks, so <see cref="SupportsOverlap"/> is false and the core
-/// <see cref="MusicDirector"/> fades the old track out, swaps the single player, then fades the new
+/// <see cref="MusicManager"/> fades the old track out, swaps the single player, then fades the new
 /// one in (see <c>MusicTransitionSequencer</c>). This adapter plays tracks NON-repeating; looping is a
 /// playlist concern handled by the core, and a track reaching its natural end is reported through
 /// <see cref="IMusicBackend.TrackEnded"/> (see <see cref="MediaEndState"/> for the stale-signal guard).

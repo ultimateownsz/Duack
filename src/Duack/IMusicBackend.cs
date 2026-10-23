@@ -3,7 +3,7 @@ namespace Duack;
 /// <summary>
 /// Backend abstraction for music playback. Adapters implement this over engine-specific
 /// audio APIs (MonoGame <c>SoundEffectInstance</c>, KNI <c>MediaPlayer</c>, etc.). The core
-/// <see cref="MusicDirector"/> owns all mixing logic (crossfade, ducking, context scales,
+/// <see cref="MusicManager"/> owns all mixing logic (crossfade, ducking, context scales,
 /// master volume); backends are thin and only apply the volume they are told, play tracks,
 /// and report completion.
 /// </summary>
@@ -40,7 +40,7 @@ public interface IMusicBackend
 
     /// <summary>
     /// Fired when the currently active track completes playback (reaches end). The core
-    /// <see cref="MusicDirector"/> uses this to advance playlists via
+    /// <see cref="MusicManager"/> uses this to advance playlists via
     /// <see cref="MusicPlaylistController.NotifyTrackCompleted"/>.
     /// </summary>
     event EventHandler? TrackEnded;

@@ -38,7 +38,7 @@ Configured under `MusicConfig.DuckSources` (keyed by source name: "sfx", "dialog
 | `EffectiveRatio` | Combined ratio applied to music (1 = no ducking). |
 | `GainReduction` / `Attenuation` | Combined gain reduction / attenuation applied to music ($1 - \text{EffectiveRatio}$). |
 
-## MusicDirector ducking facade
+## MusicManager ducking facade
 
 ```csharp
 director.Pulse("sfx");                 // duck for configured hold
@@ -95,7 +95,7 @@ Duack has **no built-in file watching**. A host that wants live editing can re-p
 config and rebuild duck sources without losing state:
 ```csharp
 var newSources = config.Music.DuckSources;   // IEnumerable<KVP>
-// DuckMixer.ReloadSources(newSources) — or rebuild MusicDirector and call ReloadSources on its mixer
+// DuckMixer.ReloadSources(newSources) — or rebuild MusicManager and call ReloadSources on its mixer
 ```
 `ReloadSources` keeps active/pulse/current-ratio continuous; new sources added, removed dropped.
 

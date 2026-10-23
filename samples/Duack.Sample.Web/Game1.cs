@@ -25,7 +25,7 @@ public class Game1 : Game, IDisposable
 
     private AudioLibrary _library = null!;
     private MusicPlaylistController _controller = null!;
-    private MusicDirector _director = null!;
+    private MusicManager _director = null!;
     private SfxManager? _sfx = null!;
     private readonly StoryController _story = new();
     private MarbleBag<string> _hitBag = null!;
@@ -92,7 +92,7 @@ public class Game1 : Game, IDisposable
         var backend = new MediaPlayerMusicBackend(
             new KniMediaPlayerHost(), contentRoot: "Content/Audio/Tracks", extension: ".ogg");
         _controller = new MusicPlaylistController(playlists);
-        _director = new MusicDirector(backend, _controller, config.Music, masterVolume: config.MasterVolume);
+        _director = new MusicManager(backend, _controller, config.Music, masterVolume: config.MasterVolume);
 
         // WebAudio SFX backend: one-shots overlap the music track while DuckMixer dips music.
         // Cue URLs are relative to the app root; WAV files live in wwwroot/Content/Audio/SFX/.

@@ -24,7 +24,7 @@ namespace Duack;
 /// <see cref="MusicPlaylistController.NotifyTrackCompleted"/>.
 /// </para>
 /// </summary>
-public class MusicDirector
+public class MusicManager
 {
     private readonly IMusicBackend _backend;
     private readonly MusicPlaylistController _playlist;
@@ -71,7 +71,7 @@ public class MusicDirector
     /// <param name="music">Music mix settings: master, crossfade, contexts, ducks, cue variation.</param>
     /// <param name="random">Random source for cue variation; defaults to <see cref="Random.Shared"/>.</param>
     /// <param name="masterVolume">Master bus volume (scales music and SFX alike); defaults to full volume.</param>
-    public MusicDirector(IMusicBackend backend, MusicPlaylistController playlist, MusicConfig? music = null, Random? random = null, float masterVolume = 1f)
+    public MusicManager(IMusicBackend backend, MusicPlaylistController playlist, MusicConfig? music = null, Random? random = null, float masterVolume = 1f)
     {
         _backend = backend ?? throw new ArgumentNullException(nameof(backend));
         _playlist = playlist ?? throw new ArgumentNullException(nameof(playlist));

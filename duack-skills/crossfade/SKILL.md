@@ -1,6 +1,6 @@
 ---
 name: crossfade
-description: Duack crossfades and scene transitions — sequential crossfades between any number of tracks, desktop (overlap) vs web (sequenced) backends, playlists, ducking during transitions, hard-reset vs natural-gate patterns. Triggers on: crossfade, scene transition, MusicDirector.Play, ReleaseDucks, IsDuckReady, overworld, battle, hospital, ducking delay.
+description: Duack crossfades and scene transitions — sequential crossfades between any number of tracks, desktop (overlap) vs web (sequenced) backends, playlists, ducking during transitions, hard-reset vs natural-gate patterns. Triggers on: crossfade, scene transition, MusicManager.Play, ReleaseDucks, IsDuckReady, overworld, battle, hospital, ducking delay.
 ---
 
 # Duack — Crossfades and Scene Transitions
@@ -8,7 +8,7 @@ description: Duack crossfades and scene transitions — sequential crossfades be
 ## 1. Overview
 
 Duack supports **sequential crossfades between any number of tracks**. You do not need to
-pre-queue all tracks — each call to `MusicDirector.Play()` triggers an independent crossfade
+pre-queue all tracks — each call to `MusicManager.Play()` triggers an independent crossfade
 from whatever is currently playing to the new track.
 
 ## 2. Basic usage
@@ -36,7 +36,7 @@ var config = new AudioConfigBuilder()
     .WithPlaylists(playlists)
     .Build();
 
-var director = new MusicDirector(backend, new MusicPlaylistController(playlists), config.Music);
+var director = new MusicManager(backend, new MusicPlaylistController(playlists), config.Music);
 
 // Each Play() is an independent crossfade:
 director.Play("overworld");   // overworld track plays (loops)
@@ -105,11 +105,11 @@ Best when you want to preserve the duck's smooth release curve.
 
 | Method | Description |
 |---|---|
-| `MusicDirector.Pulse(source, hold)` | Ducks a source for its configured hold |
-| `MusicDirector.SetDuck(source, active)` | Holds a source ducked on/off |
-| `MusicDirector.ReleaseDucks()` | Immediately releases all duck sources (no easing) |
-| `MusicDirector.IsDuckReady(threshold)` | True when combined duck ratio ≥ threshold (default 0.99) |
-| `MusicDirector.DuckRatio` | Current combined duck ratio |
+| `MusicManager.Pulse(source, hold)` | Ducks a source for its configured hold |
+| `MusicManager.SetDuck(source, active)` | Holds a source ducked on/off |
+| `MusicManager.ReleaseDucks()` | Immediately releases all duck sources (no easing) |
+| `MusicManager.IsDuckReady(threshold)` | True when combined duck ratio ≥ threshold (default 0.99) |
+| `MusicManager.DuckRatio` | Current combined duck ratio |
 
 ## 5. Playlists for automatic sequencing
 
@@ -161,7 +161,7 @@ private void ApplyFrame(StoryFrame frame)
 
 ## 7. Key insight: Play() triggers transition immediately
 
-`MusicDirector.Play()` calls `Update(0f)` internally, so the crossfade starts on the same
+`MusicManager.Play()` calls `Update(0f)` internally, so the crossfade starts on the same
 frame instead of waiting for the next `Update()` call. This ensures the audio track plays
 right after the last action in the previous scene.
 
@@ -190,15 +190,15 @@ right after the last action in the previous scene.
 
 | Method | Description |
 |---|---|
-| `MusicDirector.Play(name)` | Start a playlist (triggers crossfade immediately if different track) |
-| `MusicDirector.Next()` | Skip to next track in current playlist |
-| `MusicDirector.Stop()` | Stop playback and clear all transition state |
-| `MusicDirector.Update(dt)` | Advance playback by dt seconds (call per frame) |
-| `MusicDirector.Pulse(source, hold)` | Duck a source for its configured hold |
-| `MusicDirector.SetDuck(source, active)` | Hold a source ducked on/off |
-| `MusicDirector.ReleaseDucks()` | Immediately release all duck sources |
-| `MusicDirector.IsDuckReady(threshold)` | True when duck ratio ≥ threshold |
-| `MusicDirector.DuckRatio` | Current combined duck ratio |
-| `MusicDirector.GainReduction` / `Attenuation` | Current combined gain reduction (1 − DuckRatio) |
-| `MusicDirector.CurrentTrack` | The track that should be playing |
-| `MusicDirector.IsPlaying` | True while a playlist is running |
+| `MusicManager.Play(name)` | Start a playlist (triggers crossfade immediately if different track) |
+| `MusicManager.Next()` | Skip to next track in current playlist |
+| `MusicManager.Stop()` | Stop playback and clear all transition state |
+| `MusicManager.Update(dt)` | Advance playback by dt seconds (call per frame) |
+| `MusicManager.Pulse(source, hold)` | Duck a source for its configured hold |
+| `MusicManager.SetDuck(source, active)` | Hold a source ducked on/off |
+| `MusicManager.ReleaseDucks()` | Immediately release all duck sources |
+| `MusicManager.IsDuckReady(threshold)` | True when duck ratio ≥ threshold |
+| `MusicManager.DuckRatio` | Current combined duck ratio |
+| `MusicManager.GainReduction` / `Attenuation` | Current combined gain reduction (1 − DuckRatio) |
+| `MusicManager.CurrentTrack` | The track that should be playing |
+| `MusicManager.IsPlaying` | True while a playlist is running |

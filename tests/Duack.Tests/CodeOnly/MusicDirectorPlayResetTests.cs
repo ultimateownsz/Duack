@@ -8,7 +8,7 @@ namespace Duack.Tests.CodeOnly;
 /// Pins that Play() resets any in-progress crossfade so the next scene's track starts
 /// cleanly (no stale transition state bleeding across scene switches).
 /// </summary>
-public class MusicDirectorPlayResetTests
+public class MusicManagerPlayResetTests
 {
     private static PlaylistConfig TwoPlaylists() => new()
     {
@@ -55,7 +55,7 @@ public class MusicDirectorPlayResetTests
     {
         var backend = new FakeBackend { SupportsOverlap = true };
         var playlist = new MusicPlaylistController(TwoPlaylists());
-        var director = new MusicDirector(backend, playlist, DemoMusic());
+        var director = new MusicManager(backend, playlist, DemoMusic());
 
         // Start overworld, then switch to battle (crossfade starts).
         director.Play("overworld");

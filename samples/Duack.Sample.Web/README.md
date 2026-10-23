@@ -33,7 +33,7 @@ Then open the launched URL (e.g. https://localhost:5000) and click a button.
   sample scans live. One button per discovered track plus the auto-built `music`
   bag-shuffle playlist.
 - Code-first config via `SampleAudio` in the shared core (no JSON required for the mix itself).
-- `MusicPlaylistController` + `MusicDirector` driving `Duack.KNI.IMusicBackend` over the
+- `MusicPlaylistController` + `MusicManager` driving `Duack.KNI.IMusicBackend` over the
   platform player, including the single-instance fade-out/switch/fade-in crossfade.
 - **Story cues as duck pulses**: the web host has no sfx backend, so each cue (notice, dialog,
   hit) pulses the same `sfx` duck source with the same configured hold as desktop's

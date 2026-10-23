@@ -64,7 +64,7 @@ JSON (`Duack.Config`): `AudioConfigJson.Load()` / `TryLoad()` read `Content/Audi
 Duack provides the pieces to support hot reload if your host wants it: re-parse via
 `AudioConfigJson.Load()` / `TryLoad()` or `Parse()`, apply player overrides with
 `PlayerSettings.ApplyOverrides(authored)`, and tell the music director to refresh duck
-sources with `MusicDirector.ReloadDuckSources()` (duck state is preserved; existing sources
+sources with `MusicManager.ReloadDuckSources()` (duck state is preserved; existing sources
 swap params in place). Duack has **no built-in file watching** — file monitoring is the
 host's responsibility (and varies by engine; not standard in MonoGame/KNI).
 

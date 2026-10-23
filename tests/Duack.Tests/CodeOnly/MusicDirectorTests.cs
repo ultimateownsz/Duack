@@ -3,12 +3,12 @@ using Duack;
 namespace Duack.Tests.CodeOnly;
 
 /// <summary>
-/// Headless pin of the <see cref="MusicDirector"/>: a fake backend stands in for the engine,
+/// Headless pin of the <see cref="MusicManager"/>: a fake backend stands in for the engine,
 /// so playlist advance, crossfade realization, cue pitch application, and the full
 /// master x context x duck x fade volume composition are all verifiable without MonoGame or KNI.
 /// The adapters stay thin precisely because these behaviors live here.
 /// </summary>
-public class MusicDirectorTests
+public class MusicManagerTests
 {
     /// <summary>Records every call the director makes; can be overlap-capable or single-instance.</summary>
     private sealed class FakeMusicBackend : IMusicBackend
@@ -77,7 +77,7 @@ public class MusicDirectorTests
     {
         var backend = new FakeMusicBackend(supportsOverlap: true);
         var playlist = new MusicPlaylistController(TwoTracks("a", "b"), new Random(1));
-        var director = new MusicDirector(backend, playlist, new MusicConfig { CrossfadeSeconds = 1f });
+        var director = new MusicManager(backend, playlist, new MusicConfig { CrossfadeSeconds = 1f });
 
         director.Play("main");
         director.Update(0.016f);
@@ -91,7 +91,7 @@ public class MusicDirectorTests
     {
         var backend = new FakeMusicBackend(supportsOverlap: true);
         var playlist = new MusicPlaylistController(TwoTracks("a", "b"), new Random(1));
-        var director = new MusicDirector(backend, playlist, new MusicConfig { CrossfadeSeconds = 1f });
+        var director = new MusicManager(backend, playlist, new MusicConfig { CrossfadeSeconds = 1f });
 
         director.Play("main");
         director.Update(0.016f);
@@ -107,7 +107,7 @@ public class MusicDirectorTests
     {
         var backend = new FakeMusicBackend(supportsOverlap: true);
         var playlist = new MusicPlaylistController(TwoTracks("a", "b"), new Random(1));
-        var director = new MusicDirector(backend, playlist);
+        var director = new MusicManager(backend, playlist);
         var reported = new List<string?>();
         director.TrackCompleted += t => reported.Add(t.Name);
 
@@ -123,7 +123,7 @@ public class MusicDirectorTests
     {
         var backend = new FakeMusicBackend(supportsOverlap: true);
         var playlist = new MusicPlaylistController(OneTrack("solo", PlaylistRepeatMode.Track), new Random(1));
-        var director = new MusicDirector(backend, playlist);
+        var director = new MusicManager(backend, playlist);
 
         director.Play("main");
         director.Update(0.016f);
@@ -139,7 +139,7 @@ public class MusicDirectorTests
     {
         var backend = new FakeMusicBackend(supportsOverlap: true);
         var playlist = new MusicPlaylistController(TwoTracks("a", "b"), new Random(1));
-        var director = new MusicDirector(backend, playlist);
+        var director = new MusicManager(backend, playlist);
 
         director.Play("main");
         director.Update(0.016f);
@@ -158,7 +158,7 @@ public class MusicDirectorTests
     {
         var backend = new FakeMusicBackend(supportsOverlap: true);
         var playlist = new MusicPlaylistController(TwoTracks("a", "b"), new Random(1));
-        var director = new MusicDirector(backend, playlist, new MusicConfig { CrossfadeSeconds = 1f });
+        var director = new MusicManager(backend, playlist, new MusicConfig { CrossfadeSeconds = 1f });
 
         director.Play("main");
         director.Update(0.016f);
@@ -176,7 +176,7 @@ public class MusicDirectorTests
     {
         var backend = new FakeMusicBackend(supportsOverlap: true);
         var playlist = new MusicPlaylistController(TwoTracks("a", "b"), new Random(1));
-        var director = new MusicDirector(backend, playlist, new MusicConfig { CrossfadeSeconds = 1f });
+        var director = new MusicManager(backend, playlist, new MusicConfig { CrossfadeSeconds = 1f });
 
         director.Play("main");
         director.Update(0.016f);
@@ -193,7 +193,7 @@ public class MusicDirectorTests
     {
         var backend = new FakeMusicBackend(supportsOverlap: true);
         var playlist = new MusicPlaylistController(TwoTracks("a", "b"), new Random(1));
-        var director = new MusicDirector(backend, playlist, new MusicConfig { CrossfadeSeconds = 0f });
+        var director = new MusicManager(backend, playlist, new MusicConfig { CrossfadeSeconds = 0f });
 
         director.Play("main");
         director.Update(0.016f);
@@ -210,7 +210,7 @@ public class MusicDirectorTests
     {
         var backend = new FakeMusicBackend(supportsOverlap: false);
         var playlist = new MusicPlaylistController(TwoTracks("a", "b"), new Random(1));
-        var director = new MusicDirector(backend, playlist, new MusicConfig { CrossfadeSeconds = 1f });
+        var director = new MusicManager(backend, playlist, new MusicConfig { CrossfadeSeconds = 1f });
 
         director.Play("main");
         director.Update(0.016f);
@@ -237,7 +237,7 @@ public class MusicDirectorTests
     {
         var backend = new FakeMusicBackend(supportsOverlap: false);
         var playlist = new MusicPlaylistController(OneTrack("solo"), new Random(1));
-        var director = new MusicDirector(backend, playlist, new MusicConfig { CrossfadeSeconds = 1f });
+        var director = new MusicManager(backend, playlist, new MusicConfig { CrossfadeSeconds = 1f });
 
         director.Play("main");
         director.Update(0.016f);
@@ -253,7 +253,7 @@ public class MusicDirectorTests
         var backend = new FakeMusicBackend(supportsOverlap: true);
         var playlist = new MusicPlaylistController(OneTrack("solo"), new Random(1));
         var music = new MusicConfig { CueVariation = new CueVariation(0.5f, 0f) };
-        var director = new MusicDirector(backend, playlist, music, new Random(42));
+        var director = new MusicManager(backend, playlist, music, new Random(42));
 
         director.Play("main");
         director.Update(0.016f);
@@ -267,7 +267,7 @@ public class MusicDirectorTests
     {
         var backend = new FakeMusicBackend(supportsOverlap: true);
         var playlist = new MusicPlaylistController(OneTrack("solo"), new Random(1));
-        var director = new MusicDirector(backend, playlist, new MusicConfig());
+        var director = new MusicManager(backend, playlist, new MusicConfig());
 
         director.Play("main");
         director.Update(0.016f);
@@ -280,7 +280,7 @@ public class MusicDirectorTests
     {
         var backend = new FakeMusicBackend(supportsOverlap: true);
         var playlist = new MusicPlaylistController(OneTrack("solo"), new Random(1));
-        var director = new MusicDirector(backend, playlist, new MusicConfig { CrossfadeSeconds = 0f, MasterVolume = 0.5f });
+        var director = new MusicManager(backend, playlist, new MusicConfig { CrossfadeSeconds = 0f, MasterVolume = 0.5f });
 
         director.Play("main");
         director.Update(0.016f);
@@ -295,7 +295,7 @@ public class MusicDirectorTests
         var playlist = new MusicPlaylistController(OneTrack("solo"), new Random(1));
         var music = new MusicConfig { CrossfadeSeconds = 0f };
         music.Contexts["Overworld"] = 0.25f;
-        var director = new MusicDirector(backend, playlist, music);
+        var director = new MusicManager(backend, playlist, music);
 
         director.Play("main");
         director.Update(0.016f);
@@ -310,7 +310,7 @@ public class MusicDirectorTests
         var playlist = new MusicPlaylistController(OneTrack("solo"), new Random(1));
         var music = new MusicConfig { CrossfadeSeconds = 0f };
         music.DuckSources["sfx"] = new DuckSourceConfig { Ratio = 0.3f, AttackSeconds = 0f, ReleaseSeconds = 0f };
-        var director = new MusicDirector(backend, playlist, music);
+        var director = new MusicManager(backend, playlist, music);
 
         director.Play("main");
         director.Update(0.016f);
@@ -328,7 +328,7 @@ public class MusicDirectorTests
         var playlist = new MusicPlaylistController(OneTrack("solo"), new Random(1));
         var music = new MusicConfig { CrossfadeSeconds = 0f };
         music.DuckSources["sfx"] = new DuckSourceConfig { Ratio = 0.3f, AttackSeconds = 0f, ReleaseSeconds = 0f };
-        var director = new MusicDirector(backend, playlist, music);
+        var director = new MusicManager(backend, playlist, music);
 
         director.Play("main");
         director.Update(0.016f);
@@ -345,7 +345,7 @@ public class MusicDirectorTests
     {
         var backend = new FakeMusicBackend(supportsOverlap: true);
         var playlist = new MusicPlaylistController(TwoTracks("a", "b"), new Random(1));
-        var director = new MusicDirector(backend, playlist);
+        var director = new MusicManager(backend, playlist);
 
         director.Play("main");
         director.Update(0.016f);
@@ -361,7 +361,7 @@ public class MusicDirectorTests
     {
         var backend = new FakeMusicBackend(supportsOverlap: true);
         var playlist = new MusicPlaylistController(TwoTracks("a", "b"), new Random(1));
-        var director = new MusicDirector(backend, playlist);
+        var director = new MusicManager(backend, playlist);
 
         director.Play("missing");
         director.Update(0.016f);
@@ -374,7 +374,7 @@ public class MusicDirectorTests
     public void Updates_while_idle_do_not_touch_the_backend_volumes()
     {
         var backend = new FakeMusicBackend(supportsOverlap: true);
-        var director = new MusicDirector(backend, new MusicPlaylistController(TwoTracks("a", "b"), new Random(1)));
+        var director = new MusicManager(backend, new MusicPlaylistController(TwoTracks("a", "b"), new Random(1)));
 
         director.Update(0.016f);
         director.Update(0.016f);
@@ -393,7 +393,7 @@ public class MusicDirectorTests
         var playlist = new MusicPlaylistController(OneTrack("solo"), new Random(1));
         var music = new MusicConfig { CrossfadeSeconds = 0f };
         music.DuckSources["sfx"] = new DuckSourceConfig { Ratio = 0.3f, AttackSeconds = 0f, ReleaseSeconds = 0f };
-        var director = new MusicDirector(backend, playlist, music);
+        var director = new MusicManager(backend, playlist, music);
 
         director.Play("main");
         director.Update(0.016f);
@@ -417,7 +417,7 @@ public class MusicDirectorTests
         var playlist = new MusicPlaylistController(OneTrack("solo"), new Random(1));
         var music = new MusicConfig { CrossfadeSeconds = 0f };
         music.DuckSources["sfx"] = new DuckSourceConfig { Ratio = 0.3f, AttackSeconds = 0f, ReleaseSeconds = 0f };
-        var director = new MusicDirector(backend, playlist, music);
+        var director = new MusicManager(backend, playlist, music);
 
         director.SetDuck("sfx", true);
         director.Update(0.016f);
@@ -434,7 +434,7 @@ public class MusicDirectorTests
         var backend = new FakeMusicBackend(supportsOverlap: true);
         var playlist = new MusicPlaylistController(OneTrack("solo"), new Random(1));
         var music = new MusicConfig { CrossfadeSeconds = 0f, MasterVolume = 0.5f };
-        var director = new MusicDirector(backend, playlist, music, masterVolume: 0.5f);
+        var director = new MusicManager(backend, playlist, music, masterVolume: 0.5f);
 
         director.Play("main");
         director.Update(0.016f);
@@ -449,7 +449,7 @@ public class MusicDirectorTests
         var backend = new FakeMusicBackend(supportsOverlap: true);
         var playlist = new MusicPlaylistController(OneTrack("solo"), new Random(1));
         var music = new MusicConfig { CrossfadeSeconds = 0f, MasterVolume = 0.5f };
-        var director = new MusicDirector(backend, playlist, music);
+        var director = new MusicManager(backend, playlist, music);
 
         director.Play("main");
         director.Update(0.016f);
@@ -465,7 +465,7 @@ public class MusicDirectorTests
         // the same live behaviour the music bus already has through its config reference.
         var backend = new FakeMusicBackend(supportsOverlap: true);
         var playlist = new MusicPlaylistController(OneTrack("solo"), new Random(1));
-        var director = new MusicDirector(backend, playlist, new MusicConfig { CrossfadeSeconds = 0f });
+        var director = new MusicManager(backend, playlist, new MusicConfig { CrossfadeSeconds = 0f });
 
         director.Play("main");
         director.Update(0.016f);
@@ -484,7 +484,7 @@ public class MusicDirectorTests
         var playlist = new MusicPlaylistController(OneTrack("solo"), new Random(1));
         var music = new MusicConfig { CrossfadeSeconds = 0f };
         music.DuckSources["sfx"] = new DuckSourceConfig { Ratio = 0.3f, AttackSeconds = 0f, ReleaseSeconds = 0f };
-        var director = new MusicDirector(backend, playlist, music);
+        var director = new MusicManager(backend, playlist, music);
 
         Assert.Equal(0f, director.GainReduction, 3);
         Assert.Equal(0f, director.Attenuation, 3);

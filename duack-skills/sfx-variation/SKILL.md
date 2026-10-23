@@ -38,7 +38,7 @@ CuePlay play = variation.Resolve(random);
 `CueVariation.None` = no jitter. Non-finite/negative ranges become 0.
 
 `MusicConfig.CueVariation` / `SfxConfig.CueVariation` (nullable; omitted from JSON when null).
-`MusicDirector` applies `NextCuePitch()` to track plays; `SfxManager` applies its own
+`MusicManager` applies `NextCuePitch()` to track plays; `SfxManager` applies its own
 `SfxConfig.CueVariation` per play (jitter added on top of the passed pitch, volume scaled).
 
 ## SfxManager

@@ -20,7 +20,7 @@ While the version is `0.x`, the API may change between minor versions.
 - **Gain, fade up/down, and gain reduction audio terminology in code.**
   - Added `Gain` static class (`ToAmplitude`, `ToGain`, `FromSlider`, `ToSlider`) and `VolumeCurve.ToGain` for mixer knob / fader law terminology alongside volume sliders.
   - Added studio verb aliases to `MusicTransitionSequencer`: `BeginFadeUp()`, `BeginFadeDown()`, `IsFadingDown`, `MusicFadePhase.FadingUp`, `MusicFadePhase.FadingDown`.
-  - Added `GainReduction` and `Attenuation` properties to `DuckMixer` and `MusicDirector` to read the metered gain reduction applied to the music bus.
+  - Added `GainReduction` and `Attenuation` properties to `DuckMixer` and `MusicManager` to read the metered gain reduction applied to the music bus.
 - **Studio and sound engineering terminology mapped across documentation and skill guides.**
   Documented the mapping between Duack's concepts and native professional audio / digital console /
   sampler / studio engineering terms across `duack-skills/`: sidechain compressors (`DuckMixer` duck
@@ -60,7 +60,7 @@ While the version is `0.x`, the API may change between minor versions.
 
 #### 2026-10-19 (duck diagnostics + hot-reload reload)
 
-- **`MusicDirector.DuckSources` / `MusicDirector.ReloadDuckSources()`**: the director now exposes the
+- **`MusicManager.DuckSources` / `MusicManager.ReloadDuckSources()`**: the director now exposes the
   live duck-source snapshot (`IReadOnlyList<DuckSourceView>`, delegating to `DuckMixer.Sources`) and
   a one-call reload of the sources currently in `MusicConfig.DuckSources`, delegating to
   `DuckMixer.ReloadSources`. Consumer migration (MonsterProjectWeb) needs both: its automation
@@ -76,7 +76,7 @@ While the version is `0.x`, the API may change between minor versions.
 - **`SfxManager` now applies `SfxConfig.CueVariation`; the game no longer resolves it in its own
   facade.** Symptom: the per-play cue jitter was advertised end to end (`AudioConfigBuilder`
   `WithMusicCueVariation` / `WithSfxCueVariation`, `CueVariation`, `CuePlay`) but the SFX half of
-  the bargain never reached playback - only `MusicDirector` applied music cue pitch
+  the bargain never reached playback - only `MusicManager` applied music cue pitch
   (`NextCuePitch()`); `SfxManager` ignored `SfxConfig.CueVariation` entirely. MonsterProjectWeb
   worked around it by resolving the jitter in its `Sfx` facade (`Sfx.ResolveCue`) and forwarding
   concrete pitch/volume. Fix: `SfxManager` takes an optional `SfxConfig` (default `null`) and
@@ -92,7 +92,7 @@ While the version is `0.x`, the API may change between minor versions.
 #### 2026-10-19 (zero-hold duck pulse latched on forever)
 
 - **A pulse with a resolved hold of 0 stuck the duck on permanently.** Symptom: every sound effect
-  plays through `SfxManager.Play`, which calls `MusicDirector.Pulse("sfx")` with no explicit hold -
+  plays through `SfxManager.Play`, which calls `MusicManager.Pulse("sfx")` with no explicit hold -
   so the hold comes from the `sfx` duck source's `hold_seconds`. With the shipped `hold_seconds: 0`,
   `DuckMixer.Pulse` set `IsActive = true` and left `PulseRemaining` at 0, and `Update` only releases
   a source while `PulseRemaining > 0`. The duck therefore never released: music stayed at the ducked
@@ -117,7 +117,7 @@ While the version is `0.x`, the API may change between minor versions.
 
 - **Master bus (three-bus terminology)**: the composition chain is now
   `master bus x bus volume x context x duck x player settings`, with the master entering
-  once at the top. `MusicDirector` takes a `masterVolume` parameter (default 1) and
+  once at the top. `MusicManager` takes a `masterVolume` parameter (default 1) and
   multiplies it into the music composition; `SfxManager` takes `masterVolume` and
   `sfxBusVolume` and composes them into the per-play SFX volume. Both directors expose
   the buses as live get/set properties, so a settings slider applies on the next
@@ -324,11 +324,11 @@ ame, description) and focused instructions/examples. No production code
 - **Fixed delayed ducking on scene switch**: when transitioning between scenes (overworld→battle),
   any lingering duck from the previous scene's SFX (e.g., a dialog cue still playing) was bleeding
   into the incoming track's crossfade, making the ducking feel delayed. Added `DuckMixer.ReleaseAll()`
-  and `MusicDirector.ReleaseDucks()` to immediately reset all duck sources (no easing tail) on scene
+  and `MusicManager.ReleaseDucks()` to immediately reset all duck sources (no easing tail) on scene
   switches. Both desktop and web samples now call `ReleaseDucks()` when `frame.SceneChanged` is true
   OR `frame.Music` is not null (covers the BattleStart cue, which has no Music switch but is still
   a scene change that should release any lingering dialog duck).
-  Also added `DuckMixer.IsReady()` / `MusicDirector.IsDuckReady()` for callers that prefer to gate
+  Also added `DuckMixer.IsReady()` / `MusicManager.IsDuckReady()` for callers that prefer to gate
   the visual scene change on natural duck recovery instead of an immediate reset. Two complementary
   patterns for consumers:
   1. **Hard reset** — call `ReleaseDucks()` on scene switch; duck recovers instantly, visual changes
@@ -341,10 +341,10 @@ ame, description) and focused instructions/examples. No production code
 
 #### 2026-10-19 (crossfade reset on Play)
 
-- **MusicDirector.Play() now triggers transition immediately**: `Play()` calls `Update(0f)` after setting the
+- **MusicManager.Play() now triggers transition immediately**: `Play()` calls `Update(0f)` after setting the
   playlist, so the crossfade starts on the same frame instead of waiting for the next `Update()` call.
   This ensures the audio track plays right after the last action in the previous scene. Pins:
-  `MusicDirectorPlayResetTests` (1: Play triggers immediate transition).
+  `MusicManagerPlayResetTests` (1: Play triggers immediate transition).
 
 #### 2026-10-19 (crossfade documentation)
 
@@ -467,21 +467,21 @@ ame, description) and focused instructions/examples. No production code
   setters, `Stop`/`StopOutgoing`, `IsTrackPlaying`, a `TrackEnded` completion event, and
   a per-frame `Update` hook. The setters take the FINAL composed volume, so adapters never
   multiply anything themselves.
-- `MusicDirector` - backend-agnostic music playback core: drives a
+- `MusicManager` - backend-agnostic music playback core: drives a
   `MusicPlaylistController`, realizes both crossfade models (equal-power overlap for
   desktop backends via `CrossfadeMath`; fade-out/switch/fade-in sequencing for
   single-instance web backends via `MusicTransitionSequencer`), restarts a
   `Repeat=Track` (or single-track loop) after a natural end, applies the music
   `CueVariation` pitch on every start, and raises `TrackCompleted` after the playlist
   advances.
-- `MusicDirector` now OWNS the full mix: every backend volume is
+- `MusicManager` now OWNS the full mix: every backend volume is
   `MusicVolumeMath.Effective(music master x the track's context scale x the live duck
-  ratio x the crossfade ramp)`, composed in `MusicDirector` with an internal
+  ratio x the crossfade ramp)`, composed in `MusicManager` with an internal
   `DuckMixer` built from `MusicConfig.DuckSources`. The outgoing track keeps its OWN
   context scale while fading out, and `DuckRatio` is exposed for diagnostics. New
   passthroughs `Pulse(source, hold)` / `SetDuck(source, active)` let the game drive
   dialogue/SFX ducking through the director instead of a separate mixer. Pins:
-  `MusicDirectorTests` (19 cases, fake backend - play/advance/repeat/crossfade both
+  `MusicManagerTests` (19 cases, fake backend - play/advance/repeat/crossfade both
    models/zero crossfade/cue pitch/stop/unknown playlist/idle updates plus master x
    context x duck composition and duck release).
 

@@ -37,7 +37,7 @@ Then open the launched URL (e.g. https://localhost:5000) and click a button.
   platform player, including the single-instance fade-out/switch/fade-in crossfade.
 - **Story cues as duck pulses**: the web host has no sfx backend, so each cue (notice, dialog,
   hit) pulses the same `sfx` duck source with the same configured hold as desktop's
-  `SfxDirector` auto-duck — the mix reacts identically; only the one-shot audio is missing.
+  `SfxManager` auto-duck — the mix reacts identically; only the one-shot audio is missing.
 - Browser settings store wired via `WebPlayerSettingsStore` + `LocalStorageKeyValueStorage`
   (the `Duack.KNI` localStorage seam).
 

@@ -20,12 +20,12 @@ namespace Duack;
 public sealed class AudioLibrary
 {
     /// <summary>The default small one-shot directory, relative to the audio root.</summary>
-    public const string SfxDirectoryName = "SFX";
+    public const string SfxManageryName = "SFX";
 
     /// <summary>The default loops/tracks directory, relative to the audio root.</summary>
     public const string TracksDirectoryName = "Tracks";
 
-    /// <summary>Loadable types inside <see cref="SfxDirectoryName"/>, in preference order (wav first).</summary>
+    /// <summary>Loadable types inside <see cref="SfxManageryName"/>, in preference order (wav first).</summary>
     public static readonly IReadOnlyList<string> SfxExtensions = new[] { ".wav", ".ogg" };
 
     /// <summary>Loadable types inside <see cref="TracksDirectoryName"/>, in preference order (ogg first).</summary>
@@ -77,7 +77,7 @@ public sealed class AudioLibrary
             if (cue.Length == 0) continue;
 
             var extension = Path.GetExtension(fileName);
-            if (segments[0] == SfxDirectoryName && Contains(SfxExtensions, extension))
+            if (segments[0] == SfxManageryName && Contains(SfxExtensions, extension))
                 sfx.Add(cue);
             else if (segments[0] == TracksDirectoryName && Contains(TrackExtensions, extension))
                 tracks.Add(cue);
@@ -106,7 +106,7 @@ public sealed class AudioLibrary
         }
 
         var files = new List<string>();
-        foreach (var conventionDirectory in new[] { SfxDirectoryName, TracksDirectoryName })
+        foreach (var conventionDirectory in new[] { SfxManageryName, TracksDirectoryName })
         {
             if (!onDisk.TryGetValue(conventionDirectory, out var full)) continue;
             foreach (var file in Directory.EnumerateFiles(full))
@@ -116,7 +116,7 @@ public sealed class AudioLibrary
         return FromFiles(files);
     }
 
-    /// <summary>Whether <paramref name="cueName"/> was discovered in <see cref="SfxDirectoryName"/>.</summary>
+    /// <summary>Whether <paramref name="cueName"/> was discovered in <see cref="SfxManageryName"/>.</summary>
     public bool IsSfx(string cueName) => cueName is not null && _sfxSet.Contains(cueName);
 
     /// <summary>Whether <paramref name="cueName"/> was discovered in <see cref="TracksDirectoryName"/>.</summary>
@@ -136,7 +136,7 @@ public sealed class AudioLibrary
         var results = new List<string>();
         if (_sfxSet.Contains(cueName))
         {
-            AddProbes(results, SfxDirectoryName, cueName, SfxExtensions);
+            AddProbes(results, SfxManageryName, cueName, SfxExtensions);
         }
         else if (_tracksSet.Contains(cueName))
         {
@@ -144,7 +144,7 @@ public sealed class AudioLibrary
         }
         else
         {
-            AddProbes(results, SfxDirectoryName, cueName, SfxExtensions);
+            AddProbes(results, SfxManageryName, cueName, SfxExtensions);
             AddProbes(results, TracksDirectoryName, cueName, TrackExtensions);
         }
 

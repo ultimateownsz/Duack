@@ -26,7 +26,7 @@ public class Game1 : Game, IDisposable
     private AudioLibrary _library = null!;
     private MusicPlaylistController _controller = null!;
     private MusicDirector _director = null!;
-    private SfxDirector? _sfx = null!;
+    private SfxManager? _sfx = null!;
     private readonly StoryController _story = new();
     private MarbleBag<string> _hitBag = null!;
 
@@ -99,7 +99,7 @@ public class Game1 : Game, IDisposable
         var sfxUrls = _library.Sfx.Select(cue => new KeyValuePair<string, string>(
             cue, $"Content/Audio/SFX/{cue}.wav"));
         var sfxBackend = new WebAudioSfxBackend(new WebAudioNative(), sfxUrls);
-        _sfx = new SfxDirector(_library, sfxBackend, _director, "sfx", masterVolume: config.MasterVolume, sfxBusVolume: config.Sfx.MasterVolume, sfxConfig: config.Sfx);
+        _sfx = new SfxManager(_library, sfxBackend, _director, "sfx", masterVolume: config.MasterVolume, sfxBusVolume: config.Sfx.MasterVolume, sfxConfig: config.Sfx);
 
         _director.TrackCompleted += finished =>
             System.Diagnostics.Debug.WriteLine($"[Sample] track finished: {finished.Name} ({finished.Context})");

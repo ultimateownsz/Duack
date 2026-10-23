@@ -69,7 +69,7 @@ var clips = new SoundEffectClipLibrary(content, library);
 var musicBackend = new SoundEffectMusicBackend(clips);
 var sfxBackend = new SoundEffectSfxBackend(clips);
 var director = new MusicDirector(musicBackend, controller, config.Music);
-var sfx = new SfxDirector(library, sfxBackend, director, sfxConfig: config.Sfx);
+var sfx = new SfxManager(library, sfxBackend, director, sfxConfig: config.Sfx);
 ```
 
 Web:

@@ -179,7 +179,7 @@ public class DuckMixerTests
     [Fact]
     public void Zero_hold_pulse_is_a_no_op()
     {
-        // Symptom (MonsterProjectWeb adoption): every sound effect calls SfxDirector.Play, which
+        // Symptom (MonsterProjectWeb adoption): every sound effect calls SfxManager.Play, which
         // pulses the "sfx" source with no explicit hold. The shipped source declares
         // hold_seconds: 0, so a resolved hold of 0 landed in the old code as
         // IsActive = true with PulseRemaining = 0 - and Update only releases a source while

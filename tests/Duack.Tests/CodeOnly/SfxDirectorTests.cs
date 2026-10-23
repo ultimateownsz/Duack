@@ -3,12 +3,12 @@ using Duack;
 namespace Duack.Tests.CodeOnly;
 
 /// <summary>
-/// Pins the <see cref="SfxDirector"/>: cue-name one-shot playback against a discovered
+/// Pins the <see cref="SfxManager"/>: cue-name one-shot playback against a discovered
 /// <see cref="AudioLibrary"/> with automatic music ducking — a successful play pulses the music
-/// director's duck source, unknown cues and backend refusals never duck, and <see cref="SfxDirector.PlayNext"/>
+/// director's duck source, unknown cues and backend refusals never duck, and <see cref="SfxManager.PlayNext"/>
 /// draws from a shuffle bag so a cue never repeats back-to-back.
 /// </summary>
-public class SfxDirectorTests
+public class SfxManagerTests
 {
     private sealed class FakeSfxBackend : ISfxBackend
     {
@@ -83,7 +83,7 @@ public class SfxDirectorTests
     {
         var backend = new FakeSfxBackend();
         var music = CreateMusicDirector();
-        var sfx = new SfxDirector(Library, backend, music);
+        var sfx = new SfxManager(Library, backend, music);
 
         Assert.True(sfx.Play("hit", pitch: 0.25f, volume: 0.8f));
 
@@ -97,7 +97,7 @@ public class SfxDirectorTests
     {
         var backend = new FakeSfxBackend();
         var music = CreateMusicDirector();
-        var sfx = new SfxDirector(
+        var sfx = new SfxManager(
             Library,
             backend,
             music,
@@ -119,7 +119,7 @@ public class SfxDirectorTests
     {
         var backend = new FakeSfxBackend();
         var music = CreateMusicDirector();
-        var sfx = new SfxDirector(
+        var sfx = new SfxManager(
             Library,
             backend,
             music,
@@ -142,7 +142,7 @@ public class SfxDirectorTests
     {
         var backend = new FakeSfxBackend();
         var music = CreateMusicDirector();
-        var sfx = new SfxDirector(Library, backend, music);
+        var sfx = new SfxManager(Library, backend, music);
 
         Assert.True(sfx.Play("hit", pitch: 0.25f, volume: 0.8f));
 
@@ -155,7 +155,7 @@ public class SfxDirectorTests
     {
         var backend = new FakeSfxBackend();
         var music = CreateMusicDirector();
-        var sfx = new SfxDirector(Library, backend, music);
+        var sfx = new SfxManager(Library, backend, music);
 
         Assert.False(sfx.Play("explode"));
 
@@ -169,7 +169,7 @@ public class SfxDirectorTests
     {
         var backend = new FakeSfxBackend { Result = false };
         var music = CreateMusicDirector();
-        var sfx = new SfxDirector(Library, backend, music);
+        var sfx = new SfxManager(Library, backend, music);
 
         Assert.False(sfx.Play("hit"));
 
@@ -183,7 +183,7 @@ public class SfxDirectorTests
     {
         var backend = new FakeSfxBackend();
         var music = CreateMusicDirector();
-        var sfx = new SfxDirector(Library, backend, music, random: new Random(7));
+        var sfx = new SfxManager(Library, backend, music, random: new Random(7));
 
         var drawn = new List<string>();
         for (var i = 0; i < 15; i++)
@@ -202,7 +202,7 @@ public class SfxDirectorTests
     {
         var backend = new FakeSfxBackend();
         var music = CreateMusicDirector();
-        var sfx = new SfxDirector(AudioLibrary.FromFiles(Array.Empty<string>()), backend, music);
+        var sfx = new SfxManager(AudioLibrary.FromFiles(Array.Empty<string>()), backend, music);
 
         Assert.False(sfx.PlayNext());
 
@@ -216,7 +216,7 @@ public class SfxDirectorTests
     {
         var backend = new FakeSfxBackend();
         var music = CreateMusicDirector(duckSource: "voice");
-        var sfx = new SfxDirector(Library, backend, music, duckSource: "voice");
+        var sfx = new SfxManager(Library, backend, music, duckSource: "voice");
 
         Assert.True(sfx.Play("dialog"));
 
@@ -227,7 +227,7 @@ public class SfxDirectorTests
     [Fact]
     public void Names_exposes_the_discovered_sfx()
     {
-        var sfx = new SfxDirector(Library, new FakeSfxBackend(), CreateMusicDirector());
+        var sfx = new SfxManager(Library, new FakeSfxBackend(), CreateMusicDirector());
 
         Assert.Equal(Library.Sfx, sfx.Names);
     }
@@ -238,9 +238,9 @@ public class SfxDirectorTests
         var backend = new FakeSfxBackend();
         var music = CreateMusicDirector();
 
-        Assert.Throws<ArgumentNullException>(() => new SfxDirector(null!, backend, music));
-        Assert.Throws<ArgumentNullException>(() => new SfxDirector(Library, null!, music));
-        Assert.Throws<ArgumentNullException>(() => new SfxDirector(Library, backend, null!));
+        Assert.Throws<ArgumentNullException>(() => new SfxManager(null!, backend, music));
+        Assert.Throws<ArgumentNullException>(() => new SfxManager(Library, null!, music));
+        Assert.Throws<ArgumentNullException>(() => new SfxManager(Library, backend, null!));
     }
 
     [Fact]
@@ -248,7 +248,7 @@ public class SfxDirectorTests
     {
         var backend = new FakeSfxBackend();
         var music = CreateMusicDirector();
-        var sfx = new SfxDirector(Library, backend, music, masterVolume: 0.5f, sfxBusVolume: 0.5f);
+        var sfx = new SfxManager(Library, backend, music, masterVolume: 0.5f, sfxBusVolume: 0.5f);
 
         Assert.True(sfx.Play("hit", volume: 0.8f));
 
@@ -261,7 +261,7 @@ public class SfxDirectorTests
     {
         var backend = new FakeSfxBackend();
         var music = CreateMusicDirector();
-        var sfx = new SfxDirector(Library, backend, music, sfxBusVolume: 0.5f);
+        var sfx = new SfxManager(Library, backend, music, sfxBusVolume: 0.5f);
 
         Assert.True(sfx.Play("hit", volume: 0.8f));
 
@@ -274,7 +274,7 @@ public class SfxDirectorTests
     {
         var backend = new FakeSfxBackend();
         var music = CreateMusicDirector();
-        var sfx = new SfxDirector(Library, backend, music);
+        var sfx = new SfxManager(Library, backend, music);
 
         Assert.True(sfx.Play("hit", volume: 0.8f));
 
@@ -288,7 +288,7 @@ public class SfxDirectorTests
         // no director rebuild required.
         var backend = new FakeSfxBackend();
         var music = CreateMusicDirector();
-        var sfx = new SfxDirector(Library, backend, music);
+        var sfx = new SfxManager(Library, backend, music);
 
         Assert.True(sfx.Play("hit", volume: 0.8f));
         Assert.Equal(("hit", 0f, 0.8f), Assert.Single(backend.Played));

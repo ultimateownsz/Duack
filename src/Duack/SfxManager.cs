@@ -18,7 +18,7 @@ namespace Duack;
 /// repeated cues do not sound machine-gunned.
 /// </para>
 /// </summary>
-public sealed class SfxDirector
+public sealed class SfxManager
 {
     private readonly AudioLibrary _library;
     private readonly ISfxBackend _backend;
@@ -36,7 +36,7 @@ public sealed class SfxDirector
     /// <param name="masterVolume">Master bus volume (scales music and SFX alike); defaults to full volume.</param>
     /// <param name="sfxBusVolume">SFX bus volume; defaults to full volume.</param>
     /// <param name="sfxConfig">SFX mix settings; carries the optional <see cref="SfxConfig.CueVariation"/> jitter applied per play.</param>
-    public SfxDirector(
+    public SfxManager(
         AudioLibrary library,
         ISfxBackend backend,
         MusicDirector music,

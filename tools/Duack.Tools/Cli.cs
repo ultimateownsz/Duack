@@ -266,7 +266,7 @@ public static class Cli
     {
         foreach (var (directory, supported) in new[]
                  {
-                     (AudioLibrary.SfxDirectoryName, AudioLibrary.SfxExtensions),
+                     (AudioLibrary.SfxManageryName, AudioLibrary.SfxExtensions),
                      (AudioLibrary.TracksDirectoryName, AudioLibrary.TrackExtensions),
                  })
         {

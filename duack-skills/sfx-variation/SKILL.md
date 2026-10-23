@@ -1,6 +1,6 @@
 ---
 name: sfx-variation
-description: SFX variation in Duack — MarbleBag<T> draw-without-replacement randomizer, CueVariation pitch/volume jitter, CuePlay, and SfxDirector cue playback with auto-ducking. Use when adding footstep/hit variation, avoiding back-to-back repeats, per-play pitch randomization, or one-shot SFX that duck music.
+description: SFX variation in Duack — MarbleBag<T> draw-without-replacement randomizer, CueVariation pitch/volume jitter, CuePlay, and SfxManager cue playback with auto-ducking. Use when adding footstep/hit variation, avoiding back-to-back repeats, per-play pitch randomization, or one-shot SFX that duck music.
 ---
 
 # Duack — SFX Variation
@@ -38,15 +38,15 @@ CuePlay play = variation.Resolve(random);
 `CueVariation.None` = no jitter. Non-finite/negative ranges become 0.
 
 `MusicConfig.CueVariation` / `SfxConfig.CueVariation` (nullable; omitted from JSON when null).
-`MusicDirector` applies `NextCuePitch()` to track plays; `SfxDirector` applies its own
+`MusicDirector` applies `NextCuePitch()` to track plays; `SfxManager` applies its own
 `SfxConfig.CueVariation` per play (jitter added on top of the passed pitch, volume scaled).
 
-## SfxDirector
+## SfxManager
 
 Plays one-shot cues by name against an `AudioLibrary`; auto-ducks music on success.
 
 ```csharp
-var sfx = new SfxDirector(library, backend, director, sfxConfig: new SfxConfig { CueVariation = variation });
+var sfx = new SfxManager(library, backend, director, sfxConfig: new SfxConfig { CueVariation = variation });
 IReadOnlyList<string> names = sfx.Names;
 bool played = sfx.Play("hit", pitch: 0.25f, volume: 1f, duck: true); // jitter applied on top of the passed values
 sfx.PlayNext(pitch, volume);   // marble-bag draw, no immediate repeats

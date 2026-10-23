@@ -1,6 +1,6 @@
 ---
 name: audio-core
-description: Duack audio library — core types, namespaces, quick reference. Use when working with Duack's audio mixing, ducking, crossfades, playlists, SFX variation, player settings, or the two-directory audio convention. Triggers on: Duack, DuckMixer, MusicDirector, MusicVolumeMath, AudioConfig, SfxDirector, MarbleBag, AudioLibrary, ISfxBackend, IMusicBackend, PlayerSettings.
+description: Duack audio library — core types, namespaces, quick reference. Use when working with Duack's audio mixing, ducking, crossfades, playlists, SFX variation, player settings, or the two-directory audio convention. Triggers on: Duack, DuckMixer, MusicDirector, MusicVolumeMath, AudioConfig, SfxManager, MarbleBag, AudioLibrary, ISfxBackend, IMusicBackend, PlayerSettings.
 ---
 
 # Duack — Audio Library for XNA-Family Engines
@@ -59,8 +59,8 @@ Every namespace → `Duack`.
 ### SFX variation
 - `MarbleBag<T>` — draw-without-replacement randomizer (swap-remove, refill on empty, optional avoidImmediateRepeat, injectable Random)
 - `CueVariation` / `CuePlay` — per-play pitch/volume jitter (`MusicDirector.NextCuePitch()` /
-  `SfxDirector` per-play resolve)
-- `SfxDirector` — cue-name one-shot playback with automatic music ducking and per-play cue jitter
+  `SfxManager` per-play resolve)
+- `SfxManager` — cue-name one-shot playback with automatic music ducking and per-play cue jitter
 
 ### Settings
 - `PlayerAudioSettings`, `PlayerSettings` — player volume settings
@@ -115,7 +115,7 @@ director.IsDuckReady(0.99f);         // true when duck recovered
 director.Update(deltaSeconds);       // per-frame update
 
 // SFX director
-var sfx = new SfxDirector(library, backend, director, sfxConfig: config.Sfx);
+var sfx = new SfxManager(library, backend, director, sfxConfig: config.Sfx);
 sfx.Play("hit", pitch: 0.25f);     // play cue + auto-duck + apply authored jitter
 sfx.PlayNext();                     // draw from MarbleBag (no repeats)
 sfx.Stop();                         // cut all one-shots

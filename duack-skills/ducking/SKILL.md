@@ -53,8 +53,8 @@ director.GainReduction;                // current gain reduction (1 - DuckRatio)
 
 ## Typical patterns
 
-### SFX auto-duck (SfxDirector)
-`SfxDirector.Play` pulses the configured duck source (default "sfx") on every successful play.
+### SFX auto-duck (SfxManager)
+`SfxManager.Play` pulses the configured duck source (default "sfx") on every successful play.
 Unknown cues / backend refusals never duck.
 
 ### Dialogue ducking

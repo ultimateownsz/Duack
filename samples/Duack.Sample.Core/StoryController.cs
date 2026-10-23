@@ -25,7 +25,7 @@ public enum StoryScene
 
 /// <summary>
 /// What the frame should do with the audio system: play <see cref="Sfx"/> at <see cref="Pitch"/>
-/// (through the <see cref="SfxDirector"/>, which ducks the music automatically), switch to the
+/// (through the <see cref="SfxManager"/>, which ducks the music automatically), switch to the
 /// <see cref="Music"/> playlist when it differs from the current one, and treat <see cref="SceneChanged"/>
 /// as "redraw scene text". A frame can carry both an sfx and a music switch — the fainting blow
 /// plays its hit cue while the music fades back to the overworld.
@@ -40,7 +40,7 @@ public readonly record struct StoryFrame(string? Sfx = null, float Pitch = 0f, s
 ///
 /// <para>
 /// Cue and playlist names are constants because they must match the shipped audio files exactly —
-/// a missing file simply does not play (the <see cref="SfxDirector"/> reports false), which keeps
+/// a missing file simply does not play (the <see cref="SfxManager"/> reports false), which keeps
 /// the script decoupled from what is on disk.
 /// </para>
 /// </summary>

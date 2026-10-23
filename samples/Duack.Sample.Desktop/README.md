@@ -30,7 +30,7 @@ dotnet run --project samples/Duack.Sample.Desktop -c Release
 - **Auto-built playlists**: `AudioLibrary.BuildPlaylists` produces one looping single-track
   playlist per discovered track (scene music addressed by track name) plus the bag-shuffled
   `music` playlist over all of them.
-- **`SfxDirector`**: plays cues by name through `SoundEffectSfxBackend` (MonoGame) and
+- **`SfxManager`**: plays cues by name through `SoundEffectSfxBackend` (MonoGame) and
   automatically ducks the music (`MusicDirector.Pulse`) while a cue speaks. Unknown cues and
   backend refusals never duck.
 - **Pitch variation from one sound**: the marble bag of hit pitches was removed from the showcase

@@ -8,7 +8,7 @@ namespace Duack.MonoGame;
 /// and plays it as a fresh non-looping instance with the requested pitch/volume (clamped to the
 /// engine's ranges). Instances that have finished are reaped on the next play, and
 /// <see cref="Dispose"/> stops everything still sounding - a long session must not leak instances.
-/// All mixing decisions (including WHEN the music ducks) stay in the core <see cref="SfxDirector"/>;
+/// All mixing decisions (including WHEN the music ducks) stay in the core <see cref="SfxManager"/>;
 /// this adapter only plays one cue now.
 /// </summary>
 public sealed class SoundEffectSfxBackend : ISfxBackend, IDisposable
@@ -21,14 +21,14 @@ public sealed class SoundEffectSfxBackend : ISfxBackend, IDisposable
         _clips = clips ?? throw new ArgumentNullException(nameof(clips));
 
     /// <inheritdoc />
-    /// <remarks>Defaults mirror <see cref="SfxDirector.Play"/>: natural pitch, full volume.</remarks>
+    /// <remarks>Defaults mirror <see cref="SfxManager.Play"/>: natural pitch, full volume.</remarks>
     public bool Play(string cueName, float pitch = 0f, float volume = 1f)
     {
         ReapFinished();
 
         var clip = _clips.Get(cueName);
         if (clip is null)
-            return false; // missing clip: SfxDirector turns this into "no duck"
+            return false; // missing clip: SfxManager turns this into "no duck"
 
         var instance = clip.CreateInstance();
         instance.IsLooped = false;

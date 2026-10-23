@@ -17,7 +17,7 @@ public static class Program
 /// the overworld (overworld track), gets noticed (notice sfx), chats (dialog sfx per line), then
 /// battles (battle-start sting, battle track) trading pitched hit cues until someone faints and the
 /// story loops. All cues come from the two-directory <c>Content/Audio</c> convention via
-/// <see cref="AudioLibrary"/>, play through the <see cref="SfxDirector"/> (which ducks the music
+/// <see cref="AudioLibrary"/>, play through the <see cref="SfxManager"/> (which ducks the music
 /// automatically), and scene music switches through auto-built single-track playlists.
 ///
 /// <para>Keys: Space advances/skips, R restarts the story, S plays a random discovered sfx,
@@ -37,7 +37,7 @@ public class Game1 : Game
     private SoundEffectClipLibrary _clips = null!;
     private MusicPlaylistController _controller = null!;
     private MusicDirector _director = null!;
-    private SfxDirector _sfx = null!;
+    private SfxManager _sfx = null!;
     private readonly StoryController _story = new();
     private MarbleBag<string> _hitBag = null!;
 
@@ -81,7 +81,7 @@ public class Game1 : Game
         _clips = new SoundEffectClipLibrary(_library);
         _controller = new MusicPlaylistController(playlists);
         _director = new MusicDirector(new SoundEffectMusicBackend(_clips), _controller, config.Music, masterVolume: config.MasterVolume);
-        _sfx = new SfxDirector(_library, new SoundEffectSfxBackend(_clips), _director, masterVolume: config.MasterVolume, sfxBusVolume: config.Sfx.MasterVolume, sfxConfig: config.Sfx);
+        _sfx = new SfxManager(_library, new SoundEffectSfxBackend(_clips), _director, masterVolume: config.MasterVolume, sfxBusVolume: config.Sfx.MasterVolume, sfxConfig: config.Sfx);
 
         _director.TrackCompleted += finished =>
             Console.WriteLine($"[Sample] track finished: {finished.Name} ({finished.Context})");

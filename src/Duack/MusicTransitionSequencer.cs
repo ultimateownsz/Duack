@@ -56,6 +56,12 @@ public sealed class MusicTransitionSequencer
 
     public bool IsFadingOut => Phase == MusicFadePhase.FadingOut;
 
+    /// <summary>Duration of the fade-out phase (seconds). Set by the caller before <see cref="BeginFadeOut"/>.</summary>
+    public float FadeOutDuration { get; set; } = 0.6f;
+
+    /// <summary>Duration of the fade-in phase (seconds). Set by the caller before <see cref="BeginFadeIn"/>.</summary>
+    public float FadeInDuration { get; set; } = 0.6f;
+
     /// <summary>Studio alias for <see cref="IsFadingOut"/>.</summary>
     public bool IsFadingDown => IsFadingOut;
 
@@ -97,7 +103,7 @@ public sealed class MusicTransitionSequencer
     /// Advances the active phase by <paramref name="deltaSeconds"/>. Returns <c>true</c> exactly once,
     /// when a fade-out completes and the caller should switch tracks.
     /// </summary>
-    public bool Advance(float deltaSeconds, float durationSeconds)
+    public bool Advance(float deltaSeconds)
     {
         if (Phase == MusicFadePhase.Steady)
             return false;
@@ -105,9 +111,9 @@ public sealed class MusicTransitionSequencer
         if (!float.IsFinite(deltaSeconds) || deltaSeconds <= 0f)
             return false;
 
-        var phaseDuration = Phase == MusicFadePhase.FadingOut || _splitFadeIn
-            ? durationSeconds / 2f
-            : durationSeconds;
+        var phaseDuration = Phase == MusicFadePhase.FadingOut
+            ? FadeOutDuration
+            : (_splitFadeIn ? FadeInDuration : FadeInDuration);
 
         Progress = !float.IsFinite(phaseDuration) || phaseDuration <= 0f
             ? 1f
@@ -133,6 +139,26 @@ public sealed class MusicTransitionSequencer
 
         Recompute();
         return fadeOutCompleted;
+    }
+
+    /// <summary>
+    /// Backward-compatible overload: treats <paramref name="durationSeconds"/> as the total transition
+    /// time, splitting it equally between fade-out and fade-in (the historical behaviour).
+    /// </summary>
+    public bool Advance(float deltaSeconds, float durationSeconds)
+    {
+        if (!float.IsFinite(durationSeconds) || durationSeconds <= 0f)
+        {
+            FadeOutDuration = 0f;
+            FadeInDuration = 0f;
+        }
+        else
+        {
+            FadeOutDuration = durationSeconds / 2f;
+            // A standalone fade-in (not following a fade-out) uses the whole duration.
+            FadeInDuration = _splitFadeIn ? durationSeconds / 2f : durationSeconds;
+        }
+        return Advance(deltaSeconds);
     }
 
     /// <summary>Abandons any transition and returns to the steady state at full volume.</summary>

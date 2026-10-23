@@ -17,6 +17,11 @@ While the version is `0.x`, the API may change between minor versions.
 
 #### 2026-10-23
 
+- **Tests pinning fade-in/fade-out behavior.** Added `tests/Duack.Tests/CodeOnly/MusicManagerFadeTests.cs`
+  (7 cases: stop fade-out ramps to silence then stops on both overlap and sequenced backends,
+  immediate stop when no duration, play fade-in starts at silence and ramps to full on both backends,
+  plus per-track and builder fade-duration carriage). Verified red by temporarily disabling the
+  fade-out path (2 failures) then green after restore. No production code changed.
 - **Fade in/out support for music playback.**
   - Added `Play(string playlistName, float? fadeInSeconds = null)` and `Stop(float? fadeOutSeconds = null)` to `MusicManager` (formerly `MusicDirector`).
   - `PlaylistTrack` now supports per-track `FadeInSeconds` / `FadeOutSeconds`; `MusicManager` applies them automatically. `PlaylistConfigBuilder.Track(...)` accepts optional fade durations.

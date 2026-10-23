@@ -164,7 +164,14 @@ public class Game1 : Game, IDisposable
             // Duck only when no scene switch is happening: a cue that accompanies a switch
             // must not suppress the crossfade back to the overworld track.
             var duck = frame.Music is null;
-            if (_sfx!.Play(frame.Sfx, 0f, 1f, duck: duck) &&
+
+            // Hit cues draw from the MarbleBag so a battle never plays the same hit twice in a row
+            // (matches the desktop sample).
+            var cueName = frame.Sfx;
+            if (frame.Sfx == StoryController.HitCue && _hitBag is not null)
+                cueName = _hitBag.Draw();
+
+            if (_sfx!.Play(cueName, frame.Pitch, duck: duck) &&
                 (frame.Sfx == StoryController.HitCue || frame.Sfx == StoryController.BattleStartCue))
             {
                 _flash = 0.12f;

@@ -259,13 +259,10 @@ public class MusicManager
         }
 
         var desired = _playlist.CurrentTrack;
-        if (desired != null && !ReferenceEquals(desired, _pending ?? _active))
+        if (desired is not null && !ReferenceEquals(desired, _pending ?? _active))
         {
-            if (desired != null)
-            {
-                _fadeInDurationOverride = desired.FadeInSeconds;
-                _fadeOutDurationOverride = desired.FadeOutSeconds;
-            }
+            _fadeInDurationOverride = desired.FadeInSeconds;
+            _fadeOutDurationOverride = desired.FadeOutSeconds;
             BeginTransition(desired);
         }
 

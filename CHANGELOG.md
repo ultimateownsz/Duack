@@ -17,6 +17,12 @@ While the version is `0.x`, the API may change between minor versions.
 
 #### 2026-10-23
 
+- **Fixed CS8604 nullable warning in `MusicManager.Update`.** `desired` is now pattern-matched
+  (`is not null`) so the compiler tracks non-null before `BeginTransition(desired)`; no behavior
+  change.
+- **Web sample now uses SFX pitch effects.** `ApplyFrame` mirrors desktop: hit cues draw from the
+  `MarbleBag<string>` and `frame.Pitch` is forwarded to `SfxManager.Play` (was hardcoded 0f/1f),
+  so WebAudio one-shots vary pitch like the desktop sample.
 - **Tests pinning fade-in/fade-out behavior.** Added `tests/Duack.Tests/CodeOnly/MusicManagerFadeTests.cs`
   (7 cases: stop fade-out ramps to silence then stops on both overlap and sequenced backends,
   immediate stop when no duration, play fade-in starts at silence and ramps to full on both backends,

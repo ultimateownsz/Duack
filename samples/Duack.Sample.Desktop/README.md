@@ -59,6 +59,16 @@ The shipped OGGs are regenerated from the gitignored masters with:
 dotnet run --project tools/Duack.Tools -- convert samples/Duack.Sample.Desktop/_masters samples/Duack.Sample.Desktop/Content/Audio/Tracks --all
 ```
 
+To keep scene tracks at equal loudness (so crossfades don't jump in volume), normalize the
+masters first:
+
+```
+dotnet run --project tools/Duack.Tools -- normalize samples/Duack.Sample.Desktop/_masters samples/Duack.Sample.Desktop/_masters_normalized
+dotnet run --project tools/Duack.Tools -- convert samples/Duack.Sample.Desktop/_masters_normalized samples/Duack.Sample.Desktop/Content/Audio/Tracks --all
+```
+
+(or run `tools/NormalizeSampleAudio.ps1` to do both steps).
+
 To swap in real audio, drop your files into `SFX/` (small wav one-shots) and `Tracks/`
 (ogg loops) and see `samples/AUDIO_ATTRIBUTIONS.md`. The web counterpart is
 `samples/Duack.Sample.Web`.

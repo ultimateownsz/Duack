@@ -19,7 +19,7 @@ public class SoundEffectClipLibraryTests
     }
 
     [Fact]
-    public void Candidate_uris_follow_the_two_directory_convention_with_a_library()
+    public void Candidate_uris_follow_the_two_managery_convention_with_a_library()
     {
         var library = AudioLibrary.FromFiles(new[] { "SFX/hit.wav", "Tracks/overworld.ogg" });
 

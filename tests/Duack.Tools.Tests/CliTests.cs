@@ -305,7 +305,7 @@ public class CliTests : IDisposable
     // ---- scan ----
 
     [Fact]
-    public void Scan_writes_a_manifest_describing_both_directories()
+    public void Scan_writes_a_manifest_describing_both_manageries()
     {
         Directory.CreateDirectory(Path2("SFX"));
         Directory.CreateDirectory(Path2("Tracks"));
@@ -373,7 +373,7 @@ public class CliTests : IDisposable
     }
 
     [Fact]
-    public void Scan_an_audio_root_without_convention_directories_writes_an_empty_manifest()
+    public void Scan_an_audio_root_without_convention_manageries_writes_an_empty_manifest()
     {
         var (code, outText, err) = Run("scan", _dir);
 

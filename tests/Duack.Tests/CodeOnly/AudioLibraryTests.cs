@@ -37,7 +37,7 @@ public class AudioLibraryTests : IDisposable
     // ---- FromFiles: classification ----
 
     [Fact]
-    public void FromFiles_splits_the_two_directories_by_cue_name()
+    public void FromFiles_splits_the_two_manageries_by_cue_name()
     {
         var library = AudioLibrary.FromFiles(new[]
         {
@@ -91,7 +91,7 @@ public class AudioLibraryTests : IDisposable
     }
 
     [Fact]
-    public void FromFiles_requires_exactly_the_canonical_directory_and_extension_casing()
+    public void FromFiles_requires_exactly_the_canonical_managery_and_extension_casing()
     {
         // Case-sensitive web hosts 404 on any mismatch, so the convention is strict: a lower-cased
         // directory or an upper-cased extension never classifies.
@@ -113,7 +113,7 @@ public class AudioLibraryTests : IDisposable
     // ---- ScanDirectory ----
 
     [Fact]
-    public void ScanDirectory_reads_both_directories_off_disk()
+    public void ScanDirectory_reads_both_manageries_off_disk()
     {
         var root = CreateAudioRoot(
             ("SFX", "hit.wav"),
@@ -148,7 +148,7 @@ public class AudioLibraryTests : IDisposable
     }
 
     [Fact]
-    public void ScanDirectory_requires_the_canonical_directory_casing_on_disk()
+    public void ScanDirectory_requires_the_canonical_managery_casing_on_disk()
     {
         // On Windows the filesystem hides the casing, but the loader candidate paths (and case-
         // sensitive hosts) do not: a lower-cased directory must not feed the convention.
@@ -162,7 +162,7 @@ public class AudioLibraryTests : IDisposable
     // ---- CandidatePaths ----
 
     [Fact]
-    public void Candidate_paths_prefer_the_owning_directory_then_the_legacy_flat_layout()
+    public void Candidate_paths_prefer_the_owning_managery_then_the_legacy_flat_layout()
     {
         var library = AudioLibrary.FromFiles(new[] { "SFX/hit.wav", "Tracks/overworld.ogg" });
 
@@ -176,7 +176,7 @@ public class AudioLibraryTests : IDisposable
     }
 
     [Fact]
-    public void Candidate_paths_for_an_unknown_cue_probe_both_directories_then_the_flat_layout()
+    public void Candidate_paths_for_an_unknown_cue_probe_both_manageries_then_the_flat_layout()
     {
         var library = AudioLibrary.FromFiles(new[] { "SFX/hit.wav" });
 
@@ -186,7 +186,7 @@ public class AudioLibraryTests : IDisposable
     }
 
     [Fact]
-    public void Candidate_paths_resolve_a_cue_in_both_directories_sfx_first()
+    public void Candidate_paths_resolve_a_cue_in_both_manageries_sfx_first()
     {
         var library = AudioLibrary.FromFiles(new[] { "SFX/dup.wav", "Tracks/dup.ogg" });
 

@@ -25,7 +25,7 @@ public class Game1 : Game, IDisposable
 
     private AudioLibrary _library = null!;
     private MusicPlaylistController _controller = null!;
-    private MusicManager _director = null!;
+    private MusicManager _manager = null!;
     private SfxManager? _sfx = null!;
     private readonly StoryController _story = new();
     private MarbleBag<string> _hitBag = null!;
@@ -37,8 +37,6 @@ public class Game1 : Game, IDisposable
     private float _duckPeakHold = 1f;
 
     private bool _musicStarted;
-    private string? _currentMusic;
-    private string? _pendingMusic;
 
     public Game1()
     {
@@ -94,16 +92,16 @@ public class Game1 : Game, IDisposable
         var backend = new MediaPlayerMusicBackend(
             new KniMediaPlayerHost(), contentRoot: "Content/Audio/Tracks", extension: ".ogg");
         _controller = new MusicPlaylistController(playlists);
-        _director = new MusicManager(backend, _controller, config.Music, masterVolume: config.MasterVolume);
+        _manager = new MusicManager(backend, _controller, config.Music, masterVolume: config.MasterVolume);
 
         // WebAudio SFX backend: one-shots overlap the music track while DuckMixer dips music.
         // Cue URLs are relative to the app root; WAV files live in wwwroot/Content/Audio/SFX/.
         var sfxUrls = _library.Sfx.Select(cue => new KeyValuePair<string, string>(
             cue, $"Content/Audio/SFX/{cue}.wav"));
         var sfxBackend = new WebAudioSfxBackend(new WebAudioNative(), sfxUrls);
-        _sfx = new SfxManager(_library, sfxBackend, _director, "sfx", masterVolume: config.MasterVolume, sfxBusVolume: config.Sfx.MasterVolume, sfxConfig: config.Sfx);
+        _sfx = new SfxManager(_library, sfxBackend, _manager, "sfx", masterVolume: config.MasterVolume, sfxBusVolume: config.Sfx.MasterVolume, sfxConfig: config.Sfx);
 
-        _director.TrackCompleted += finished =>
+        _manager.TrackCompleted += finished =>
             System.Diagnostics.Debug.WriteLine($"[Sample] track finished: {finished.Name} ({finished.Context})");
     }
 
@@ -121,15 +119,7 @@ public class Game1 : Game, IDisposable
         if (Keyboard.GetState().IsKeyDown(Keys.Escape))
             Exit();
 
-        _director.Update(dt);
-
-        if (_pendingMusic is not null && !_director.IsPlaying)
-        {
-            var next = _pendingMusic;
-            _pendingMusic = null;
-            _director.Play(next, fadeInSeconds: 0.8f);
-            _currentMusic = next;
-        }
+        _manager.Update(dt);
 
         if (_flash > 0f) _flash = Math.Max(0f, _flash - dt);
         if (_hitFlash > 0f) _hitFlash = Math.Max(0f, _hitFlash - dt);
@@ -139,8 +129,7 @@ public class Game1 : Game, IDisposable
         if (!_musicStarted)
         {
             _musicStarted = true;
-            _director.Play(StoryController.OverworldPlaylist, fadeInSeconds: 1.0f);
-            _currentMusic = StoryController.OverworldPlaylist;
+            _manager.Play(StoryController.OverworldPlaylist, fadeInSeconds: 1.0f);
         }
 
         var keyboard = Keyboard.GetState();
@@ -159,20 +148,12 @@ public class Game1 : Game, IDisposable
     private void ApplyFrame(StoryFrame frame)
     {
         if (frame.Music is not null || frame.SceneChanged)
-            _director.ReleaseDucks();
+            _manager.ReleaseDucks();
 
-        if (frame.Music is not null && frame.Music != _currentMusic)
+        if (frame.Music is not null)
         {
-            _currentMusic = frame.Music;
-            if (_director.IsPlaying)
-            {
-                _director.Stop(0.2f);
-                _pendingMusic = frame.Music;
-            }
-            else
-            {
-                _director.Play(frame.Music, fadeInSeconds: 0.8f);
-            }
+            _manager.Stop();
+            _manager.Play(frame.Music, fadeInSeconds: 0.8f);
         }
 
         if (frame.Sfx == StoryController.BattleStartCue)
@@ -242,10 +223,10 @@ public class Game1 : Game, IDisposable
 
     private void DrawDuckBar(Viewport viewport)
     {
-        if (_duckPeakHold < _director.DuckRatio)
-            _duckPeakHold = _director.DuckRatio;
+        if (_duckPeakHold < _manager.DuckRatio)
+            _duckPeakHold = _manager.DuckRatio;
         else
-            _duckPeakHold = Math.Max(_director.DuckRatio, _duckPeakHold - 0.005f);
+            _duckPeakHold = Math.Max(_manager.DuckRatio, _duckPeakHold - 0.005f);
 
         var x = 8;
         var w = viewport.Width - 16;
@@ -253,9 +234,9 @@ public class Game1 : Game, IDisposable
         var title = new Rectangle(x, 8, w, 10);
         DrawRect(title, Color.Black * 0.7f);
         DrawRect(new Rectangle(title.X + 4, title.Y + 3, 30, 4), Color.White * 0.85f);
-        var readout = new Rectangle(title.Right - 50, title.Y + 3, (int)(46 * (1f - _director.DuckRatio)), 4);
+        var readout = new Rectangle(title.Right - 50, title.Y + 3, (int)(46 * (1f - _manager.DuckRatio)), 4);
         if (readout.Width > 0)
-            DrawRect(readout, _director.DuckRatio < 0.99f ? Color.OrangeRed : Color.LightGreen);
+            DrawRect(readout, _manager.DuckRatio < 0.99f ? Color.OrangeRed : Color.LightGreen);
 
         var musicLabel = new Rectangle(x, 20, 46, 12);
         DrawRect(musicLabel, Color.Black * 0.5f);
@@ -263,7 +244,7 @@ public class Game1 : Game, IDisposable
 
         var musicBar = new Rectangle(x + 48, 20, w - 48, 12);
         DrawRect(musicBar, Color.Black * 0.6f);
-        var ratio = _director.DuckRatio;
+        var ratio = _manager.DuckRatio;
         var musicFill = new Rectangle(musicBar.X, musicBar.Y, (int)(musicBar.Width * ratio), musicBar.Height);
         var musicColor = ratio > 0.99f ? Color.LightGreen : ratio > 0.6f ? Color.Orange : Color.OrangeRed;
         DrawRect(musicFill, musicColor);

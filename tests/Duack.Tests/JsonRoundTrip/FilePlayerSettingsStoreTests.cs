@@ -36,7 +36,7 @@ public class FilePlayerSettingsStoreTests
     }
 
     [Fact]
-    public void FilePlayerSettingsStore_defaults_to_a_per_user_root_outside_the_content_directory()
+    public void FilePlayerSettingsStore_defaults_to_a_per_user_root_outside_the_content_managery()
     {
         var store = new FilePlayerSettingsStore();
 

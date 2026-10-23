@@ -36,10 +36,8 @@ public class Game1 : Game
     private AudioLibrary _library = null!;
     private SoundEffectClipLibrary _clips = null!;
     private MusicPlaylistController _controller = null!;
-    private MusicManager _director = null!;
+    private MusicManager _manager = null!;
     private SfxManager _sfx = null!;
-    private string? _currentMusic;
-    private string? _pendingMusic;
     private readonly StoryController _story = new();
     private MarbleBag<string> _hitBag = null!;
 
@@ -82,14 +80,13 @@ public class Game1 : Game
         // --- Wire the desktop adapters: music + one-shot sfx over one clip library ---
         _clips = new SoundEffectClipLibrary(_library);
         _controller = new MusicPlaylistController(playlists);
-        _director = new MusicManager(new SoundEffectMusicBackend(_clips), _controller, config.Music, masterVolume: config.MasterVolume);
-        _sfx = new SfxManager(_library, new SoundEffectSfxBackend(_clips), _director, masterVolume: config.MasterVolume, sfxBusVolume: config.Sfx.MasterVolume, sfxConfig: config.Sfx);
+        _manager = new MusicManager(new SoundEffectMusicBackend(_clips), _controller, config.Music, masterVolume: config.MasterVolume);
+        _sfx = new SfxManager(_library, new SoundEffectSfxBackend(_clips), _manager, masterVolume: config.MasterVolume, sfxBusVolume: config.Sfx.MasterVolume, sfxConfig: config.Sfx);
 
-        _director.TrackCompleted += finished =>
+        _manager.TrackCompleted += finished =>
             Console.WriteLine($"[Sample] track finished: {finished.Name} ({finished.Context})");
 
-        _director.Play(StoryController.OverworldPlaylist, fadeInSeconds: 1.0f);
-        _currentMusic = StoryController.OverworldPlaylist;
+        _manager.Play(StoryController.OverworldPlaylist, fadeInSeconds: 1.0f);
     }
 
     protected override void LoadContent()
@@ -109,17 +106,7 @@ public class Game1 : Game
             Exit();
         }
 
-        _director.Update(dt);
-
-        // A pending track switch completes only once the prior track has fully faded out,
-        // so the new screen never starts with the old track still audible.
-        if (_pendingMusic is not null && !_director.IsPlaying)
-        {
-            var next = _pendingMusic;
-            _pendingMusic = null;
-            _director.Play(next, fadeInSeconds: 0.8f);
-            _currentMusic = next;
-        }
+        _manager.Update(dt);
 
         if (_flash > 0f)
             _flash = Math.Max(0f, _flash - dt);
@@ -143,11 +130,11 @@ public class Game1 : Game
         }
         else if (WasKeyPressed(keyboard, _previousKeyboard, Keys.D1))
         {
-            _director.Play("overworld");
+            _manager.Play("overworld");
         }
         else if (WasKeyPressed(keyboard, _previousKeyboard, Keys.D2))
         {
-            _director.Play("battle");
+            _manager.Play("battle");
         }
         else
         {
@@ -168,22 +155,14 @@ public class Game1 : Game
         // Release any lingering duck from the previous scene so it doesn't bleed
         // into the incoming track's crossfade (e.g., dialog SFX still playing).
         if (frame.SceneChanged || frame.Music is not null)
-            _director.ReleaseDucks();
+            _manager.ReleaseDucks();
 
-        if (frame.Music is not null && frame.Music != _currentMusic)
+        if (frame.Music is not null)
         {
-            // Fade the prior track out completely before the new track fades in, so the new
-            // screen never starts with the old track still audible.
-            _currentMusic = frame.Music;
-            if (_director.IsPlaying)
-            {
-                _director.Stop(0.2f);
-                _pendingMusic = frame.Music;
-            }
-            else
-            {
-                _director.Play(frame.Music, fadeInSeconds: 0.8f);
-            }
+            // Hard-stop the previous track so it is never heard fading out on the new screen;
+            // the incoming track then fades in from silence.
+            _manager.Stop();
+            _manager.Play(frame.Music, fadeInSeconds: 0.8f);
         }
 
         // A scene switch (e.g. battle start) cuts any lingering one-shot (the dialog cue is long)
@@ -262,10 +241,10 @@ public class Game1 : Game
     private void DrawDuckBar(Viewport viewport)
     {
         // Decay the peak-hold marker toward 1.0 (slow, familiar VU-meter behaviour).
-        if (_duckPeakHold < _director.DuckRatio)
-            _duckPeakHold = _director.DuckRatio;
+        if (_duckPeakHold < _manager.DuckRatio)
+            _duckPeakHold = _manager.DuckRatio;
         else
-            _duckPeakHold = Math.Max(_director.DuckRatio, _duckPeakHold - 0.005f);
+            _duckPeakHold = Math.Max(_manager.DuckRatio, _duckPeakHold - 0.005f);
 
         var x = 8;
         var w = viewport.Width - 16;
@@ -276,9 +255,9 @@ public class Game1 : Game
         // "DUCK" label block on the left of the title strip.
         DrawRect(new Rectangle(title.X + 4, title.Y + 3, 30, 4), Color.White * 0.85f);
         // Ratio readout block on the right (wider = more ducked).
-        var readout = new Rectangle(title.Right - 50, title.Y + 3, (int)(46 * (1f - _director.DuckRatio)), 4);
+        var readout = new Rectangle(title.Right - 50, title.Y + 3, (int)(46 * (1f - _manager.DuckRatio)), 4);
         if (readout.Width > 0)
-            DrawRect(readout, _director.DuckRatio < 0.99f ? Color.OrangeRed : Color.LightGreen);
+            DrawRect(readout, _manager.DuckRatio < 0.99f ? Color.OrangeRed : Color.LightGreen);
 
         // --- Lane 1: MUSIC (the ducked signal) ---
         var musicLabel = new Rectangle(x, 20, 46, 12);
@@ -288,7 +267,7 @@ public class Game1 : Game
 
         var musicBar = new Rectangle(x + 48, 20, w - 48, 12);
         DrawRect(musicBar, Color.Black * 0.6f);
-        var ratio = _director.DuckRatio;
+        var ratio = _manager.DuckRatio;
         var musicFill = new Rectangle(musicBar.X, musicBar.Y, (int)(musicBar.Width * ratio), musicBar.Height);
         var musicColor = ratio > 0.99f ? Color.LightGreen
                        : ratio > 0.6f ? Color.Orange

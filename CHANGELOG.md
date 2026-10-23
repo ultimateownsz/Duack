@@ -17,6 +17,17 @@ While the version is `0.x`, the API may change between minor versions.
 
 #### 2026-10-22
 
+- **Gain, fade up/down, and gain reduction audio terminology in code.**
+  - Added `Gain` static class (`ToAmplitude`, `ToGain`, `FromSlider`, `ToSlider`) and `VolumeCurve.ToGain` for mixer knob / fader law terminology alongside volume sliders.
+  - Added studio verb aliases to `MusicTransitionSequencer`: `BeginFadeUp()`, `BeginFadeDown()`, `IsFadingDown`, `MusicFadePhase.FadingUp`, `MusicFadePhase.FadingDown`.
+  - Added `GainReduction` and `Attenuation` properties to `DuckMixer` and `MusicDirector` to read the metered gain reduction applied to the music bus.
+- **Studio and sound engineering terminology mapped across documentation and skill guides.**
+  Documented the mapping between Duack's concepts and native professional audio / digital console /
+  sampler / studio engineering terms across `duack-skills/`: sidechain compressors (`DuckMixer` duck
+  sources), envelope parameters (attack, hold, release), compressor ratio ($n:1$) and gain
+  reduction / attenuation, digital console scene memory / snapshot states (`Context`), stereo master bus /
+  2-mix fader (`MasterVolume`), monitor level / monitor chain (`PlayerSettings`), fader law (`VolumeCurve`),
+  round-robin cycling (`MarbleBag<T>`), and one-shots / cues.
 - **`duack convert` now passes pre-encoded `.ogg` files through.** A content directory may hold a
   cue that ships no WAV master (only an already-encoded OGG). There is nothing to encode, and
   dropping the file would lose the cue entirely, so `convert` copies such a file into the output
@@ -59,6 +70,24 @@ While the version is `0.x`, the API may change between minor versions.
   `DuckSources_exposes_live_state_for_diagnostics`).
 
 ### Fixed
+
+#### 2026-10-22 (sfx cue variation applied by the director)
+
+- **`SfxDirector` now applies `SfxConfig.CueVariation`; the game no longer resolves it in its own
+  facade.** Symptom: the per-play cue jitter was advertised end to end (`AudioConfigBuilder`
+  `WithMusicCueVariation` / `WithSfxCueVariation`, `CueVariation`, `CuePlay`) but the SFX half of
+  the bargain never reached playback - only `MusicDirector` applied music cue pitch
+  (`NextCuePitch()`); `SfxDirector` ignored `SfxConfig.CueVariation` entirely. MonsterProjectWeb
+  worked around it by resolving the jitter in its `Sfx` facade (`Sfx.ResolveCue`) and forwarding
+  concrete pitch/volume. Fix: `SfxDirector` takes an optional `SfxConfig` (default `null`) and
+  resolves a `CuePlay` on every play - jitter pitch added on top of the caller's pitch (clamped to
+  the engine's [-1, 1] range), jitter volume scaling the caller's volume - then composes master ×
+  bus as before; a null config keeps the caller's values untouched. The game facade is now a pure
+  forwarder (`Sfx.Play` hands base values to the director), and the game passes
+  `sfxConfig: _config.Sfx` when constructing the director. Pins: `Sfx_cue_variation_applies_pitch_jitter_per_play`,
+  `Sfx_cue_variation_adds_jitter_on_top_of_an_explicit_per_play_pitch`,
+  `Without_sfx_cue_variation_the_cue_plays_at_its_base_pitch_and_volume` (core) alongside the
+  unchanged passthrough and bus-composition tests.
 
 #### 2026-10-19 (zero-hold duck pulse latched on forever)
 

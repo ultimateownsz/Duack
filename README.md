@@ -62,10 +62,11 @@ Duack ships markdown agent skills under `duack-skills/`. To use them in your pro
 
 - **Manual:** copy or submodule the `duack-skills/` directory into your agent folder
   (`.opencode/`, `.claude/skills/`, etc.).
-- **CLI (optional):** `dotnet run --project tools/Duack.Tools -- init <contentDir> --skills`
+- **CLI (optional):** `dotnet run --project tools/DuackCli -- init <contentDir> --skills`
   (use `--skills-dir <dir>` to choose the destination).
 
 ## Install
 
-NuGet: `Duack` (core, code-first), `Duack.MonoGame`, `Duack.KNI`. `Duack.Config` and `Duack.Tools`
+NuGet: `Duack` (core, code-first), `Duack.MonoGame`, `Duack.KNI`. `Duack.Config` and `DuackCli`
 are provisional in this preview. (Published after the playlist milestone; see roadmap.)
+

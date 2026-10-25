@@ -1,4 +1,5 @@
-namespace Duack.Tools;
+using Duack;
+namespace DuackCli;
 
 /// <summary>
 /// Thin CLI-facing wrapper over the core <see cref="PlaylistJson"/> wire format. Playlists are a
@@ -20,3 +21,5 @@ public static class PlaylistFile
     /// </summary>
     public static PlaylistConfig? FromConfig(AudioConfig config) => PlaylistJson.FromConfig(config);
 }
+
+

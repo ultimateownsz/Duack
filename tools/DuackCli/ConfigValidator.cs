@@ -1,7 +1,8 @@
+using Duack;
 using System.Collections.Generic;
 using System.Globalization;
 
-namespace Duack.Tools;
+namespace DuackCli;
 
 /// <summary>How serious a <see cref="ValidationIssue"/> is.</summary>
 public enum IssueSeverity
@@ -154,3 +155,5 @@ public static class ConfigValidator
 
     private static ValidationIssue Warning(string message) => new(IssueSeverity.Warning, message);
 }
+
+

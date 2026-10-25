@@ -1,4 +1,4 @@
-namespace Duack.Tools.Tests;
+namespace DuackCli.Tests;
 
 /// <summary>
 /// Pins how the converter decides which files are "songs": the union of every playlist's track
@@ -54,3 +54,5 @@ public class SongSetTests
         Assert.False(songs.Contains("theme_a"));
     }
 }
+
+

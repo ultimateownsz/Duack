@@ -1,6 +1,6 @@
 using NAudio.Wave;
 
-namespace Duack.Tools.Tests;
+namespace DuackCli.Tests;
 
 /// <summary>
 /// Round-trips a real (generated) WAV through the encoder into a temp directory: the OGG must be a
@@ -71,3 +71,5 @@ public class WavToOggConverterTests : IDisposable
         return path;
     }
 }
+
+

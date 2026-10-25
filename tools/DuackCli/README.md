@@ -1,15 +1,15 @@
-# Duack.Tools (`duack`)
+# DuackCli (`duack`)
 
 Build-time tooling for Duack content: scaffold, validate, and convert an
 `audio-config.json` and its WAV masters. Desktop-only and never referenced by `src/` or
 `samples/`; it is the only place `NAudio` and `OggVorbisEncoder` are used.
 
 ```
-duack init     <contentDir> [--out <file>] [--force]
-duack validate <config.json> [--playlists <file>]
-duack convert  <contentDir> <outDir> [--config <file>] [--playlists <file>] [--quality <0..1>] [--force] [--all]
-duack scan     <audioRoot> [--out <file>]
-duack normalize <dir> [<outDir>] [--out <dir>] [--config <file>] [--write-config]
+duackcli init     <contentDir> [--out <file>] [--force]
+duackcli validate <config.json> [--playlists <file>]
+duackcli convert  <contentDir> <outDir> [--config <file>] [--playlists <file>] [--quality <0..1>] [--force] [--all]
+duackcli scan     <audioRoot> [--out <file>]
+duackcli normalize <dir> [<outDir>] [--out <dir>] [--config <file>] [--write-config]
 ```
 
 - **init** scans `<contentDir>` for `*.wav` and writes a starting `audio-config.json`
@@ -71,7 +71,7 @@ var config = new AudioConfigBuilder()
     .WithPlaylists(playlists)   // embeds them under the "playlists" key
     .Build();
 File.WriteAllText("audio-config.json", config.Serialize());
-// then: duack convert <contentDir> <outDir> --config audio-config.json
+// then: duackcli convert <contentDir> <outDir> --config audio-config.json
 ```
 
 `WithPlaylists` stores the map in `AudioConfig.ExtensionData`, so it survives `Serialize()` /
@@ -89,7 +89,7 @@ captured on load and re-emitted on save.** This is load-bearing for tooling:
 - Build-only sections such as `playlists` (and any section a future tool adds) are **not**
   in the runtime model, yet they survive an `AudioConfig.Load()` → `Serialize()` round trip
   because they land in `ExtensionData`.
-- `duack convert --config <file>` reads the embedded `playlists` section straight out of
+- `duackcli convert --config <file>` reads the embedded `playlists` section straight out of
   `ExtensionData`, so the same file the game loads also drives conversion.
 - **An external editor that produces `audio-config.json` MUST preserve unknown sections.**
   Deserialize into a model that keeps extension data (as `Duack.AudioConfig` does), or edit
@@ -120,9 +120,10 @@ trailing commas are allowed so hand-edited files stay friendly.
 ## Tests
 
 ```
-dotnet test tests/Duack.Tools.Tests
+dotnet test tests/DuackCli.Tests
 ```
 
 Covers the validator rules, the song-set / conversion-decision policy, the scaffold shape,
 the WAV→OGG round trip (temp directory), the playlist loader, and the CLI end-to-end
 (exit codes + filesystem effects) for `init` / `validate` / `convert`.
+

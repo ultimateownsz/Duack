@@ -11,7 +11,7 @@ if (-not (Test-Path $masters)) {
 
 if ($InPlace) {
     $target = Join-Path $env:TEMP ("duack-normalized-" + [Guid]::NewGuid().ToString("N"))
-    & dotnet run --project tools/Duack.Tools -- normalize $masters $target
+    & dotnet run --project tools/DuackCli -- normalize $masters $target
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     Get-ChildItem $target -Filter *.wav | ForEach-Object {
         Copy-Item $_.FullName (Join-Path $masters $_.Name) -Force
@@ -20,9 +20,10 @@ if ($InPlace) {
     Write-Host "Normalized masters in place: $masters"
 } else {
     $out = Join-Path $SampleRoot "_masters_normalized"
-    & dotnet run --project tools/Duack.Tools -- normalize $masters $out
+    & dotnet run --project tools/DuackCli -- normalize $masters $out
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     Write-Host ""
     Write-Host "Next: convert the normalized masters:"
-    Write-Host "  dotnet run --project tools/Duack.Tools -- convert $out $SampleRoot/Content/Audio/Tracks --all"
+    Write-Host "  dotnet run --project tools/DuackCli -- convert $out $SampleRoot/Content/Audio/Tracks --all"
 }
+

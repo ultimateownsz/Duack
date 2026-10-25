@@ -1,12 +1,13 @@
+using Duack;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace Duack.Tools;
+namespace DuackCli;
 
 /// <summary>
 /// Builds a starting <see cref="AudioConfig"/> from a content directory's WAV files (the pure part
-/// of <c>duack init</c>). The result carries the default music/sfx sections, the sfx/dialogue duck
+/// of <c>duackcli init</c>). The result carries the default music/sfx sections, the sfx/dialogue duck
 /// sources, and a placeholder <c>tracks</c> entry for every discovered WAV so the loudness/compress
 /// values have somewhere to be filled in.
 /// </summary>
@@ -40,3 +41,5 @@ public static class ConfigScaffolder
         return config;
     }
 }
+
+

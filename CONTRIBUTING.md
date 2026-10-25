@@ -15,7 +15,7 @@ API may change between releases.
   MonsterProjectWeb migration). Do not skip phases.
 - The library targets `net8.0`/`net10.0` pure BCL in `src/Duack`; adapters live in
   `src/Duack.MonoGame` and `src/Duack.KNI`; offline tooling (NAudio/OggVorbisEncoder) lives
-  only in `tools/Duack.Tools`. Never add a package reference to `src/Duack`.
+  only in `tools/DuackCli`. Never add a package reference to `src/Duack`.
 
 ## Test-driven development
 
@@ -46,7 +46,7 @@ dotnet test tests/Duack.Tests
 ## Scope boundaries
 
 - **Do not fold `AudioMixer` into Duack.** `tools/AudioMixer` stays in MonsterProjectWeb.
-  Only `tools/AudioConverter` (as `duack convert`) migrated here.
+  Only `tools/AudioConverter` (as `duackcli convert`) migrated here.
 - **Do not delegate playlist state to `MediaQueue` or `MediaPlayer`.** Duack's own
   `MusicPlaylistController` is the single sequencing path for both backends.
 - **Mobile is out of scope** until further notice. Desktop (MonoGame DesktopGL) and web
@@ -54,7 +54,8 @@ dotnet test tests/Duack.Tests
 
 ## Naming
 
-- Core package ID: `Duack`. Adapters: `Duack.MonoGame`, `Duack.KNI`. Tool: `Duack.Tools`.
+- Core package ID: `Duack`. Adapters: `Duack.MonoGame`, `Duack.KNI`. Tool: `DuackCli`.
 - Root namespace: `Duack` (core), `Duack.MonoGame` / `Duack.KNI` (adapters).
 - The API term is **context** (OBS-style "scene" framing in docs only). Do not rename it to
   "Scene" in code.
+

@@ -1,9 +1,10 @@
+using Duack;
 using System;
 using System.IO;
 using NAudio.Wave;
 using OggVorbisEncoder;
 
-namespace Duack.Tools;
+namespace DuackCli;
 
 /// <summary>
 /// Managed WAV → OGG Vorbis encoder (NAudio decode, OggVorbisEncoder encode; no ffmpeg). Ported
@@ -105,3 +106,5 @@ public static class WavToOggConverter
         return hash;
     }
 }
+
+

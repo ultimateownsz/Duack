@@ -12,8 +12,8 @@ namespace Duack;
 /// <para>
 /// This preview is code-only: this is the SECONDARY surface. The mix is authored in code
 /// (<see cref="AudioConfigBuilder"/>) and the JSON file is an optional overlay on top of it, not
-/// the source of truth. The tooling (<c>duack init</c> / <c>duack validate</c> /
-/// <c>duack convert</c>) speaks this format, and so does a game that wants to tune a mix from a
+/// the source of truth. The tooling (<c>duackcli init</c> / <c>duackcli validate</c> /
+/// <c>duackcli convert</c>) speaks this format, and so does a game that wants to tune a mix from a
 /// file - but nothing in the core requires a file to exist.
 /// </para>
 /// <para>

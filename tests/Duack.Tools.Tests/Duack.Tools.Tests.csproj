@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <RootNamespace>Duack.Tools.Tests</RootNamespace>
+    <RootNamespace>DuackCli.Tests</RootNamespace>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
@@ -16,7 +16,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\tools\Duack.Tools\Duack.Tools.csproj" />
+    <ProjectReference Include="..\..\tools\DuackCli\DuackCli.csproj" />
   </ItemGroup>
 
 </Project>
+

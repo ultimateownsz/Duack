@@ -213,7 +213,7 @@ public sealed class AudioLibrary
     private static string ContextOf(AudioLibraryPlaylistOptions options, string name) =>
         options.ContextForTrack?.Invoke(name) ?? string.Empty;
 
-    /// <summary>Projects the discovered cues into a manifest (for <c>duack scan</c>-style output).</summary>
+    /// <summary>Projects the discovered cues into a manifest (for <c>duackcli scan</c>-style output).</summary>
     public AudioLibraryManifest ToManifest() => new()
     {
         SchemaVersion = AudioLibraryManifest.CurrentSchemaVersion,

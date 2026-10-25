@@ -16,11 +16,11 @@ If you swap in your own music and SFX, drop them into the two-directory conventi
 regenerate:
 
 ```
-duack scan <audioRoot>            # writes <audioRoot>/audio-manifest.json (web hosts read this)
-duack convert <mastersDir> <tracksDir> --all   # encode Tracks songs to OGG for the web build
+duackcli scan <audioRoot>            # writes <audioRoot>/audio-manifest.json (web hosts read this)
+duackcli convert <mastersDir> <tracksDir> --all   # encode Tracks songs to OGG for the web build
 ```
 
-See `tools/Duack.Tools/README.md` for the full CLI.
+See `tools/DuackCli/README.md` for the full CLI.
 
 ## Your own audio: licensing checklist
 
@@ -49,10 +49,11 @@ Content/Audio/
 
 - `AudioLibrary.ScanDirectory` (desktop) classifies both directories into cue names —
   nothing is registered by hand, dropping a file in is enough.
-- Web hosts cannot enumerate directories, so `duack scan` writes the checked-in
+- Web hosts cannot enumerate directories, so `duackcli scan` writes the checked-in
   `audio-manifest.json` and the page rebuilds the same library from it.
 - Directory names and extensions are matched **case-sensitively** (`SFX`, `Tracks`,
-  lowercase `.wav`/`.ogg`): case-sensitive web hosts 404 on any mismatch, and `duack scan`
+  lowercase `.wav`/`.ogg`): case-sensitive web hosts 404 on any mismatch, and `duackcli scan`
   warns about files it therefore cannot load.
-- `duack convert <mastersDir> <tracksDir> --all` encodes `Tracks/` songs to OGG for the
+- `duackcli convert <mastersDir> <tracksDir> --all` encodes `Tracks/` songs to OGG for the
   web build (SFX stay WAV: short and small, so converting buys nothing).
+

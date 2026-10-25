@@ -1,4 +1,4 @@
-namespace Duack.Tools.Tests;
+namespace DuackCli.Tests;
 
 /// <summary>
 /// Pins the per-file conversion decision: only songs become OGG, up-to-date output is skipped
@@ -54,3 +54,5 @@ public class ConversionPlannerTests
             ConversionPlanner.Decide(isSong: true, force: true, oggExists: true, oggUpToDate: true));
     }
 }
+
+

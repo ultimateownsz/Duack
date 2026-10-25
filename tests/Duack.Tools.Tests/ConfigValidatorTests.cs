@@ -1,4 +1,4 @@
-namespace Duack.Tools.Tests;
+namespace DuackCli.Tests;
 
 /// <summary>
 /// Pins the headless validation rules: each out-of-range or unknown field is reported with a clear,
@@ -168,3 +168,5 @@ public class ConfigValidatorTests
         Assert.Empty(ConfigValidator.Validate(Clean(), playlists));
     }
 }
+
+

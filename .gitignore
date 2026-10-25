@@ -17,7 +17,7 @@ coverage*.xml
 publish/
 
 ## Sample audio masters (regenerate the shipped OGGs with
-## `dotnet run --project tools/Duack.Tools -- convert samples/Duack.Sample.Desktop/_masters samples/Duack.Sample.Desktop/Content/Audio/Tracks --all`)
+## `dotnet run --project tools/DuackCli -- convert samples/Duack.Sample.Desktop/_masters samples/Duack.Sample.Desktop/Content/Audio/Tracks --all`)
 _masters/
 
 ## OS

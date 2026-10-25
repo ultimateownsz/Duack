@@ -1,6 +1,6 @@
 using NAudio.Wave;
 
-namespace Duack.Tools.Tests;
+namespace DuackCli.Tests;
 
 /// <summary>Writes a short real WAV file for tests that need decodable audio.</summary>
 internal static class TestWav
@@ -16,3 +16,5 @@ internal static class TestWav
             writer.WriteSample((float)(Math.Sin(2 * Math.PI * 440 * i / sampleRate) * 0.5));
     }
 }
+
+

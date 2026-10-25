@@ -1,10 +1,11 @@
+using Duack;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using NAudio.Wave;
 
-namespace Duack.Tools;
+namespace DuackCli;
 
 public sealed record TrackLoudness(string Name, string Path, double Rms, double Peak)
 {
@@ -166,3 +167,5 @@ public static class LoudnessAnalyzer
     public static IReadOnlyList<(TrackLoudness Track, double Gain)> NormalizeTracks(string inputDir, string outputDir) => NormalizeDirectory(inputDir, outputDir);
     public static IReadOnlyList<(TrackLoudness Track, double Gain)> NormalizeWavs(string inputDir, string outputDir) => NormalizeDirectory(inputDir, outputDir);
 }
+
+

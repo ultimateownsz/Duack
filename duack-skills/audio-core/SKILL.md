@@ -77,7 +77,7 @@ Every namespace → `Duack`.
 - Audio root holds `SFX/` (small one-shots, wav preferred) and `Tracks/` (loops/songs, ogg preferred)
 - `AudioLibrary.ScanDirectory(root)` classifies live (desktop)
 - `AudioLibrary.FromManifest(manifest)` for web (browsers can't enumerate directories)
-- `duack scan <audioRoot>` writes `audio-manifest.json`
+- `duackcli scan <audioRoot>` writes `audio-manifest.json`
 - Classification is case-SENSITIVE (`SFX`/`Tracks`, lowercase extensions only)
 
 ### Adapters
@@ -178,13 +178,13 @@ See the `crossfade` skill for detailed crossfade and scene transition patterns.
 - `tests/Duack.Config.Tests` — config/playlist JSON wire format pins (Duack.Config)
 - `tests/Duack.Adapters.Tests` — adapter behavior via headless seams
 - `tests/Duack.Sample.Tests` — sample StoryController + SampleAudio pins
-- `tests/Duack.Tools.Tests` — CLI end-to-end
+- `tests/DuackCli.Tests` — CLI end-to-end
 
-### CLI tools (`tools/Duack.Tools`)
-- `duack init <contentDir>` — scaffold audio-config.json from content scan
-- `duack validate <config.json>` — schema + range validation
-- `duack convert <input> <output>` — WAV to OGG for web
-- `duack scan <audioRoot>` — write audio-manifest.json for web hosts
+### CLI tools (`tools/DuackCli`)
+- `duackcli init <contentDir>` — scaffold audio-config.json from content scan
+- `duackcli validate <config.json>` — schema + range validation
+- `duackcli convert <input> <output>` — WAV to OGG for web
+- `duackcli scan <audioRoot>` — write audio-manifest.json for web hosts
 - NAudio/OggVorbisEncoder live here only. Never referenced by src/ or samples/.
 
 ## Quickstart (install + wire)
@@ -217,3 +217,4 @@ var director = new MusicManager(backend, controller, config.Music);
 Per-frame: director.Update(deltaSeconds); Switch: director.ReleaseDucks(); director.Play("battle"); Duck: director.Pulse("sfx");.
 
 See topic skills: ducking, playlists, sfx-variation, player-settings, audio-library, config, adapters, cli, crossfade.
+

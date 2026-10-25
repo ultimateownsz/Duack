@@ -1,6 +1,6 @@
 ---
 name: audio-library
-description: Duack's two-directory audio convention — AudioLibrary classification/scan, CandidatePaths, ToPlaylist/BuildPlaylists, AudioLibraryManifest for web hosts, duack scan. Use when organizing audio files, scanning content, supporting web manifests, or wiring cue names without hand-registration.
+description: Duack's two-directory audio convention — AudioLibrary classification/scan, CandidatePaths, ToPlaylist/BuildPlaylists, AudioLibraryManifest for web hosts, duackcli scan. Use when organizing audio files, scanning content, supporting web manifests, or wiring cue names without hand-registration.
 ---
 
 # Duack — Audio Library (Two-Directory Convention)
@@ -46,7 +46,7 @@ library.BuildPlaylists(options);                 // per-track + all-tracks bag-s
 
 ## Web manifest
 
-Browsers can't enumerate directories. `duack scan <audioRoot>` writes `audio-manifest.json`.
+Browsers can't enumerate directories. `duackcli scan <audioRoot>` writes `audio-manifest.json`.
 
 ```csharp
 AudioLibraryManifest manifest = library.ToManifest();
@@ -71,10 +71,10 @@ var library = AudioLibrary.FromManifest(manifest);
 so existing flat content (MonsterProjectWeb) keeps loading unchanged. `SoundEffectClipLibrary`
 uses `CandidateUris` with exact legacy order when no library supplied.
 
-## duack scan
+## duackcli scan
 
 ```
-duack scan <audioRoot> [--out <file>]
+duackcli scan <audioRoot> [--out <file>]
 ```
 Writes `<audioRoot>/audio-manifest.json` (or `--out`). Exits 1 on missing root. Warns (no
 fail) about files the loader can never open (wrong type or upper-cased extension).

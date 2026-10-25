@@ -1,4 +1,5 @@
-namespace Duack.Tools;
+using Duack;
+namespace DuackCli;
 
 public static class LoudnessMeter
 {
@@ -124,3 +125,5 @@ public static class LoudnessComparer
     public static IReadOnlyList<(TrackLoudness Track, double Gain)> NormalizeAll(string i, string o) => LoudnessAnalyzer.NormalizeAll(i, o);
     public static IReadOnlyList<(TrackLoudness Track, double Gain)> AnalyzeAndNormalize(string i, string o) => LoudnessAnalyzer.AnalyzeAndNormalize(i, o);
 }
+
+

@@ -1,4 +1,4 @@
-namespace Duack.Tools.Tests;
+namespace DuackCli.Tests;
 
 /// <summary>
 /// Pins how a <see cref="PlaylistConfig"/> is read: a standalone JSON file (snake_case, string or
@@ -71,3 +71,5 @@ public class PlaylistFileTests
         Assert.Null(PlaylistFile.FromConfig(config));
     }
 }
+
+

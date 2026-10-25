@@ -1,4 +1,5 @@
-namespace Duack.Tools;
+using Duack;
+namespace DuackCli;
 
 /// <summary>What the converter should do with one WAV file.</summary>
 public enum ConversionAction
@@ -14,7 +15,7 @@ public enum ConversionAction
 }
 
 /// <summary>
-/// The pure per-file decision behind <c>duack convert</c>. Kept separate from the encoder and file
+/// The pure per-file decision behind <c>duackcli convert</c>. Kept separate from the encoder and file
 /// system so the policy ("only songs become OGG; skip up-to-date output unless forced") is testable.
 /// </summary>
 public static class ConversionPlanner
@@ -35,3 +36,5 @@ public static class ConversionPlanner
         return ConversionAction.Convert;
     }
 }
+
+

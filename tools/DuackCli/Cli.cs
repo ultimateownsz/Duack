@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using Duack;
 
-namespace Duack.Tools;
+namespace DuackCli;
 
 /// <summary>
 /// Testable command dispatcher for the <c>duack</c> CLI. Writes user-facing text to the supplied
@@ -560,5 +561,6 @@ public static class Cli
         public string? Value(string name) => Options.TryGetValue(name, out var value) ? value : null;
     }
 }
+
 
 

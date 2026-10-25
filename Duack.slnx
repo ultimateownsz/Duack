@@ -3,7 +3,7 @@
   <Project Path="src/Duack.Config/Duack.Config.csproj" />
   <Project Path="src/Duack.MonoGame/Duack.MonoGame.csproj" />
   <Project Path="src/Duack.KNI/Duack.KNI.csproj" />
-  <Project Path="tools/Duack.Tools/Duack.Tools.csproj" />
+  <Project Path="tools/DuackCli/DuackCli.csproj" />
   <Project Path="tests/Duack.Tests/Duack.Tests.csproj" />
   <Project Path="tests/Duack.Config.Tests/Duack.Config.Tests.csproj" />
   <Project Path="tests/Duack.Adapters.Tests/Duack.Adapters.Tests.csproj" />
@@ -12,3 +12,4 @@
   <Project Path="samples/Duack.Sample.Desktop/Duack.Sample.Desktop.csproj" />
   <Project Path="samples/Duack.Sample.Core/Duack.Sample.Core.csproj" />
 </Solution>
+

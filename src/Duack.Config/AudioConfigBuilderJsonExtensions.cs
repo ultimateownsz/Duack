@@ -4,7 +4,7 @@ namespace Duack;
 /// The JSON-only additions to <see cref="AudioConfigBuilder"/>.
 /// <para>
 /// Embedding playlists into a config is a WIRE-FORMAT concern, not a mixing concern: the embedded
-/// <c>playlists</c> section exists so the CLI (<c>duack convert --config</c>) can find the songs a
+/// <c>playlists</c> section exists so the CLI (<c>duackcli convert --config</c>) can find the songs a
 /// game plays. It lives here, in the provisional JSON package, so the core builder stays free of
 /// any serialization dependency.
 /// </para>

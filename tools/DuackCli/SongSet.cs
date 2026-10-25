@@ -1,8 +1,9 @@
+using Duack;
 using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace Duack.Tools;
+namespace DuackCli;
 
 /// <summary>
 /// The set of names that count as "songs" for conversion, taken from the union of every playlist's
@@ -47,3 +48,5 @@ public sealed class SongSet
         return string.IsNullOrEmpty(withoutExtension) ? name.Trim() : withoutExtension.Trim();
     }
 }
+
+

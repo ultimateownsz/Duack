@@ -1,6 +1,6 @@
 using NAudio.Wave;
 
-namespace Duack.Tools.Tests;
+namespace DuackCli.Tests;
 
 public class LoudnessCliTests : IDisposable
 {
@@ -72,3 +72,5 @@ public class LoudnessCliTests : IDisposable
         Assert.Equal(0, code);
     }
 }
+
+

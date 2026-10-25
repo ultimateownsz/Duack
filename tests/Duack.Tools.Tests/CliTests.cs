@@ -1,4 +1,4 @@
-namespace Duack.Tools.Tests;
+namespace DuackCli.Tests;
 
 /// <summary>
 /// End-to-end tests for the <c>duack</c> CLI, driven through <see cref="Cli.Run"/> with captured
@@ -401,3 +401,5 @@ public class CliTests : IDisposable
         }
         """;
 }
+
+

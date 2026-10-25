@@ -1,7 +1,7 @@
-namespace Duack.Tools.Tests;
+namespace DuackCli.Tests;
 
 /// <summary>
-/// Pins the <c>duack init</c> scaffold: one <c>tracks</c> entry per discovered WAV (normalized,
+/// Pins the <c>duackcli init</c> scaffold: one <c>tracks</c> entry per discovered WAV (normalized,
 /// sorted), the default music/sfx sections with the sfx/dialogue duck sources, and a scaffold that
 /// validates clean so it can be edited from a working starting point.
 /// </summary>
@@ -49,3 +49,5 @@ public class ConfigScaffolderTests
         Assert.Empty(ConfigValidator.Validate(config));
     }
 }
+
+

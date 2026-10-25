@@ -1,6 +1,6 @@
 using NAudio.Wave;
 
-namespace Duack.Tools.Tests;
+namespace DuackCli.Tests;
 
 /// <summary>Pins the loudness measurement + normalization helpers.</summary>
 public class LoudnessAnalyzerTests : IDisposable
@@ -130,3 +130,5 @@ public class LoudnessAnalyzerTests : IDisposable
         Assert.Equal(a.Rms, c.Rms);
     }
 }
+
+

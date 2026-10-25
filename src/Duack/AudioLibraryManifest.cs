@@ -7,7 +7,7 @@ namespace Duack;
 /// <summary>
 /// The checked-in manifest of an audio root: which sfx and track cues a content directory ships.
 /// Browsers cannot enumerate directories, so a web host reads this file instead of scanning;
-/// <c>duack scan</c> generates it from the two-directory layout. Hand edits are tolerated
+/// <c>duackcli scan</c> generates it from the two-directory layout. Hand edits are tolerated
 /// (snake_case keys, missing lists read as empty, unknown fields survive a load→save cycle).
 /// </summary>
 public sealed class AudioLibraryManifest

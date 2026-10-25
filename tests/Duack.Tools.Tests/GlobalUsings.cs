@@ -1,3 +1,4 @@
 global using Duack;
-global using Duack.Tools;
+global using DuackCli;
 global using Xunit;
+

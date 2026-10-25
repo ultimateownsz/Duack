@@ -64,7 +64,7 @@ with the master entering once at the top. Duck sources target the music bus, und
 
 ## What's included
 
-- Sidechain ducking with attack / hold / release and hot reload
+- Sidechain ducking with attack / hold / release
 - Per-context music volumes and crossfades
 - Playlists with bag-style shuffle (variation with a memory)
 - Player settings: perceptual volume sliders, file / localStorage / in-memory persistence

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Duack;
 
 /// <summary>
-/// Core music director: owns playlist sequencing, crossfade realization, ducking, context
+/// Core music manager: owns playlist sequencing, crossfade realization, ducking, context
 /// scales, and master-volume composition — the final volume the backend plays at is
 /// <see cref="MusicVolumeMath.Effective"/> of (master × context scale × duck ratio × fade).
 /// It talks to a thin <see cref="IMusicBackend"/> that only plays tracks and applies

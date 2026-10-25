@@ -5,7 +5,7 @@ namespace Duack;
 
 /// <summary>
 /// Plays one-shot cues by name against a discovered <see cref="AudioLibrary"/> and keeps the music
-/// mix out of the way while they speak: every successful play pulses the music director's duck
+/// mix out of the way while they speak: every successful play pulses the music manager's duck
 /// source (default <c>sfx</c>). Unknown cues and backend refusals report failure and never duck.
 /// <see cref="PlayNext"/> draws from a shuffle bag over the discovered sfx, so a demo or ambient
 /// layer never plays the same cue back-to-back.
@@ -80,7 +80,7 @@ public sealed class SfxManager
         if (!_library.IsSfx(cueName)) return false;
 
         // Per-play jitter from the authored cue variation, resolved fresh on every play so a live
-        // settings change applies without rebuilding the director; added on top of the caller's
+        // settings change applies without rebuilding the manager; added on top of the caller's
         // pitch and scaling the caller's volume, then composed with the buses.
         var variation = _sfxConfig?.CueVariation;
         var cuePlay = variation?.Resolve(_random) ?? new CuePlay(0f, 1f);
@@ -93,7 +93,7 @@ public sealed class SfxManager
         return true;
     }
 
-    /// <summary>Stops every one-shot this director's backend is currently playing.</summary>
+    /// <summary>Stops every one-shot this manager's backend is currently playing.</summary>
     public void Stop() => _backend.Stop();
 
     /// <summary>

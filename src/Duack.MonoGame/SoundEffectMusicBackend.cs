@@ -9,7 +9,7 @@ namespace Duack.MonoGame;
 ///
 /// <para>
 /// All mixing decisions (master / context / duck / fade composition, crossfade curves, playlist
-/// sequencing) live in the core; this adapter only maps the director's requests onto the engine.
+/// sequencing) live in the core; this adapter only maps the manager's requests onto the engine.
 /// It plays tracks NON-looped: looping is a playlist concern (<c>PlaylistRepeatMode</c>) handled by
 /// the core, so a track reaching its end is reported as a completion via the <see cref="IMusicBackend.TrackEnded"/>
 /// event.

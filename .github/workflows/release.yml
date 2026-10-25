@@ -12,6 +12,8 @@ env:
 jobs:
   release:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # required for OIDC trusted publishing
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,7 +34,7 @@ jobs:
 
       - name: Verify core is BCL-only
         run: |
-          $env:NUGET_PACKAGES = "$env:TEMP\duack-empty-cache"
+          export NUGET_PACKAGES="$TEMP/duack-empty-cache"
           dotnet test tests/Duack.Tests/Duack.Tests.csproj --no-build -c Release
 
       - name: Pack
@@ -41,10 +43,16 @@ jobs:
           dotnet pack src/Duack.MonoGame/Duack.MonoGame.csproj -c Release -o artifacts
           dotnet pack src/Duack.KNI/Duack.KNI.csproj -c Release -o artifacts
 
+      - name: NuGet login (OIDC to temporary API key)
+        uses: NuGet/login@v1
+        id: nuget
+        with:
+          user: ultimateownsz
+
       - name: Push to NuGet
         run: |
-          dotnet nuget push "artifacts/*.nupkg" --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }} --skip-duplicate
-          dotnet nuget push "artifacts/*.snupkg" --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }} --skip-duplicate
+          dotnet nuget push "artifacts/*.nupkg" --source https://api.nuget.org/v3/index.json --api-key ${{ steps.nuget.outputs.NUGET_API_KEY }} --skip-duplicate
+          dotnet nuget push "artifacts/*.snupkg" --source https://api.nuget.org/v3/index.json --api-key ${{ steps.nuget.outputs.NUGET_API_KEY }} --skip-duplicate
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

@@ -52,7 +52,7 @@ public static class Cli
     {
         writer.WriteLine("usage: duack <command> [options]");
         writer.WriteLine();
-        writer.WriteLine("  init     <contentDir> [--out <file>] [--force]");
+        writer.WriteLine("  init     <contentDir> [--out <file>] [--force] [--skills] [--skills-dir <dir>]");
         writer.WriteLine("  validate <config.json> [--playlists <file>]");
         writer.WriteLine("  convert  <contentDir> <outDir> [--config <file>] [--playlists <file>]");
         writer.WriteLine("           [--quality <0..1>] [--force] [--all]");
@@ -68,7 +68,7 @@ public static class Cli
 
     private static int RunInit(string[] args, TextWriter output, TextWriter error)
     {
-        if (!TryParseArgs(args, valueOptions: new[] { "--out" }, flags: new[] { "--force" }, out var parsed, out var errorMessage))
+        if (!TryParseArgs(args, valueOptions: new[] { "--out", "--skills-dir" }, flags: new[] { "--force", "--skills" }, out var parsed, out var errorMessage))
             return Fail(error, errorMessage);
 
         if (parsed.Positional.Count != 1)
@@ -86,7 +86,55 @@ public static class Cli
         var config = ConfigScaffolder.Build(wavs);
         WriteAllText(outPath, AudioConfigJson.Serialize(config));
         output.WriteLine($"[duack] wrote {outPath} ({config.Tracks?.Count ?? 0} tracks, {wavs.Count} wavs).");
+
+        if (parsed.Has("--skills"))
+        {
+            var src = FindSkillsDirectory();
+            if (src is null)
+            {
+                error.WriteLine("warning: duack-skills directory not found; skipping skill install.");
+            }
+            else
+            {
+                var dest = parsed.Value("--skills-dir");
+                if (string.IsNullOrWhiteSpace(dest))
+                    dest = Directory.Exists(".opencode") ? Path.Combine(".opencode", "duack-skills") : "duack-skills";
+                CopyDirectory(src, dest);
+                output.WriteLine($"[duack] installed skills to {dest}");
+            }
+        }
+
         return 0;
+    }
+
+    private static string? FindSkillsDirectory()
+    {
+        var starts = new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory };
+        foreach (var start in starts)
+        {
+            var dir = start;
+            while (dir is not null)
+            {
+                var candidate = Path.Combine(dir, "duack-skills");
+                if (Directory.Exists(candidate))
+                    return candidate;
+                var parent = Directory.GetParent(dir);
+                dir = parent?.FullName;
+            }
+        }
+        return null;
+    }
+
+    private static void CopyDirectory(string source, string destination)
+    {
+        Directory.CreateDirectory(destination);
+        foreach (var file in Directory.EnumerateFiles(source, "*", SearchOption.AllDirectories))
+        {
+            var relative = Path.GetRelativePath(source, file);
+            var target = Path.Combine(destination, relative);
+            Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+            File.Copy(file, target, overwrite: true);
+        }
     }
 
     // ---- validate ----

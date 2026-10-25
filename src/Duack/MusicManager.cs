@@ -98,7 +98,8 @@ public class MusicManager
 
     /// <summary>Starts <paramref name="playlistName"/> from the top.</summary>
     /// <param name="playlistName">Name of the playlist to play.</param>
-    /// <param name="fadeInSeconds">Fade in duration in seconds. If null or omitted, uses the crossfade duration.</param>
+    /// <param name="fadeInSeconds">Fade in duration in seconds. If null or omitted, uses
+    /// <see cref="AudioConfig.Music"/>.<c>CrossfadeSeconds</c>.</param>
     public void Play(string playlistName, float? fadeInSeconds = null)
     {
         _stoppingWithFade = false;

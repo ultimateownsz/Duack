@@ -17,7 +17,7 @@ from whatever is currently playing to the new track.
 var playlists = new PlaylistConfig();
 playlists.Playlists["overworld"] = new PlaylistDefinition
 {
-    Tracks = { new PlaylistTrack { Name = "overworld", Context = "Overworld" } },
+    Tracks = { new PlaylistTrack { Name = "overworld", Context = "Overworld", FadeInSeconds = null, FadeOutSeconds = null } },
     Repeat = PlaylistRepeatMode.Track,
 };
 playlists.Playlists["battle"] = new PlaylistDefinition
@@ -36,16 +36,16 @@ var config = new AudioConfigBuilder()
     .WithPlaylists(playlists)
     .Build();
 
-var director = new MusicManager(backend, new MusicPlaylistController(playlists), config.Music);
+var manager = new MusicManager(backend, new MusicPlaylistController(playlists), config.Music);
 
-director.Play("overworld", fadeInSeconds: 1.0f);
-director.Stop(fadeOutSeconds: 0.5f);
+manager.Play("overworld");  // uses AudioConfig.Music.CrossfadeSeconds
+manager.Stop(fadeOutSeconds: 0.5f);
 
 // Each Play() is an independent crossfade:
-director.Play("overworld");   // overworld track plays (loops)
-director.Play("battle");      // crossfade overworld → battle (1.5s)
-director.Play("hospital");    // crossfade battle → hospital (1.5s)
-director.Play("overworld");   // crossfade hospital → overworld (1.5s)
+manager.Play("overworld");   // overworld track plays (loops)
+manager.Play("battle");      // crossfade overworld → battle (1.5s)
+manager.Play("hospital");    // crossfade battle → hospital (1.5s)
+manager.Play("overworld");   // crossfade hospital → overworld (1.5s)
 ```
 
 ## 3. How crossfades work
@@ -82,8 +82,8 @@ crossfades).
 ```csharp
 if (frame.Music is not null)
 {
-    director.ReleaseDucks();  // immediately reset all duck sources
-    director.Play(frame.Music);
+    manager.ReleaseDucks();  // immediately reset all duck sources
+    manager.Play(frame.Music);
 }
 ```
 The duck recovers instantly (no easing tail), so the incoming track starts at full volume
@@ -93,10 +93,10 @@ from frame one. Best when you want the incoming track at full volume immediately
 ```csharp
 if (frame.Music is not null)
 {
-    director.Play(frame.Music);  // crossfade starts immediately
+    manager.Play(frame.Music);  // crossfade starts immediately
 }
 // In Draw or Update, defer the visual scene change:
-if (story.Scene != displayedScene && director.IsDuckReady())
+if (story.Scene != displayedScene && manager.IsDuckReady())
 {
     displayedScene = story.Scene;  // only switch visuals once duck has recovered
 }
@@ -129,7 +129,7 @@ playlists.Playlists["battle-sequence"] = new PlaylistDefinition
     Repeat = PlaylistRepeatMode.Off,   // stop after victory
     Shuffle = PlaylistShuffleMode.Off,  // play in order
 };
-director.Play("battle-sequence"); // plays intro → loop → victory, crossfading between each
+manager.Play("battle-sequence"); // plays intro → loop → victory, crossfading between each
 ```
 
 Tracks advance automatically when the current track finishes. `Repeat` and `Shuffle` control
@@ -144,10 +144,10 @@ private void ApplyFrame(StoryFrame frame)
 {
     // Release ducks on scene switch so the incoming track starts clean
     if (frame.SceneChanged || frame.Music is not null)
-        director.ReleaseDucks();
+        manager.ReleaseDucks();
 
     if (frame.Music is not null)
-        director.Play(frame.Music);  // triggers crossfade immediately
+        manager.Play(frame.Music);  // triggers crossfade immediately
 
     // Cut lingering SFX on scene switch (e.g., long dialog cue)
     if (frame.Sfx == StoryController.BattleStartCue)
@@ -177,16 +177,16 @@ complementary tools:
      already playing (and the old one gone) when the new screen appears. Example: on the
      battle-start cue, crossfade overworld→battle over the 1.2s intro:
      ```csharp
-     if (frame.Sfx == BattleStartCue && director.CurrentTrack?.Name != "battle")
-         director.Play("battle", fadeInSeconds: BattleIntroSeconds);
+     if (frame.Sfx == BattleStartCue && manager.CurrentTrack?.Name != "battle")
+         manager.Play("battle", fadeInSeconds: BattleIntroSeconds);
      ```
    - **Hard stop + fade in**: when an early crossfade is not possible, stop the old track
      instantly and fade the new one in:
      ```csharp
-     if (frame.Music is not null && director.CurrentTrack?.Name != frame.Music)
+     if (frame.Music is not null && manager.CurrentTrack?.Name != frame.Music)
      {
-         director.Stop();                       // old track gone this frame
-         director.Play(frame.Music, fadeInSeconds: 0.8f);
+         manager.Stop();                       // old track gone this frame
+         manager.Play(frame.Music, fadeInSeconds: 0.8f);
      }
      ```
 
@@ -206,6 +206,8 @@ right after the last action in the previous scene.
   multi-track sequencing, use `PlaylistConfig` with `Repeat` and `Shuffle`.
 - **Crossfade duration**: Configured via `AudioConfigBuilder.WithCrossfadeSeconds(seconds)`.
   Default is 1.2s. Both desktop and web use the same duration.
+- **Per-call overrides**: `Play(name, fadeInSeconds)` / `Stop(fadeOutSeconds)` override the config
+  duration for that transition. Pass `null` (the default) to honour `AudioConfig.Music.CrossfadeSeconds`.
 - **Web (KNI)**: Single-track player (fade-out → swap → fade-in). Each transition costs
   `CrossfadeSeconds` total. The sequencing logic is identical to desktop.
 - **Ducking during crossfades**: The duck ratio applies to whatever track is active. During
@@ -218,6 +220,24 @@ right after the last action in the previous scene.
 
 - **Crossfade / Ramp**: In DAWs and mixing consoles, transitions between signals and automation ramps are drawn as fades/crossfades. Duack's equal-power crossfade curve preserves acoustic power across track transitions.
 - **Fade up / Fade down**: Studio/broadcast verbs corresponding to track fade-in and fade-out automation.
+
+## 8b. Minimal config-driven example (copy-paste starting point)
+
+```csharp
+// 1) Playlists: null fades => CrossfadeSeconds drives the transition
+builder.WithPlaylist("Overworld", p => p
+    .Track("overworld", "Overworld", fadeInSeconds: null, fadeOutSeconds: null)
+    .Repeat(PlaylistRepeatMode.Track));
+
+// 2) Mix: one knob controls every transition
+new AudioConfigBuilder()
+    .WithCrossfadeSeconds(2.0f)   // change here to tune all transitions
+    .WithContext("Overworld", 1f)
+    .Build();
+```
+
+Swap the track name/context and the crossfade seconds for your game; `null` overrides are what
+make the single `WithCrossfadeSeconds` knob take effect.
 
 ## 9. API quick reference
 

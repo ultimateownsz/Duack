@@ -9,6 +9,10 @@
     <Version>0.1.0-preview.1</Version>
     <Authors>Duack contributors</Authors>
     <Product>Duack</Product>
+    <PackageProjectUrl>https://github.com/ultimateownsz/Duack</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/ultimateownsz/Duack.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>audio;monogame;kni;ducking;crossfade;playlist;mixer</PackageTags>
   </PropertyGroup>
 
 </Project>

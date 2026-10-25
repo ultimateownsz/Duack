@@ -56,6 +56,15 @@ Duack owns the mix and produces the numbers; your engine plays the sound. Deskto
 
 **No UI, ever.** Duack ships no editor or GUI of any kind — a deliberate extensibility boundary, not a limitation. The CLI is the first-party plugin surface: anyone building a visual tool, asset-pipeline integration, or debug overlay builds on the CLI's manifest and validation output.
 
+## Agent skills
+
+Duack ships markdown agent skills under `duack-skills/`. To use them in your project:
+
+- **Manual:** copy or submodule the `duack-skills/` directory into your agent folder
+  (`.opencode/`, `.claude/skills/`, etc.).
+- **CLI (optional):** `dotnet run --project tools/Duack.Tools -- init <contentDir> --skills`
+  (use `--skills-dir <dir>` to choose the destination).
+
 ## Install
 
 NuGet: `Duack` (core, code-first), `Duack.MonoGame`, `Duack.KNI`. `Duack.Config` and `Duack.Tools`

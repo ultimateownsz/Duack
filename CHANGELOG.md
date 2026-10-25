@@ -17,6 +17,10 @@ While the version is `0.x`, the API may change between minor versions.
 
 #### 2026-10-23
 
+- **NuGet publishing metadata and release workflow.** The three shipped packages (`Duack`,
+  `Duack.MonoGame`, `Duack.KNI`) now carry the MIT license expression, an embedded README, and
+  portable symbols (`.snupkg`); a new `.github/workflows/release.yml` builds, tests, packs, and
+  pushes all three to nuget.org on a `v*` tag (or manual dispatch) and creates a GitHub Release.
 - **CLI loudness normalization (`duack normalize`).** New command measures each WAV track's RMS and
   peak loudness, reports the loudest track, and writes gain-normalized WAV copies (matching every
   track to the loudest track's RMS) so crossfades and playlists play at equal loudness without

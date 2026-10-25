@@ -26,8 +26,13 @@ authoritative song list). A content directory may also hold pre-encoded `.ogg` f
 with no WAV master): `convert` copies them through verbatim (`copied=` in the summary).
 Outputs newer than their source are skipped.
 
+Convention: keep WAV masters in a gitignored `_masters/` directory (sibling to `Content/`) and
+convert into `Content/Audio/Tracks/` (OGG) so the committed tree only ships the encoded tracks.
+SFX masters stay as WAV in `Content/Audio/SFX/`. Normalize masters first
+(`duack normalize _masters _masters_normalized`) when equal loudness across tracks matters.
+
 ```
-dotnet run --project tools/Duack.Tools -- convert samples/.../_masters samples/.../Content/Audio/Tracks --all
+dotnet run --project tools/Duack.Tools -- convert <app>/Content/Audio/_masters <app>/Content/Audio/Tracks --all
 ```
 
 ### `duack scan <audioRoot> [--out <file>]`

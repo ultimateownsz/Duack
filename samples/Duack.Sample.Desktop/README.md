@@ -50,21 +50,21 @@ dotnet run --project samples/Duack.Sample.Desktop -c Release
 Content/Audio/
   SFX/          battle-start.wav, dialog.wav, hit.wav, notice-video-game-sfx.wav
   Tracks/       battle.ogg, hospital.ogg, overworld.ogg
-_masters/       (gitignored) WAV masters for the Tracks songs
+Content/Audio/_masters/   (gitignored) WAV masters for the Tracks songs
 ```
 
 The shipped OGGs are regenerated from the gitignored masters with:
 
 ```
-dotnet run --project tools/Duack.Tools -- convert samples/Duack.Sample.Desktop/_masters samples/Duack.Sample.Desktop/Content/Audio/Tracks --all
+dotnet run --project tools/Duack.Tools -- convert samples/Duack.Sample.Desktop/Content/Audio/_masters samples/Duack.Sample.Desktop/Content/Audio/Tracks --all
 ```
 
 To keep scene tracks at equal loudness (so crossfades don't jump in volume), normalize the
 masters first:
 
 ```
-dotnet run --project tools/Duack.Tools -- normalize samples/Duack.Sample.Desktop/_masters samples/Duack.Sample.Desktop/_masters_normalized
-dotnet run --project tools/Duack.Tools -- convert samples/Duack.Sample.Desktop/_masters_normalized samples/Duack.Sample.Desktop/Content/Audio/Tracks --all
+dotnet run --project tools/Duack.Tools -- normalize samples/Duack.Sample.Desktop/Content/Audio/_masters samples/Duack.Sample.Desktop/Content/Audio/_masters_normalized
+dotnet run --project tools/Duack.Tools -- convert samples/Duack.Sample.Desktop/Content/Audio/_masters_normalized samples/Duack.Sample.Desktop/Content/Audio/Tracks --all
 ```
 
 (or run `tools/NormalizeSampleAudio.ps1` to do both steps).

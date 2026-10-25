@@ -51,7 +51,7 @@ A change that ships with no test needs a written reason in the changelog entry.
 - `tests/Duack.Tests/JsonRoundTrip` — config/player-settings wire-format pins.
 - `tests/Duack.Adapters.Tests` — behavior of the two adapter packages, driven through their
   headless seams (fake clip library / fake media-player host); no audio device or browser needed.
-- `tools/DuackCli` — the desktop-only `duack` CLI (`init`/`validate`/`convert`/`scan`); the only
+- `tools/DuackCli` — the desktop-only `duackcli` CLI (`init`/`validate`/`convert`/`scan`); the only
   place `NAudio`/`OggVorbisEncoder` live. Never referenced by `src/` or `samples/`. See its
   `README.md` for the CLI and the `ExtensionData` round-trip contract.
 - `tests/Duack.Tools.Tests` — the tool's pure logic plus CLI end-to-end (exit codes +
@@ -88,10 +88,11 @@ dotnet build Duack.slnx
 dotnet test Duack.slnx
 ```
 
-The tool projects carry a distinct assembly identity (`AssemblyName DuackCli`): a bare
+The tool project uses a distinct assembly identity (`AssemblyName duackcli`): naming it bare
 `duack` collides case-insensitively with the core `Duack.dll` on Windows, and MSBuild then
 silently drops the tool assembly from the test project's references (`CS0103` against a type
-that clearly exists). `duack` is a packaging concern (`ToolCommandName`), not the assembly name.
+that clearly exists). `duackcli` is both the assembly name and the command users invoke
+(`ToolCommandName`); the package ID remains `DuackCli`.
 
 To prove the core stays BCL-only, restore into an empty package cache:
 

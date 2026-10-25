@@ -8,7 +8,7 @@ using Duack;
 namespace DuackCli;
 
 /// <summary>
-/// Testable command dispatcher for the <c>duack</c> CLI. Writes user-facing text to the supplied
+/// Testable command dispatcher for the <c>duackcli</c> CLI. Writes user-facing text to the supplied
 /// writers so an end-to-end test can capture output without touching the real console.
 /// </summary>
 public static class Cli
@@ -51,7 +51,7 @@ public static class Cli
 
     private static int PrintUsage(TextWriter writer)
     {
-        writer.WriteLine("usage: duack <command> [options]");
+        writer.WriteLine("usage: duackcli <command> [options]");
         writer.WriteLine();
         writer.WriteLine("  init     <contentDir> [--out <file>] [--force] [--skills] [--skills-dir <dir>]");
         writer.WriteLine("  validate <config.json> [--playlists <file>]");
@@ -86,7 +86,7 @@ public static class Cli
         var wavs = EnumerateWavs(contentDir);
         var config = ConfigScaffolder.Build(wavs);
         WriteAllText(outPath, AudioConfigJson.Serialize(config));
-        output.WriteLine($"[duack] wrote {outPath} ({config.Tracks?.Count ?? 0} tracks, {wavs.Count} wavs).");
+        output.WriteLine($"[duackcli] wrote {outPath} ({config.Tracks?.Count ?? 0} tracks, {wavs.Count} wavs).");
 
         if (parsed.Has("--skills"))
         {
@@ -101,7 +101,7 @@ public static class Cli
                 if (string.IsNullOrWhiteSpace(dest))
                     dest = Directory.Exists(".opencode") ? Path.Combine(".opencode", "duack-skills") : "duack-skills";
                 CopyDirectory(src, dest);
-                output.WriteLine($"[duack] installed skills to {dest}");
+                output.WriteLine($"[duackcli] installed skills to {dest}");
             }
         }
 
@@ -170,7 +170,7 @@ public static class Cli
             return 1;
 
         if (issues.Count == 0)
-            output.WriteLine("[duack] ok");
+            output.WriteLine("[duackcli] ok");
         return 0;
     }
 
@@ -281,7 +281,7 @@ public static class Cli
             copied++;
         }
 
-        output.WriteLine($"[duack] converted={converted} copied={copied} up-to-date={upToDate} not-song={notSong} ({outDir})");
+        output.WriteLine($"[duackcli] converted={converted} copied={copied} up-to-date={upToDate} not-song={notSong} ({outDir})");
         return 0;
     }
 
@@ -305,7 +305,7 @@ public static class Cli
         var outPath = parsed.Value("--out") ?? Path.Combine(audioRoot, "audio-manifest.json");
         WriteAllText(outPath, AudioLibraryManifestJson.Serialize(library.ToManifest()));
 
-        output.WriteLine($"[duack] sfx={library.Sfx.Count} tracks={library.Tracks.Count} -> {outPath}");
+        output.WriteLine($"[duackcli] sfx={library.Sfx.Count} tracks={library.Tracks.Count} -> {outPath}");
         return 0;
     }
 
@@ -368,7 +368,7 @@ public static class Cli
         var measurements = wavPaths.Select(LoudnessAnalyzer.Measure).ToList();
         var reference = LoudnessAnalyzer.Loudest(measurements);
 
-        output.WriteLine($"[duack] measured {measurements.Count} track(s); loudest: {reference?.Name} " +
+        output.WriteLine($"[duackcli] measured {measurements.Count} track(s); loudest: {reference?.Name} " +
                         $"(RMS {FormatDb(reference?.RmsDb ?? double.NegativeInfinity)} dBFS)");
 
         foreach (var m in measurements)
@@ -382,7 +382,7 @@ public static class Cli
         if (!string.IsNullOrWhiteSpace(outDir))
         {
             LoudnessAnalyzer.NormalizeDirectory(inputDir, outDir!);
-            output.WriteLine($"[duack] wrote normalized WAVs to {outDir}");
+            output.WriteLine($"[duackcli] wrote normalized WAVs to {outDir}");
         }
 
         if (parsed.Has("--write-config"))
@@ -414,7 +414,7 @@ public static class Cli
             }
 
             WriteAllText(configPath!, AudioConfigJson.Serialize(config));
-            output.WriteLine($"[duack] updated tracks in {configPath}");
+            output.WriteLine($"[duackcli] updated tracks in {configPath}");
         }
         else if (parsed.Value("--config") is { } explicitConfigPath)
         {
@@ -433,7 +433,7 @@ public static class Cli
             }
 
             WriteAllText(explicitConfigPath, AudioConfigJson.Serialize(config));
-            output.WriteLine($"[duack] updated tracks in {explicitConfigPath}");
+            output.WriteLine($"[duackcli] updated tracks in {explicitConfigPath}");
         }
 
         return 0;

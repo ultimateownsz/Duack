@@ -46,6 +46,13 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 
 ### Fixed
 
+#### 2026-10-25
+
+- **`duackcli` help no longer advertises the retired `duack` command.** The usage banner and
+  user-facing `[duack]` status prefixes now say `duackcli`, matching the packaged
+  `ToolCommandName`. Pinned by `CliTests.No_arguments_prints_usage_and_fails` and
+  `CliTests.Init_writes_a_config_next_to_the_content`.
+
 ### Deprecated
 
 ### Removed

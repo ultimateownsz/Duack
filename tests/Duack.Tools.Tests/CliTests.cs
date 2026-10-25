@@ -1,7 +1,7 @@
 namespace DuackCli.Tests;
 
 /// <summary>
-/// End-to-end tests for the <c>duack</c> CLI, driven through <see cref="Cli.Run"/> with captured
+/// End-to-end tests for the <c>duackcli</c> CLI, driven through <see cref="Cli.Run"/> with captured
 /// writers and a temp content directory. Each verb's exit code and filesystem effects are pinned.
 /// </summary>
 public class CliTests : IDisposable
@@ -32,7 +32,7 @@ public class CliTests : IDisposable
     {
         var (code, _, err) = Run();
         Assert.NotEqual(0, code);
-        Assert.Contains("usage", err, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("usage: duackcli <command> [options]", err);
     }
 
     [Fact]
@@ -51,10 +51,11 @@ public class CliTests : IDisposable
         File.WriteAllBytes(Path2("theme_a.wav"), Array.Empty<byte>());
         File.WriteAllBytes(Path2("hit.wav"), Array.Empty<byte>());
 
-        var (code, _, err) = Run("init", _dir);
+        var (code, stdout, err) = Run("init", _dir);
 
         Assert.Equal(0, code);
         Assert.Equal("", err);
+        Assert.StartsWith("[duackcli]", stdout);
         var configPath = Path2("audio-config.json");
         Assert.True(File.Exists(configPath));
         var json = File.ReadAllText(configPath);

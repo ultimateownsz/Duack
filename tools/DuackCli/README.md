@@ -113,7 +113,7 @@ captured on load and re-emitted on save.** This is load-bearing for tooling:
   Deserialize into a model that keeps extension data (as `Duack.AudioConfig` does), or edit
   the JSON surgically; a model that drops unknown properties will silently delete
   `playlists` and every other build-only section on the next save.
-- Section keys are camel/snake as written in the file. `duack` reads the embedded playlists
+- Section keys are camel/snake as written in the file. `duackcli` reads the embedded playlists
   map directly from the `playlists` value (the map IS the section's value; there is no
   second `playlists` wrapper inside it).
 

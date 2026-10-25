@@ -33,5 +33,7 @@ jobs:
 
       - name: Verify core is BCL-only (empty package cache)
         run: |
-          $env:NUGET_PACKAGES = "$env:TEMP\duack-empty-cache"
-          dotnet test tests/Duack.Tests/Duack.Tests.csproj --no-build -c Release
+          CACHE_DIR="$RUNNER_TEMP/duack-empty-cache"
+          rm -rf "$CACHE_DIR"
+          mkdir -p "$CACHE_DIR"
+          NUGET_PACKAGES="$CACHE_DIR" dotnet test tests/Duack.Tests/Duack.Tests.csproj --no-build -c Release

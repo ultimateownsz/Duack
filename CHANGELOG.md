@@ -52,6 +52,11 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
   user-facing `[duack]` status prefixes now say `duackcli`, matching the packaged
   `ToolCommandName`. Pinned by `CliTests.No_arguments_prints_usage_and_fails` and
   `CliTests.Init_writes_a_config_next_to_the_content`.
+- **CI `build-and-test` no longer fails in the BCL-only verification step on Linux.** Repro was
+  the `build-and-test` job (`actions/runs/40235172642`, job `121295082021`) failing with
+  `/...sh: line 1: :NUGET_PACKAGES: command not found` because the workflow used PowerShell
+  syntax inside a bash step. The step now creates an empty cache directory and sets
+  `NUGET_PACKAGES` with bash-compatible syntax for the `dotnet test` invocation.
 
 ### Deprecated
 

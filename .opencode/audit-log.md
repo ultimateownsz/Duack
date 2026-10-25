@@ -128,7 +128,7 @@ While the version is `0.x`, the API may change between minor versions.
 - **`MusicManager.DuckSources` / `MusicManager.ReloadDuckSources()`**: the director now exposes the
   live duck-source snapshot (`IReadOnlyList<DuckSourceView>`, delegating to `DuckMixer.Sources`) and
   a one-call reload of the sources currently in `MusicConfig.DuckSources`, delegating to
-  `DuckMixer.ReloadSources`. Consumer migration (MonsterProjectWeb) needs both: its automation
+  `DuckMixer.ReloadSources`. Consumer migration needs both: its automation
   surface reads `.Duck.EffectiveRatio` / `.Duck.Sources` off a central mix object it no longer owns,
   and its hot reload mutates the duck-source dictionary in place and must re-apply it without
   tearing down the director. Pins: 2 new tests (`ReloadDuckSources_preserves_active_state_and_applies_new_params`,
@@ -142,7 +142,7 @@ While the version is `0.x`, the API may change between minor versions.
   facade.** Symptom: the per-play cue jitter was advertised end to end (`AudioConfigBuilder`
   `WithMusicCueVariation` / `WithSfxCueVariation`, `CueVariation`, `CuePlay`) but the SFX half of
   the bargain never reached playback - only `MusicManager` applied music cue pitch
-  (`NextCuePitch()`); `SfxManager` ignored `SfxConfig.CueVariation` entirely. MonsterProjectWeb
+  (`NextCuePitch()`); `SfxManager` ignored `SfxConfig.CueVariation` entirely. The consumer
   worked around it by resolving the jitter in its `Sfx` facade (`Sfx.ResolveCue`) and forwarding
   concrete pitch/volume. Fix: `SfxManager` takes an optional `SfxConfig` (default `null`) and
   resolves a `CuePlay` on every play - jitter pitch added on top of the caller's pitch (clamped to
@@ -210,9 +210,9 @@ While the version is `0.x`, the API may change between minor versions.
   (MonoGame issues #5472 / #6153 / #6828), code-first quickstart, music-context OBS
   framing, feature list, scope boundary, and install line. Documents the preview
   release channel.
-- **`MonsterProjectWeb.BlazorGL` now directly references `Duack.KNI`** (WP6 step 2):
+- **The consumer's BlazorGL head now directly references `Duack.KNI`** (WP6 step 2):
   the browser head gets its own explicit project reference to the KNI adapter, in
-  addition to the transitive one through `MonsterProjectWeb.Common.Kni`, so the head
+  addition to the transitive one through the consumer's shared KNI project, so the head
   declares its adapter dependency directly.
 
 #### 2026-10-19 (agent skills documentation)
@@ -280,11 +280,11 @@ ame, description) and focused instructions/examples. No production code
   button. Desktop content restructured to `SFX/` (4 wav) + `Tracks/` (3 ogg); the WAV
   masters moved to a gitignored `_masters/` (regenerate the OGGs with
   `duackcli convert _masters Content/Audio/Tracks --all`). Docs: both sample READMEs,
-  `AUDIO_ATTRIBUTIONS.md` (real MonsterProjectWeb-sourced audio ships in the samples, with
+  `AUDIO_ATTRIBUTIONS.md` (real audio sourced from the upstream game ships in the samples, with
   the per-file source table kept in the game repo), tools README (`scan`).
   Verified: `dotnet test Duack.slnx` green (355 tests across 4 suites), desktop + web
   samples build clean.
-- Core additions are backward compatible: existing consumers (MonsterProjectWeb) keep the
+- Core additions are backward compatible: existing consumers keep the
   flat `Content/Audio` layout working through the preserved candidate fallback and are
   unaffected until they opt into `AudioLibrary`/`SfxManager`.
 
@@ -462,14 +462,14 @@ ame, description) and focused instructions/examples. No production code
 
 #### 2026-10-16
 
-- Initial extraction of the audio mix core from MonsterProjectWeb's
-  `MonsterProjectWeb.Audio` project: `AudioConfig` (model, JSON load/save, sanitize,
+- Initial extraction of the audio mix core from the upstream game's
+  audio project: `AudioConfig` (model, JSON load/save, sanitize,
   extension-data preservation, snake_case player settings), `DuckMixer`,
   `MusicVolumeMath`, `CrossfadeMath`, `MusicTransitionSequencer`, `PlayerAudioSettings`,
   `PlayerSettings`, and the `IPlayerSettingsStore` trio (`FilePlayerSettingsStore`,
   `WebPlayerSettingsStore`, `InMemoryPlayerSettingsStore`).
 - `MusicRetryPolicy` moved in from the game's `Common/Audio` (pure retry/backoff logic).
-- Unit tests ported from the game's `MonsterProjectWeb.Tests/Audio` into two suites:
+- Unit tests ported from the game's audio test project into two suites:
   `CodeOnly` (no JSON serialization surface) and `JsonRoundTrip` (pin the JSON wire
   format and unknown-section preservation).
 
@@ -665,7 +665,7 @@ ame, description) and focused instructions/examples. No production code
 #### 2026-10-17
 
 - Playlists are authored in the game's `audio-config.json` under `playlists` (decided: one file
-  drives both playback and conversion), but MonsterProjectWeb has not written that section yet.
+  drives both playback and conversion), but the consumer has not written that section yet.
   Until it does, its web build must call `duackcli convert ... --all`, so the song-vs-SFX split
   (SFX staying WAV) does not engage for the game yet. Authoring the playlist is part of the WP6
   migration.

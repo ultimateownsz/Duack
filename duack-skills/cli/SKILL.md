@@ -58,7 +58,7 @@ For anyone building an external editor against the tooling layer:
 
 - Tools target desktop .NET only.
 - Never referenced by `src/` or `samples/`.
-- AudioMixer (preview/editor-adjacent) stays in MonsterProjectWeb — not part of Duack tools.
+- Editor-adjacent mixer UI stays in the host game — not part of Duack tools.
 
 ## Tips
 

@@ -13,7 +13,7 @@ namespace Duack.KNI;
 /// <b>These bindings are synchronous on purpose, and must stay that way.</b> They used to go through
 /// <c>IJSRuntime</c> and wait for the reply with <c>GetAwaiter().GetResult()</c>, on the argument
 /// that "they run once at boot and on an explicit Save, never per frame". The second half of that was
-/// the mistake: the settings overlay's Save is driven from the game loop, and FRB2's KNI head calls
+/// the mistake: the settings overlay's Save is driven from the game loop, and a KNI host calls
 /// <c>TickDotNet</c> synchronously from a <c>requestAnimationFrame</c> callback. Blazor WASM is single
 /// threaded, so a frame that blocks waiting for a managed-to-JS call to be acknowledged cannot
 /// receive that acknowledgement - the round trip needs the frame to yield, and the frame is the thing

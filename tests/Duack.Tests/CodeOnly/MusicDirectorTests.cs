@@ -386,9 +386,6 @@ public class MusicManagerTests
     [Fact]
     public void ReloadDuckSources_preserves_active_state_and_applies_new_params()
     {
-        // MonsterProjectWeb hot-reloads audio-config.json: the duck sources swap in place (live
-        // active/pulse state survives, so a dip in progress keeps easing) - the same contract
-        // DuckMixer.ReloadSources pins, reached through the director that owns the mixer.
         var backend = new FakeMusicBackend(supportsOverlap: true);
         var playlist = new MusicPlaylistController(OneTrack("solo"), new Random(1));
         var music = new MusicConfig { CrossfadeSeconds = 0f };

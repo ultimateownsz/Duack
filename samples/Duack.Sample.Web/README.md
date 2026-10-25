@@ -1,6 +1,6 @@
 # Duack.Sample.Web
 
-Self-contained Blazor WebAssembly sample for Duack's KNI (web) adapter. No FlatRedBall2
+Self-contained Blazor WebAssembly sample for Duack's KNI (web) adapter. No additional engine
 dependency — it drives `Duack.KNI.MediaPlayerMusicBackend` (platform `MediaPlayer`, an HTML
 `<audio>` element on BlazorGL) directly with a render-loop timer. The storyline itself is the
 shared, engine-free `samples/Duack.Sample.Core` (the same `StoryController` the desktop sample

@@ -32,8 +32,8 @@
   </ItemGroup>
 
   <!-- Copy shared audio content from the desktop sample so there's a single source of truth.
-       Mirrors FlatRedBall2's Common/Content pattern. After adding new files, regenerate the web
-       manifest with: dotnet run -project tools/DuackCli scan samples/Duack.Sample.Web/wwwroot/Content/Audio -->
+       After adding new files, regenerate the web manifest with:
+       dotnet run -project tools/DuackCli scan samples/Duack.Sample.Web/wwwroot/Content/Audio -->
   <ItemGroup>
     <SharedAudioContent Include="..\Duack.Sample.Desktop\Content\Audio\**\*.*"
                        Exclude="..\Duack.Sample.Desktop\Content\Audio\**\audio-manifest.json" />

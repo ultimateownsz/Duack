@@ -54,7 +54,7 @@ public class WebPlayerSettingsStoreTests
     [Fact]
     public void Key_is_namespaced_so_it_cannot_collide_with_other_saved_data()
     {
-        Assert.StartsWith("monsterprojectweb:", WebPlayerSettingsStore.DefaultKey);
+        Assert.StartsWith("duack:", WebPlayerSettingsStore.DefaultKey);
     }
 
     [Fact]

@@ -24,7 +24,7 @@ public interface IKeyValueStorage
 /// </summary>
 public class WebPlayerSettingsStore : IPlayerSettingsStore
 {
-    public const string DefaultKey = "monsterprojectweb:playerAudioSettings";
+    public const string DefaultKey = "duack:playerAudioSettings";
 
     private readonly IKeyValueStorage _storage;
     private readonly string _key;

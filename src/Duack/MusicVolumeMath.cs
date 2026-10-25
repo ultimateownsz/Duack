@@ -1,9 +1,9 @@
 ﻿namespace Duack;
 
 /// <summary>
-/// The music volume the game's <c>MusicController</c> applies per frame. Music volume is owned here,
-/// not by the engine: <c>FlatRedBallService.Default.Audio.MusicVolume</c> only feeds FRB2's own
-/// music backend, and this project plays music through <c>SoundEffectInstance</c> (desktop) or
+/// The music volume the host game's <c>MusicController</c> applies per frame. Music volume is owned
+/// here, not by the engine: an engine-level music-volume field only feeds that engine's own music
+/// backend, and this library plays music through <c>SoundEffectInstance</c> (desktop) or
 /// <c>MediaPlayer</c> (web) instead, so nothing reads that field.
 /// </summary>
 public static class MusicVolumeMath

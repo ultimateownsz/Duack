@@ -1,8 +1,7 @@
 # AGENTS.md
 
 Duack is a small, backend-agnostic audio library (mixing, ducking, crossfade, player
-settings) extracted from a FlatRedBall2 game and consumed by that game, an Avalonia tool,
-and (later) published preview NuGet packages.
+settings) extracted from a production game and published as preview NuGet packages.
 
 ## Changelog discipline
 
@@ -81,7 +80,7 @@ web hosts 404 on any mismatch, and `duackcli scan` warns about files it therefor
 The legacy flat layout (`Content/Audio/{name}.ogg|.wav`) remains a working fallback — the
 last candidates in `AudioLibrary.CandidatePaths` order, and the exact probe order of
 `SoundEffectClipLibrary.CandidateUris` when no library is supplied — so existing flat
-content (MonsterProjectWeb) keeps loading unchanged.
+content keeps loading unchanged.
 ## Build & test
 
 ```

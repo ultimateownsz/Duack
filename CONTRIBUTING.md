@@ -1,8 +1,8 @@
 # Contributing to Duack
 
 Duack is a config-driven audio mixing library for XNA-family engines (MonoGame, KNI,
-FlatRedBall2), extracted from the MonsterProjectWeb game. It ships as preview (`0.x`): the
-API may change between releases.
+FlatRedBall2), extracted from a production game. It ships as preview (`0.x`): the API may
+change between releases.
 
 ## Before you contribute
 
@@ -12,7 +12,7 @@ API may change between releases.
   symptom plus enough reproduction detail to re-verify or revert.
 - Read the project handoff plan (the Duack extraction work order): it fixes the phase order
   (WP0 inventory → WP1 core → WP2 playlist → WP3 adapters → WP4 tooling → WP5 samples → WP6
-  MonsterProjectWeb migration). Do not skip phases.
+  consumer migration). Do not skip phases.
 - The library targets `net8.0`/`net10.0` pure BCL in `src/Duack`; adapters live in
   `src/Duack.MonoGame` and `src/Duack.KNI`; offline tooling (NAudio/OggVorbisEncoder) lives
   only in `tools/DuackCli`. Never add a package reference to `src/Duack`.
@@ -45,8 +45,8 @@ dotnet test tests/Duack.Tests
 
 ## Scope boundaries
 
-- **Do not fold `AudioMixer` into Duack.** `tools/AudioMixer` stays in MonsterProjectWeb.
-  Only `tools/AudioConverter` (as `duackcli convert`) migrated here.
+- **Do not fold an audio mixer UI into Duack.** Editor-adjacent tooling stays in the host game;
+  only `tools/AudioConverter` (as `duackcli convert`) migrated here.
 - **Do not delegate playlist state to `MediaQueue` or `MediaPlayer`.** Duack's own
   `MusicPlaylistController` is the single sequencing path for both backends.
 - **Mobile is out of scope** until further notice. Desktop (MonoGame DesktopGL) and web

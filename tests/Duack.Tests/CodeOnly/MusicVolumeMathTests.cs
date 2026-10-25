@@ -5,9 +5,9 @@ namespace Duack.Tests.CodeOnly;
 
 /// <summary>
 /// Pins who owns music volume. <c>MusicController</c> applies the mix per frame on both heads
-/// (<c>SoundEffectInstance.Volume</c> on desktop, <c>MediaPlayer.Volume</c> on web), so the engine's
-/// <c>Audio.MusicVolume</c> plays no part: that engine field only feeds FRB2's own music backend,
-/// which this project never uses. The formula lived inline in three places and only the web copy
+/// (<c>SoundEffectInstance.Volume</c> on desktop, <c>MediaPlayer.Volume</c> on web), so an
+/// engine-level music-volume field plays no part: it only feeds that engine's own music backend,
+/// which this library never uses. The formula lived inline in three places and only the web copy
 /// clamped, so it is pinned here as the single source of truth.
 /// </summary>
 public class MusicVolumeMathTests

@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Reflection;
 using System.Text.Json;
 
 namespace Duack;
@@ -30,8 +31,9 @@ public class FilePlayerSettingsStore : IPlayerSettingsStore
     public string FilePath { get; }
 
     /// <summary>
-    /// Per-user application data, e.g. <c>%APPDATA%\MonsterProjectWeb</c> on Windows and
-    /// <c>~/.config/MonsterProjectWeb</c> elsewhere. Falls back to the temp directory when the OS
+    /// Per-user application data, e.g. <c>%APPDATA%\{host assembly}</c> on Windows and
+    /// <c>~/.config/{host assembly}</c> elsewhere. The folder is named after the host application,
+    /// not this library or any particular consumer. Falls back to the temp directory when the OS
     /// reports no application-data folder; the store then simply reports failure to save.
     /// </summary>
     public static string DefaultRootDirectory()
@@ -44,8 +46,16 @@ public class FilePlayerSettingsStore : IPlayerSettingsStore
             appData = Path.GetTempPath();
         }
 
-        return Path.Combine(appData, "MonsterProjectWeb");
+        return Path.Combine(appData, ResolveApplicationName());
     }
+
+    /// <summary>
+    /// Name of the folder under the per-user application-data directory. Uses the entry assembly so
+    /// each host game gets its own store; falls back to <c>Duack</c> when the runtime does not expose
+    /// an entry assembly (for example, a native host).
+    /// </summary>
+    private static string ResolveApplicationName() =>
+        Assembly.GetEntryAssembly()?.GetName().Name ?? "Duack";
 
     public bool TryLoad(out PlayerAudioSettings? settings)
     {

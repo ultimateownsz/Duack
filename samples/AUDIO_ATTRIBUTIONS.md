@@ -1,13 +1,12 @@
 # Audio attribution
 
-The samples ship **real audio, reused from the
-[MonsterProjectWeb](https://github.com/vchelaru/MonsterProjectWeb) game project** (the
-project Duack was extracted from) — music from Freesound (e.g. overworld loop by
-[sirkoto51](https://freesound.org/people/sirkoto51/), hospital by
-[moulaythami](https://freesound.org/people/moulaythami/)) and game SFX. The per-file
-source table (original download names, artists, licenses) lives in MonsterProjectWeb's
-`MonsterProjectWeb.Common/Content/Audio/ATTRIBUTIONS.md`; check it before redistributing
-the samples beyond itch/GitHub. `dialog.wav` and `hit.wav` are authored specifically for
+The samples ship **real audio, reused from the open-source game project Duack was extracted
+from** ([upstream repository](https://github.com/vchelaru/MonsterProjectWeb)) — music from
+Freesound (e.g. overworld loop by [sirkoto51](https://freesound.org/people/sirkoto51/),
+hospital by [moulaythami](https://freesound.org/people/moulaythami/)) and game SFX. The
+per-file source table (original download names, artists, licenses) lives in the upstream
+project's `Common/Content/Audio/ATTRIBUTIONS.md`; check it before redistributing the samples
+beyond itch/GitHub. `dialog.wav` and `hit.wav` are authored specifically for
 the sample; the sample's `hospital.wav` is a shortened edit of the game's master. The
 files exist so `Duack.Sample.Desktop` and `Duack.Sample.Web` build and run on first try
 with no external downloads.

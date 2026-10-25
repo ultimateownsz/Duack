@@ -68,7 +68,7 @@ var library = AudioLibrary.FromManifest(manifest);
 ## Candidate paths & legacy flat
 
 `CandidatePaths` returns owning convention dir first, then legacy flat `{name}.ogg|.wav` last,
-so existing flat content (MonsterProjectWeb) keeps loading unchanged. `SoundEffectClipLibrary`
+so existing flat content keeps loading unchanged. `SoundEffectClipLibrary`
 uses `CandidateUris` with exact legacy order when no library supplied.
 
 ## duackcli scan

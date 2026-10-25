@@ -21,8 +21,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Versions mirror MonsterProjectWeb's tools/AudioConverter pins so a converted OGG is
-         byte-comparable with the game's web build. -->
+    <!-- Pins chosen to match the original audio-converter pipeline so a converted OGG stays
+         byte-comparable with builds produced by that tool. -->
     <PackageReference Include="NAudio" Version="2.2.1" />
     <PackageReference Include="OggVorbisEncoder" Version="1.2.2" />
   </ItemGroup>

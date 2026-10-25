@@ -18,7 +18,7 @@ public class FilePlayerSettingsStoreTests
         {
             Path = System.IO.Path.Combine(
                 System.IO.Path.GetTempPath(),
-                "mpw-player-settings-" + Guid.NewGuid().ToString("N"));
+                "duack-player-settings-" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(Path);
         }
 
@@ -42,6 +42,18 @@ public class FilePlayerSettingsStoreTests
 
         Assert.DoesNotContain("Content", store.FilePath, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain(Environment.CurrentDirectory, store.FilePath, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void FilePlayerSettingsStore_default_root_uses_the_host_application_name()
+    {
+        // The store must not pick a consumer's folder name. The host application owns that
+        // identity; a library that hardcodes one game's name leaks that game into every adopter.
+        var expected = System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name ?? "Duack";
+
+        var store = new FilePlayerSettingsStore();
+
+        Assert.Equal(expected, System.IO.Path.GetFileName(store.RootDirectory));
     }
 
     [Fact]

@@ -117,7 +117,7 @@ public class PlayerSettingsTests
     [Fact]
     public void ApplyOverrides_preserves_authored_cue_variation()
     {
-        // Symptom (MonsterProjectWeb adoption): the authored cue variation (marble-bag pitch
+        // Symptom (consumer adoption): the authored cue variation (marble-bag pitch
         // jitter for hits/footsteps) silently disappeared as soon as a player had saved volume
         // settings, because ApplyOverrides rebuilt MusicConfig/SfxConfig from the saved blob and
         // carried only master/crossfade/contexts/duck sources - every cue played dead flat for

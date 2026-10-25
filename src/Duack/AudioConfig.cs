@@ -177,7 +177,7 @@ public class AudioConfig
     /// Build-only JSON sections the runtime model does not describe. Captured on load and
     /// re-emitted on save so a save never drops them.
     /// <para>
-    /// The code-only surface never touches this: it exists so the JSON door can carry unknown
+    /// The code-first surface never touches this: it exists so the JSON door can carry unknown
     /// sections through a load/save cycle without losing them.
     /// </para>
     /// </summary>

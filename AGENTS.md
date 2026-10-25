@@ -2,10 +2,7 @@
 
 Duack is a small, backend-agnostic audio library (mixing, ducking, crossfade, player
 settings) extracted from a FlatRedBall2 game and consumed by that game, an Avalonia tool,
-and (later) published preview NuGet packages. It is the sibling of these repositories:
-
-- Engine of record: `C:\Users\danil\RiderProjects\FlatRedBall2` (FRB2, net10.0).
-- Consumer game: `C:\Users\danil\RiderProjects\MonsterProjectWeb`.
+and (later) published preview NuGet packages.
 
 ## Changelog discipline
 
@@ -31,7 +28,7 @@ A change that ships with no test needs a written reason in the changelog entry.
 - `src/Duack` is **pure BCL** (`System.Text.Json` only). It must build and test with no
   engine/XNA/MonoGame/KNI package present. Never add a package or project reference to it.
 - Backend glue (engine, XNA, browser interop) lives in adapter packages, not the core.
-- **This preview is code-only.** The configuration surface is the C# API
+- **This preview is code-first.** The configuration surface is the C# API
   (`AudioConfigBuilder`, `PlaylistConfigBuilder`, model objects). The JSON layer ships in the
   core for tooling and persistence: `AudioConfigJson` / `PlaylistJson`, the snake_case
   serialization contexts, and the playlist-embedding builder extension. No `audio-config.json`

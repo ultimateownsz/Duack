@@ -23,6 +23,9 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
   table covers crossfade/playlists, buses, ducking, cue variation, settings persistence,
   desktop/web parity, tooling, dependency footprint, and authoring. It also states what Duack
   deliberately does not do (editor/GUI, FMOD/Wwise replacement, playback engine).
+- **Standardized the preview description on "code-first".** AGENTS.md, the audio-core skill, and
+  the core JSON comments no longer say "code-only", which incorrectly implied the core has no
+  JSON code. The JSON layer remains part of the core for tooling and persistence.
 
 ### Fixed
 

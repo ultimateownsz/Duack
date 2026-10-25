@@ -10,7 +10,7 @@ namespace Duack;
 /// The JSON door for <see cref="AudioConfig"/>: parse, serialize, load and save the
 /// <c>audio-config.json</c> wire format.
 /// <para>
-/// This preview is code-only: this is the SECONDARY surface. The mix is authored in code
+/// This preview is code-first: this is the SECONDARY surface. The mix is authored in code
 /// (<see cref="AudioConfigBuilder"/>) and the JSON file is an optional overlay on top of it, not
 /// the source of truth. The tooling (<c>duackcli init</c> / <c>duackcli validate</c> /
 /// <c>duackcli convert</c>) speaks this format, and so does a game that wants to tune a mix from a

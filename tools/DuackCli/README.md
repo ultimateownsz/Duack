@@ -1,47 +1,65 @@
-# DuackCli (`duack`)
+# DuackCli (`duackcli`)
 
-Build-time tooling for Duack content: scaffold, validate, and convert an
-`audio-config.json` and its WAV masters. Desktop-only and never referenced by `src/` or
-`samples/`; it is the only place `NAudio` and `OggVorbisEncoder` are used.
+Build-time tooling for Duack content: scaffold, validate, and convert WAV masters.
+Desktop-only and never referenced by `src/` or `samples/`; it is the only place `NAudio`
+and `OggVorbisEncoder` are used.
 
+## Commands
+
+### `duackcli init`
+
+```bash
+duackcli init <contentDir> [--out <file>] [--force] [--skills] [--skills-dir <dir>]
 ```
-duackcli init     <contentDir> [--out <file>] [--force]
+
+Scans `<contentDir>` for `*.wav` and writes a starting `audio-config.json` (default
+`<contentDir>/audio-config.json`) with the default music/sfx sections, the `sfx`/`dialogue`
+duck sources, and one placeholder `tracks` entry per WAV. Refuses to overwrite an existing
+file unless `--force` is passed. `--skills` optionally installs the agent skill files.
+
+### `duackcli validate`
+
+```bash
 duackcli validate <config.json> [--playlists <file>]
-duackcli convert  <contentDir> <outDir> [--config <file>] [--playlists <file>] [--quality <0..1>] [--force] [--all]
-duackcli scan     <audioRoot> [--out <file>]
+```
+
+Reports schema and range problems with path-qualified messages and exits non-zero when there
+is an **error** (a warning still exits zero). Never mutates the file. `--playlists`
+cross-checks playlist tracks against the configured contexts.
+
+### `duackcli convert`
+
+```bash
+duackcli convert <contentDir> <outDir> [--config <file>] [--playlists <file>] [--quality <0..1>] [--force] [--all]
+```
+
+Encodes the **songs** to OGG Vorbis for the web build; **sound effects stay WAV**. The
+**playlist is the authoritative song list**, so a playlist source is **required**; output is
+skipped when the OGG already exists and is at least as new as its WAV, and `--force`
+re-encodes anyway. `--all` converts **every** WAV (SFX included) and is mutually exclusive
+with a playlist source. Already-encoded `.ogg` files are copied through verbatim.
+
+### `duackcli scan`
+
+```bash
+duackcli scan <audioRoot> [--out <file>]
+```
+
+Reads the two-directory audio convention (`<audioRoot>/SFX/*` for one-shot sounds,
+`<audioRoot>/Tracks/*` for loops/songs) and writes `audio-manifest.json` (default
+`<audioRoot>/audio-manifest.json`) listing the discovered cue names. Exits 1 when the audio
+root does not exist.
+
+### `duackcli normalize`
+
+```bash
 duackcli normalize <dir> [<outDir>] [--out <dir>] [--config <file>] [--write-config]
 ```
 
-- **init** scans `<contentDir>` for `*.wav` and writes a starting `audio-config.json`
-  (default `<contentDir>/audio-config.json`) with the default music/sfx sections, the
-  `sfx`/`dialogue` duck sources, and one placeholder `tracks` entry per WAV. Refuses to
-  overwrite an existing file unless `--force` is passed.
-- **validate** reports schema and range problems with path-qualified messages and exits
-  non-zero when there is an **error** (a warning still exits zero). It never mutates the
-  file, so a hand-edited config can be checked before the runtime's `Sanitize` silently
-  clamps it. `--playlists` cross-checks playlist tracks against the configured contexts.
-- **convert** encodes the **songs** to OGG Vorbis for the web build; **sound effects stay
-  WAV** (they are short and small, so converting them buys nothing). The **playlist is the
-  authoritative song list**, so a playlist source is **required**; output is skipped when
-  the OGG already exists and is at least as new as its WAV, and `--force` re-encodes anyway.
-  `--all` is the explicit opt-in to convert **every** WAV (SFX included) and is mutually
-  exclusive with a playlist source. A content directory may also hold **already-encoded
-  `.ogg` files** (a cue with no WAV master): those are copied through verbatim rather than
-  re-encoded, and an output that is already newer is left alone.
-- **normalize** measures each WAV track's RMS and peak loudness, reports the loudest track,
-  and (when an output directory is given) writes gain-normalized WAV copies so every track
-  matches the loudest track's RMS level - handy for making crossfades and playlists play at
-  equal loudness without re-encoding. Aliases: `loudness`, `analyze`, `analyse`, `measure`,
-  `loudnorm`. `--write-config` / `--config` refresh the build-only `tracks` loudnorm
-  targets. Pure helpers live in `LoudnessAnalyzer` (`LoudnessMeter`/`Loudness`/etc. aliases).
-- **scan** reads the two-directory audio convention (`<audioRoot>/SFX/*` for one-shot
-  sounds, `<audioRoot>/Tracks/*` for loops/songs) and writes `audio-manifest.json` (default
-  `<audioRoot>/audio-manifest.json`) listing the discovered cue names — the checked-in file
-  a **web host** reads at runtime, because browsers cannot enumerate directories. Classifies
-  case-sensitively (`SFX`/`Tracks` and lowercase extensions only — case-sensitive hosts 404
-  on any mismatch), warns (without failing) about files it cannot load (wrong type or
-  upper-cased extension), and exits 1 when the audio root does not exist. Wire format:
-  `Duack.AudioLibraryManifestJson` (`schema_version`, `sfx`, `tracks`).
+Measures each WAV track's RMS and peak loudness, reports the loudest track, and (when an
+output directory is given) writes gain-normalized WAV copies so every track matches the
+loudest track's RMS level. Aliases: `loudness`, `analyze`, `analyse`, `measure`,
+`loudnorm`.
 
 The playlist source is `--playlists <file>` (a standalone playlist JSON) or an embedded
 `playlists` section read from `--config`. If `--config` is given but has no `playlists`
@@ -87,7 +105,7 @@ carries `[JsonExtensionData] ExtensionData`: **any property the model does not d
 captured on load and re-emitted on save.** This is load-bearing for tooling:
 
 - Build-only sections such as `playlists` (and any section a future tool adds) are **not**
-  in the runtime model, yet they survive an `AudioConfig.Load()` → `Serialize()` round trip
+  in the runtime model, yet they survive an `AudioConfig.Load()` / `Serialize()` round trip
   because they land in `ExtensionData`.
 - `duackcli convert --config <file>` reads the embedded `playlists` section straight out of
   `ExtensionData`, so the same file the game loads also drives conversion.
@@ -119,11 +137,11 @@ trailing commas are allowed so hand-edited files stay friendly.
 
 ## Tests
 
-```
+```bash
 dotnet test tests/DuackCli.Tests
 ```
 
 Covers the validator rules, the song-set / conversion-decision policy, the scaffold shape,
-the WAV→OGG round trip (temp directory), the playlist loader, and the CLI end-to-end
+the WAV to OGG round trip (temp directory), the playlist loader, and the CLI end-to-end
 (exit codes + filesystem effects) for `init` / `validate` / `convert`.
 

@@ -8,7 +8,15 @@
     <PackageId>Duack.MonoGame</PackageId>
     <Description>MonoGame/desktop IMusicBackend adapter for Duack (cached SoundEffect tracks with overlap crossfade).</Description>
     <IsPackable>true</IsPackable>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Duack\Duack.csproj" />

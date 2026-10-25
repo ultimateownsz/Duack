@@ -8,7 +8,7 @@ Duack ships as a **preview** release: the API may change between versions.
 
 ## Why Duack exists
 
-In MonoGame and its family, crossfading two songs is architecturally impossible (`MediaPlayer` is a static, single-song API; requested since 2017: issues #5472, #6153, #6828), song volume is unreliable after the first track, the built-in queue can't be modified at runtime, and nothing provides ducking. XACT, the old Microsoft tool that handled variation and categories, is dead. Duack is the modern, fully managed replacement: no dead GUIs, no native runtimes, no ffmpeg.
+In MonoGame and similar libraries, crossfading two songs is architecturally impossible (`MediaPlayer` is a static, single-song API; requested since 2017: issues #5472, #6153, #6828), song volume is unreliable after the first track, the built-in queue can't be modified at runtime, and nothing provides ducking. XACT, the old Microsoft tool that handled variation and categories, is dead. Duack is the modern, fully managed replacement: no dead GUIs, no native runtimes, no ffmpeg.
 
 Duack does not try to replace FMOD or Wwise — those platforms ship authoring editors, DSP, and profiling that Duack does not attempt. Duack replaces the ad-hoc audio code indie teams write themselves when middleware is too heavy.
 
@@ -56,6 +56,16 @@ Duack owns the mix and produces the numbers; your engine plays the sound. Deskto
 
 **No UI, ever.** Duack ships no editor or GUI of any kind — a deliberate extensibility boundary, not a limitation. The CLI is the first-party plugin surface: anyone building a visual tool, asset-pipeline integration, or debug overlay builds on the CLI's manifest and validation output.
 
+## Commands
+
+| Command | Syntax | Purpose |
+|---------|--------|---------|
+| `init` | `duackcli init <contentDir> [--out <file>] [--force] [--skills] [--skills-dir <dir>]` | Scaffold `audio-config.json` from a content directory scan; optionally install agent skills. |
+| `validate` | `duackcli validate <config.json> [--playlists <file>]` | Schema + range validation with clear messages. |
+| `convert` | `duackcli convert <contentDir> <outDir> [--all]` | WAV to OGG for web; SFX stay WAV unless `--all`. |
+| `scan` | `duackcli scan <audioRoot> [--out <file>]` | Write `audio-manifest.json` from the two-directory layout. |
+| `normalize` | `duackcli normalize <dir> [<outDir>] [--out <dir>] [--config <file>] [--write-config]` | Measure track loudness and write gain-normalized WAVs. |
+
 ## Agent skills
 
 Duack ships markdown agent skills under `duack-skills/`. To use them in your project:
@@ -67,6 +77,6 @@ Duack ships markdown agent skills under `duack-skills/`. To use them in your pro
 
 ## Install
 
-NuGet: `Duack` (core, code-first), `Duack.MonoGame`, `Duack.KNI`. `Duack.Config` and `DuackCli`
-are provisional in this preview. (Published after the playlist milestone; see roadmap.)
+NuGet: `Duack` (core, code-first), `Duack.MonoGame`, `Duack.KNI`. `DuackCli`
+is provisional in this preview. (Published after the playlist milestone; see roadmap.)
 

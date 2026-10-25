@@ -9,10 +9,18 @@
     <PackageId>Duack.KNI</PackageId>
     <Description>KNI/browser IMusicBackend adapter for Duack (platform MediaPlayer plus localStorage settings storage).</Description>
     <IsPackable>true</IsPackable>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <!-- Required by [JSImport]: the synchronous localStorage bindings generate unsafe marshalling
          stubs, and they must stay synchronous (see LocalStorageKeyValueStorage remarks). -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Duack\Duack.csproj" />

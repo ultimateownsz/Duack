@@ -1,6 +1,6 @@
 using Duack;
 
-namespace Duack.Config.Tests;
+namespace Duack.Tests.JsonRoundTrip;
 
 public class AudioConfigTests
 {

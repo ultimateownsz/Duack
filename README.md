@@ -12,6 +12,27 @@ In MonoGame and similar libraries, crossfading two songs is architecturally impo
 
 Duack does not try to replace FMOD or Wwise — those platforms ship authoring editors, DSP, and profiling that Duack does not attempt. Duack replaces the ad-hoc audio code indie teams write themselves when middleware is too heavy.
 
+## What you get over the built-in MonoGame/XNA audio path
+
+Most MonoGame audio helpers are thin wrappers over `MediaPlayer` and `SoundEffect`, so they inherit
+the same limitations. Duack sits above the engine backend and owns the mix:
+
+| Need | Built-in / thin-wrapper path | Duack |
+|------|------------------------------|-------|
+| Crossfading two songs | `MediaPlayer` is a static, single-song API; you hand-roll `SoundEffectInstance` playback and volume ramps | Fade-in/fade-out and crossfade are part of the mixer. Overlap where the backend supports it (desktop); sequenced fade-out → swap → fade-in where it does not (KNI) |
+| Playlists and queue | The built-in queue cannot be modified at runtime, and there is no track-completed/next/stop contract | `MusicPlaylistController` with `Next`, `Stop`, track-completed, repeat, and bag-style shuffle |
+| Bus and volume model | Per-song volume is unreliable after the first track; mix math is your problem | Master → music/SFX buses, per-context scales, and player overrides composed in one place |
+| Ducking | None; every game writes its own "lower the music under dialogue" hack | Sidechain-style duck sources with attack/hold/release, live gain-reduction metering, and `ReloadDuckSources()` without tearing down the manager |
+| Cue variation | XACT's variation/category system is gone | Marble-bag variant selection plus per-play pitch/volume jitter for music and SFX |
+| Player settings | DIY file/registry/localStorage code, usually without schema handling | File, localStorage, and in-memory stores; sanitized settings layered over the authored mix |
+| Desktop and web parity | Desktop and Blazor/WASM paths usually diverge | One core over `IMusicBackend`/`ISfxBackend`; MonoGame and KNI adapters share the config and playlist model |
+| Tooling | No first-party validation or content pipeline | `duackcli` validates, scans, normalizes, and converts WAV → OGG; AOT-safe manifest/config JSON for web |
+| Dependency footprint | Wrappers can drag native runtimes or codec binaries into the game | Core is pure BCL; adapters reference the engine only. NAudio/OggVorbisEncoder live in the desktop CLI, never in `src/` or `samples/` |
+| Authoring model | Scattered constants and hand-registered cue names | Code-first `AudioConfigBuilder`; the two-directory convention (`SFX/`, `Tracks/`) removes cue registration. Optional JSON is available for tooling and persistence |
+
+What Duack deliberately does not do: it ships no editor or GUI, it is not FMOD/Wwise, it does not
+play audio itself (your engine does), and mobile is not supported yet.
+
 ## Quickstart
 
 ```csharp
@@ -22,9 +43,10 @@ var config = new AudioConfigBuilder()
     .Build();
 ```
 
-This preview is **code-first**: build your mix in C#. An optional JSON file (`audio-config.json`)
-exists as a secondary door via the separate `Duack.Config` package (provisional for this
-preview) for tooling and file-based overlays; it is not required to use the library.
+This preview is **code-first**: build your mix in C#. The core also carries a JSON layer
+(`AudioConfigJson` / `PlaylistJson`) for tooling and file-based overlays, so an optional
+`audio-config.json` can be read or written; no file is shipped with the library and none is
+required to use it.
 
 ## Music contexts
 

@@ -1,21 +1,15 @@
 using Duack;
 
-namespace Duack.Config.Tests;
-
-/// <summary>
+namespace Duack.Tests.JsonRoundTrip;
 
 /// <summary>
 /// Pins the schema-version stamp on the authored config document. A missing stamp reads as the
 /// current version; a zero/legacy stamp is normalized up to 1 by Sanitize; a FUTURE stamp is
 /// preserved (never silently downgraded to this build's schema), so an older build opening a
-/// newer blob can still decide what to do with it.
-/// <para>
-/// The settings document's stamp is pinned in the core suite instead
-/// (<c>Duack.Tests.JsonRoundTrip.PlayerAudioSettingsSchemaVersionTests</c>): the settings wire
-/// format is part of the core, the config wire format is not.
-/// </para>
+/// newer blob can still decide what to do with it. The settings document's stamp is pinned
+/// alongside it in <c>PlayerAudioSettingsSchemaVersionTests</c>.
 /// </summary>
-public class SchemaVersionTests
+public class AudioConfigSchemaVersionTests
 {
     [Fact]
     public void AudioConfig_serializes_the_schema_version()

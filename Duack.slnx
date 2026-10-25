@@ -5,7 +5,6 @@
   <Project Path="src/Duack.KNI/Duack.KNI.csproj" />
   <Project Path="tools/DuackCli/DuackCli.csproj" />
   <Project Path="tests/Duack.Tests/Duack.Tests.csproj" />
-  <Project Path="tests/Duack.Config.Tests/Duack.Config.Tests.csproj" />
   <Project Path="tests/Duack.Adapters.Tests/Duack.Adapters.Tests.csproj" />
   <Project Path="tests/Duack.Tools.Tests/Duack.Tools.Tests.csproj" />
   <Project Path="tests/Duack.Sample.Tests/Duack.Sample.Tests.csproj" />

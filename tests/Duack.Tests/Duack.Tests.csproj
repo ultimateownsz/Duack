@@ -17,8 +17,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Duack\Duack.csproj" />
-    <!-- This preview is code-only; the JSON door lives in Duack.Config and its tests live in
-         tests/Duack.Config.Tests, so this suite can prove the core needs no serialization layer. -->
+    <!-- The core now carries its own JSON layer (AudioConfigJson / PlaylistJson), so the
+         config and playlist wire-format pins live in JsonRoundTrip alongside the rest of the
+         serialization tests and this suite still references only src/Duack. -->
   </ItemGroup>
 
 </Project>

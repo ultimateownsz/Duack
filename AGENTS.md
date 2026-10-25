@@ -32,20 +32,17 @@ A change that ships with no test needs a written reason in the changelog entry.
   engine/XNA/MonoGame/KNI package present. Never add a package or project reference to it.
 - Backend glue (engine, XNA, browser interop) lives in adapter packages, not the core.
 - **This preview is code-only.** The configuration surface is the C# API
-  (`AudioConfigBuilder`, `PlaylistConfigBuilder`, model objects). There is no JSON wire format in
-  this preview: the JSON door lives in the separate **provisional** package `src/Duack.Config`
-  (not shipped with this preview): `AudioConfigJson` / `PlaylistJson`, the snake_case
-  serialization contexts, and the playlist-embedding builder extension. The tooling
-  (`tools/DuackCli`) and consumers that want file-based config reference `Duack.Config`
-  explicitly; the core stays serialization-free beyond the attributes it already carries for
-  extension-data preservation. JSON round-trip tests live in `tests/Duack.Config.Tests`; the
-  core test suite (`tests/Duack.Tests`) must not require `Duack.Config`. JSON support may be
-  added (and the door published or folded back into the core) once there are users to validate
-  the shape.
+  (`AudioConfigBuilder`, `PlaylistConfigBuilder`, model objects). The JSON layer ships in the
+  core for tooling and persistence: `AudioConfigJson` / `PlaylistJson`, the snake_case
+  serialization contexts, and the playlist-embedding builder extension. No `audio-config.json`
+  ships with the library and none is required at runtime. There is no separate `Duack.Config`
+  project. JSON round-trip tests live in `tests/Duack.Tests/JsonRoundTrip`; the core test suite
+  references only `src/Duack`. A concrete JSON use case may justify splitting the layer into its
+  own package later; until then keep it in the core.
 - Playlists have their OWN source-generated context (`Duack.PlaylistJson`), so the AOT web
   head can read them at runtime; a game may author them in code with `PlaylistConfigBuilder`
-  and embed them via `AudioConfigBuilderJsonExtensions.WithPlaylists` (Duack.Config). The CLI's
-  `PlaylistFile` delegates to `PlaylistJson`, so tool and runtime never drift on the format.
+  and embed them via `AudioConfigBuilderJsonExtensions.WithPlaylists`. The CLI's `PlaylistFile`
+  delegates to `PlaylistJson`, so tool and runtime never drift on the format.
 
 ## Layout
 
@@ -61,7 +58,7 @@ A change that ships with no test needs a written reason in the changelog entry.
 - `tools/DuackCli` — the desktop-only `duack` CLI (`init`/`validate`/`convert`/`scan`); the only
   place `NAudio`/`OggVorbisEncoder` live. Never referenced by `src/` or `samples/`. See its
   `README.md` for the CLI and the `ExtensionData` round-trip contract.
-- `tests/DuackCli.Tests` — the tool's pure logic plus CLI end-to-end (exit codes +
+- `tests/Duack.Tools.Tests` — the tool's pure logic plus CLI end-to-end (exit codes +
   filesystem effects) against temp directories.
 - `samples/Duack.Sample.Core` — the engine-free sample core both heads share: the scripted
   storyline (`StoryController`) and the demo wiring (`SampleAudio`), pure BCL over `src/Duack`.

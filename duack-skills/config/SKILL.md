@@ -1,15 +1,15 @@
 ---
 name: config
-description: Duack configuration — AudioConfig/AudioConfigBuilder, JSON wire format via Duack.Config (snake_case), SchemaVersion, Sanitize clamping, ExtensionData round-trip, source-generated contexts, host-driven hot reload (no built-in file watcher), Tracks build-only section. Use when editing audio-config.json, authoring config in code, validating config, or preserving unknown fields.
+description: Duack configuration — AudioConfig/AudioConfigBuilder, core JSON wire format (snake_case), SchemaVersion, Sanitize clamping, ExtensionData round-trip, source-generated contexts, host-driven hot reload (no built-in file watcher), Tracks build-only section. Use when editing audio-config.json, authoring config in code, validating config, or preserving unknown fields.
 ---
 
 # Duack — Configuration
 
 ## Two doors, same objects
 
-This preview is **code-first**: author the mix in C# via `AudioConfigBuilder`. The JSON file
-is a secondary door via the separate **provisional** package `Duack.Config`
-(`AudioConfigJson` / `PlaylistJson`). The core has no JSON API.
+This preview is **code-first**: author the mix in C# via `AudioConfigBuilder`. The core also
+carries the JSON layer (`AudioConfigJson` / `PlaylistJson`) for tooling and persistence; no
+`audio-config.json` ships with the library and none is required at runtime.
 
 Code-first:
 ```csharp
@@ -22,11 +22,11 @@ var config = new AudioConfigBuilder()
     .WithDuckSource("sfx", new DuckSourceConfig { Ratio=0.25f, AttackSeconds=0.06f, ReleaseSeconds=0.35f })
     .WithMusicCueVariation(new CueVariation(0.1f, 0.05f))
     .WithSfxCueVariation(new CueVariation(0.15f, 0.1f))
-    .WithPlaylists(playlists)  // via Duack.Config extension
+    .WithPlaylists(playlists)  // core JSON extension
     .Build();
 ```
 
-JSON (`Duack.Config`): `AudioConfigJson.Load()` / `TryLoad()` read `Content/Audio/audio-config.json`;
+JSON (core): `AudioConfigJson.Load()` / `TryLoad()` read `Content/Audio/audio-config.json`;
 `AudioConfigJson.Parse(json)` / `TryParse`; `AudioConfigJson.Serialize(config)`; `AudioConfigJson.Save(config, path)`.
 
 ## Schema & versioning
@@ -51,8 +51,7 @@ JSON (`Duack.Config`): `AudioConfigJson.Load()` / `TryLoad()` read `Content/Audi
 
 - Source-generated contexts (no reflection; WASM/trimming safe): `AudioConfigJsonContext`,
   `PlaylistConfigJsonContext`, `PlayerAudioSettingsJsonContext`, `AudioLibraryManifestJsonContext`
-  (all in `Duack.Config` except `PlayerAudioSettingsJsonContext` which lives with the core
-  settings).
+  (all in the core).
 - Snake_case keys, case-insensitive on read, indented write.
 - `Tracks` section (build-only loudness/compress targets) null-omitted on write.
 - `ExtensionData` (`[JsonExtensionData]`) preserves unknown sections/fields across load→save.
@@ -75,7 +74,7 @@ host's responsibility (and varies by engine; not standard in MonoGame/KNI).
 
 ## OpenStream
 
-`AudioConfigJson.OpenStream` (in `Duack.Config`) defaults to `File.OpenRead`; games replace
+`AudioConfigJson.OpenStream` (core) defaults to `File.OpenRead`; games replace
 with `TitleContainer.OpenStream` so the same relative path resolves on DesktopGL and Blazor.
 
 ## Tips

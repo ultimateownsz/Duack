@@ -7,7 +7,7 @@ description: Duack CLI (tools/DuackCli) — duackcli init, validate, convert, sc
 
 `tools/DuackCli` is desktop-only .NET. NAudio and OggVorbisEncoder live here only — never
 referenced by `src/` or `samples/`. Ships commands: `init`, `validate`, `convert`, `scan`.
-The CLI references `Duack` and the provisional `Duack.Config` package.
+The CLI references the `Duack` core package, including its JSON layer.
 
 ## Commands
 

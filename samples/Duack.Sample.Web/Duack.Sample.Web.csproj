@@ -25,8 +25,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Duack\Duack.csproj" />
-    <!-- The provisional JSON layer: the web head reads the checked-in audio-manifest.json via
-         AudioLibraryManifestJson and installs the music backend that plays through the browser. -->    <ProjectReference Include="..\..\src\Duack.KNI\Duack.KNI.csproj" />
+    <!-- The web head reads the checked-in audio-manifest.json through the core JSON layer
+         (AudioLibraryManifestJson) and installs the music backend that plays through the browser. -->
+    <ProjectReference Include="..\..\src\Duack.KNI\Duack.KNI.csproj" />
     <ProjectReference Include="..\Duack.Sample.Core\Duack.Sample.Core.csproj" />
   </ItemGroup>
 

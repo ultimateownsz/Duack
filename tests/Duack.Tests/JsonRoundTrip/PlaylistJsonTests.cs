@@ -1,8 +1,6 @@
 using Duack;
 
-namespace Duack.Config.Tests;
-
-/// <summary>
+namespace Duack.Tests.JsonRoundTrip;
 
 /// <summary>
 /// Pins the playlist wire format: a code-built <see cref="PlaylistConfig"/> serializes to snake_case

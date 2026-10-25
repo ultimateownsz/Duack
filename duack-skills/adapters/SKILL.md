@@ -59,7 +59,7 @@ semantics must not be assumed on web).
   Document in README; do not solve silently.
 - Web sample uses manifest-driven music (no directory enumeration).
 - `OperatingSystem.IsBrowser()` gates browser-only behavior; `AudioConfigJson.Save` is a
-  no-op on browser (in `Duack.Config`).
+  no-op on browser (in the core).
 
 ## Wiring example
 

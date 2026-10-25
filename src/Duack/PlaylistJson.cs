@@ -11,8 +11,8 @@ namespace Duack;
 /// what <see cref="FromConfig"/> reads and <see cref="Embed"/> writes. Hand edits are tolerated:
 /// snake_case keys, string or numeric enum values, comments, and trailing commas.
 /// <para>
-/// Part of the provisional JSON layer (not shipped in this preview): this lives in the separate
-/// <c>Duack.Config</c> package and becomes the published, documented door with the preview.
+/// Part of the core JSON layer. It exists for tooling and persistence; nothing in the runtime
+/// requires a playlist document to exist.
 /// </para>
 /// </summary>
 public static class PlaylistJson

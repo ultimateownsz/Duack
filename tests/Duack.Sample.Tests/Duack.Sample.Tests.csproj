@@ -18,8 +18,9 @@
   <ItemGroup>
     <!-- The shared, engine-free sample core (StoryController + SampleAudio): the scripted
          storyline and demo wiring stay pinned without a graphics device or engine package.
-         The provisional JSON layer is referenced because the sample embeds playlists for the CLI
-         bridge and the tests assert the embedding round-trips. -->
-    <ProjectReference Include="..\..\samples\Duack.Sample.Core\Duack.Sample.Core.csproj" />  </ItemGroup>
+         The sample embeds playlists for the CLI bridge through the core JSON layer, and the
+         tests assert the embedding round-trips. -->
+    <ProjectReference Include="..\..\samples\Duack.Sample.Core\Duack.Sample.Core.csproj" />
+  </ItemGroup>
 
 </Project>

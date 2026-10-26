@@ -1,10 +1,10 @@
 ﻿namespace Duack;
 
 /// <summary>
-/// Layers the player's saved preferences over the authored mix. <c>audio-config.json</c> stays the
+/// Layers the player's saved preferences over the authored mix. The authored config stays the
 /// source of truth for everything a developer authors; the store only carries the handful of values
-/// the settings overlay exposes, so re-exporting the authored file (or hot-reloading it) never
-/// discards a player's volume choice and never writes back into shipped content.
+/// the settings overlay exposes, so updating the authored mix never discards a player's volume choice
+/// and never writes back into shipped code or assets.
 /// </summary>
 public static class PlayerSettings
 {

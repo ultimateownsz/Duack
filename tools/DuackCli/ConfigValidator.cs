@@ -1,3 +1,4 @@
+using System;
 using Duack;
 using System.Collections.Generic;
 using System.Globalization;
@@ -20,10 +21,10 @@ public enum IssueSeverity
 public sealed record ValidationIssue(IssueSeverity Severity, string Message);
 
 /// <summary>
-/// Reports schema and range problems in an <see cref="AudioConfig"/> WITHOUT mutating it, so a
-/// hand-edited file can be checked with clear messages before the runtime's
-/// <see cref="AudioConfig.Sanitize"/> silently clamps it. Pure and headless.
+/// Reports schema and range problems in an <see cref="AudioConfig"/> WITHOUT mutating it.
+/// <para><b>Deprecated:</b> audio-config.json validation is deprecated.</para>
 /// </summary>
+[Obsolete("audio-config.json is deprecated and moved to the 'legacy/pre-refactor' branch.")]
 public static class ConfigValidator
 {
     /// <summary>Validates an audio config, with no playlist cross-checks.</summary>

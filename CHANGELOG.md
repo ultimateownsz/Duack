@@ -44,6 +44,12 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
   FNA) are unchanged. The test comment that framed a duck-source reload around a hot-reload
   scenario was removed until a host needs that guidance.
 
+#### 2026-10-26
+
+- **Player settings documentation no longer describes the authored configuration as a shipped
+  `audio-config.json` file.** Player preferences remain outside authored content and now refer to
+  the code-first configuration surface.
+
 ### Fixed
 
 #### 2026-10-25
@@ -54,6 +60,16 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
   `CliTests.Init_writes_a_config_next_to_the_content`.
 
 ### Deprecated
+
+#### 2026-10-26
+
+- **The legacy `audio-config.json` workflow is deprecated.** `AudioConfigJson`, the build-only
+  `Tracks`/`ExtensionData` members, playlist embedding, and the CLI's `init`, `validate`,
+  `convert --config`, and `normalize --config`/`--write-config` paths now emit deprecation guidance
+  pointing to `legacy/pre-refactor`. Active authoring uses `AudioConfigBuilder` and
+  `PlaylistConfigBuilder`; `duackcli convert` accepts standalone playlists or explicit `--all`,
+  while `duackcli scan` and `normalize` remain available. Existing JSON APIs remain present as
+  obsolete compatibility symbols and are covered by the round-trip tests.
 
 ### Removed
 

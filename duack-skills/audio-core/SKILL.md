@@ -83,10 +83,14 @@ Every namespace → `Duack`.
 
 ### Adapters
 
-**Duack.MonoGame** (desktop):
-- `SoundEffectMusicBackend` — IMusicBackend over SoundEffectInstance (overlap crossfade)
-- `SoundEffectSfxBackend` — ISfxBackend over IAudioClipLibrary
-- `SoundEffectClipLibrary` — clip resolver with AudioLibrary candidate paths
+**Duack** (core, engine-agnostic):
+- `SoundEffectMusicBackend` -- IMusicBackend over IAudioClipLibrary (overlap crossfade)
+- `SoundEffectSfxBackend` -- ISfxBackend over IAudioClipLibrary
+- `IAudioInstance` / `IAudioClip` / `IAudioClipLibrary` seams (headless testable)
+
+**Duack.MonoGame** (desktop bindings):
+- `SoundEffectClipLibrary` -- clip resolver with AudioLibrary candidate paths
+- `SoundEffectAudioClip` / `SoundEffectAudioInstance` -- MonoGame SoundEffect bindings
 
 **Duack.KNI** (web):
 - `MediaPlayerMusicBackend` — IMusicBackend over platform MediaPlayer (HTML audio)

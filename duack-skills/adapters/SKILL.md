@@ -84,16 +84,16 @@ Desktop:
 var clips = new SoundEffectClipLibrary(content, library);
 var musicBackend = new SoundEffectMusicBackend(clips);
 var sfxBackend = new SoundEffectSfxBackend(clips);
-var director = new MusicManager(musicBackend, controller, config.Music);
-var sfx = new SfxManager(library, sfxBackend, director, sfxConfig: config.Sfx);
+var manager = new MusicManager(musicBackend, controller, config.Music);
+var sfx = new SfxManager(library, sfxBackend, manager, sfxConfig: config.Sfx);
 ```
 
 Web:
 ```csharp
 var host = new KnMediaPlayerHost();
 var musicBackend = new MediaPlayerMusicBackend(host);
-var director = new MusicManager(musicBackend, controller, config.Music);
-// no SFX backend on web (music-only); duck via director.Pulse
+var manager = new MusicManager(musicBackend, controller, config.Music);
+// no SFX backend on web (music-only); duck via manager.Pulse
 ```
 
 ## Rules

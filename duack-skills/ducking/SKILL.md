@@ -45,14 +45,14 @@ Configured under `MusicConfig.DuckSources` (keyed by source name: "sfx", "dialog
 ## MusicManager ducking facade
 
 ```csharp
-director.Pulse("sfx");                 // duck for configured hold
-director.Pulse("sfx", 0.5f);           // duck for 0.5s
-director.SetDuck("dialogue", true);    // hold ducked
-director.SetDuck("dialogue", false);   // release
-director.ReleaseDucks();               // instant release (scene switch)
-director.IsDuckReady(0.99f);           // recovered?
-director.DuckRatio;                    // current combined ratio
-director.GainReduction;                // current gain reduction (1 - DuckRatio)
+manager.Pulse("sfx");                 // duck for configured hold
+manager.Pulse("sfx", 0.5f);           // duck for 0.5s
+manager.SetDuck("dialogue", true);    // hold ducked
+manager.SetDuck("dialogue", false);   // release
+manager.ReleaseDucks();               // instant release (scene switch)
+manager.IsDuckReady(0.99f);           // recovered?
+manager.DuckRatio;                    // current combined ratio
+manager.GainReduction;                // current gain reduction (1 - DuckRatio)
 ```
 
 ## Typical patterns
@@ -64,9 +64,9 @@ Unknown cues / backend refusals never duck.
 ### Dialogue ducking
 ```csharp
 // dialogue starts
-director.SetDuck("dialogue", true);
+manager.SetDuck("dialogue", true);
 // dialogue ends
-director.SetDuck("dialogue", false);
+manager.SetDuck("dialogue", false);
 ```
 
 ### Scene switch — two complementary patterns
@@ -75,16 +75,16 @@ director.SetDuck("dialogue", false);
 ```csharp
 if (frame.Music is not null)
 {
-    director.ReleaseDucks();   // instantly reset all sources
-    director.Play(frame.Music);
+    manager.ReleaseDucks();   // instantly reset all sources
+    manager.Play(frame.Music);
 }
 ```
 
 **Natural gate** — preserve smooth release curve, defer visuals:
 ```csharp
-if (frame.Music is not null) director.Play(frame.Music);
+if (frame.Music is not null) manager.Play(frame.Music);
 // in Update/Draw:
-if (story.Scene != displayedScene && director.IsDuckReady())
+if (story.Scene != displayedScene && manager.IsDuckReady())
     displayedScene = story.Scene;
 ```
 

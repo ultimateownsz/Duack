@@ -199,16 +199,17 @@ var config = new AudioConfigBuilder()
     .WithDuckSource("dialogue", new DuckSourceConfig { Ratio = 0.25f, AttackSeconds = 0.06f, ReleaseSeconds = 0.35f })
     .Build();
 
-// Music director
-var director = new MusicManager(backend, playlistController, config.Music);
-director.Play("overworld");           // start playlist
-director.Pulse("sfx");               // duck music
-director.ReleaseDucks();             // immediately release all ducks
-director.IsDuckReady(0.99f);         // true when duck recovered
-director.Update(deltaSeconds);       // per-frame update
+// Music manager
+var manager = new MusicManager(backend, playlistController, config.Music);
+manager.Play("overworld");           // start playlist
+manager.Pulse("sfx");               // duck music
+manager.ReleaseDucks();             // immediately release all ducks
+manager.IsDuckReady(0.99f);         // true when duck recovered
+manager.Update(deltaSeconds);       // per-frame update
 
-// SFX director
-var sfx = new SfxManager(library, backend, director, sfxConfig: config.Sfx);
+
+// SFX manager
+var sfx = new SfxManager(library, backend, manager, sfxConfig: config.Sfx);
 sfx.Play("hit", pitch: 0.25f);     // play cue + auto-duck + apply authored jitter
 sfx.PlayNext();                     // draw from MarbleBag (no repeats)
 sfx.Stop();                         // cut all one-shots
@@ -304,10 +305,10 @@ Wire (desktop):
 var clips = new SoundEffectClipLibrary(content);
 var backend = new SoundEffectMusicBackend(clips);
 var controller = new MusicPlaylistController(playlists);
-var director = new MusicManager(backend, controller, config.Music);
+var manager = new MusicManager(backend, controller, config.Music);
 `
 
-Per-frame: director.Update(deltaSeconds); Switch: director.ReleaseDucks(); director.Play("battle"); Duck: director.Pulse("sfx");.
+Per-frame: manager.Update(deltaSeconds); Switch: manager.ReleaseDucks(); manager.Play("battle"); Duck: manager.Pulse("sfx");.
 
 See topic skills: ducking, playlists, sfx-variation, player-settings, audio-library, config, adapters, cli, crossfade.
 

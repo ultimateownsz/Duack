@@ -51,13 +51,13 @@ var playlists = new PlaylistConfigBuilder()
 
 ```csharp
 var controller = new MusicPlaylistController(playlists, random /*optional*/);
-var director = new MusicManager(backend, controller, config.Music);
+var manager = new MusicManager(backend, controller, config.Music);
 
-director.Play("battle-sequence");                // starts from top, triggers crossfade
-director.Play("battle-sequence", fadeInSeconds: 1.0f); // optional fade in
-director.Next();                                // skip track (breaks track-repeat)
-director.Stop();                                // stop, no TrackCompleted event
-director.Stop(fadeOutSeconds: 0.5f);            // stop with fade out
+manager.Play("battle-sequence");                // starts from top, triggers crossfade
+manager.Play("battle-sequence", fadeInSeconds: 1.0f); // optional fade in
+manager.Next();                                // skip track (breaks track-repeat)
+manager.Stop();                                // stop, no TrackCompleted event
+manager.Stop(fadeOutSeconds: 0.5f);            // stop with fade out
 ```
 
 Properties: `IsPlaying`, `CurrentPlaylistName`, `CurrentTrack`.
@@ -68,9 +68,9 @@ Events: `TrackCompleted` (raised after advance; handler sees successor or null).
 
 Adapter fires `IMusicBackend.TrackEnded` when active track ends → `MusicManager` calls
 `controller.NotifyTrackCompleted()` → controller advances per repeat/shuffle → raises
-`TrackCompleted` → director begins transition (crossfade) on next `Update`.
+`TrackCompleted` → manager begins transition (crossfade) on next `Update`.
 
-`Repeat=Track` loops the same track: director restarts playback itself (fade-out→swap→fade-in
+`Repeat=Track` loops the same track: manager restarts playback itself (fade-out→swap→fade-in
 on web, or restart with fade-in on desktop overlap path).
 
 ## Auto-build from AudioLibrary

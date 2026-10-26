@@ -11,13 +11,10 @@ Duack supports **sequential crossfades between any number of tracks**. You do no
 pre-queue all tracks — each call to `MusicManager.Play()` triggers an independent crossfade
 from whatever is currently playing to the new track.
 
-### Why crossfade? (UX rationale)
 
-Crossfades exist because of the **Peak-End Rule** (lawsofux.com/peak-end-rule): players judge
 a transition by how it felt at its worst moment and its final moment, not by the average. A
 hard cut between tracks creates a jarring peak (silence gap) that players remember; an
 equal-power crossfade smooths the peak so the transition reads as seamless. The
-**Doherty Threshold** (lawsofux.com/doherty-threshold) also applies: transitions under ~400 ms
 feel instant, so keep `CrossfadeSeconds` at or below 1.5 s for scene switches and reserve
 longer fades (2-4 s) for deliberate mood shifts.
 

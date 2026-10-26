@@ -50,17 +50,16 @@ public class LoudnessCliTests : IDisposable
     }
 
     [Fact]
-    public void Normalize_write_config_updates_tracks()
+    public void Normalize_write_config_is_deprecated_and_fails()
     {
         WriteSine("tone.wav", 0.5f);
 
-        var (code, stdout, stderr) = Run("normalize", _dir, "--write-config");
+        var (code, _, stderr) = Run("normalize", _dir, "--write-config");
 
-        Assert.Equal(0, code);
-        Assert.Equal("", stderr);
-        Assert.Contains("updated tracks", stdout);
-        Assert.True(File.Exists(Path2("audio-config.json")));
-        Assert.Contains("loudnorm", File.ReadAllText(Path2("audio-config.json")));
+        Assert.Equal(1, code);
+        Assert.Contains("deprecated", stderr, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("legacy/pre-refactor", stderr);
+        Assert.False(File.Exists(Path2("audio-config.json")));
     }
 
     [Fact]

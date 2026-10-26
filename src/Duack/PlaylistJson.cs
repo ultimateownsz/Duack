@@ -69,7 +69,9 @@ public static class PlaylistJson
     /// <summary>
     /// Extracts the embedded <c>playlists</c> section from an audio config's
     /// <see cref="AudioConfig.ExtensionData"/>, or null when the config has none.
+    /// <para><b>Deprecated:</b> embedding playlists into audio-config.json is deprecated.</para>
     /// </summary>
+    [System.Obsolete("Embedding playlists into audio-config.json is deprecated and moved to the 'legacy/pre-refactor' branch.")]
     public static PlaylistConfig? FromConfig(AudioConfig config)
     {
         if (config.ExtensionData is null || !config.ExtensionData.TryGetValue("playlists", out var element))
@@ -81,8 +83,10 @@ public static class PlaylistJson
     /// <summary>
     /// Stores <paramref name="playlists"/> in an audio config's <see cref="AudioConfig.ExtensionData"/>
     /// under the <c>playlists</c> key, so a later <c>AudioConfigJson.Serialize</c> emits it and
-    /// <see cref="FromConfig"/> reads it back. This is how code-authored playlists reach the CLI.
+    /// <see cref="FromConfig"/> reads it back.
+    /// <para><b>Deprecated:</b> embedding playlists into audio-config.json is deprecated.</para>
     /// </summary>
+    [System.Obsolete("Embedding playlists into audio-config.json is deprecated and moved to the 'legacy/pre-refactor' branch.")]
     public static void Embed(AudioConfig config, PlaylistConfig playlists)
     {
         config.ExtensionData ??= new Dictionary<string, JsonElement>();

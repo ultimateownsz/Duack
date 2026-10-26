@@ -133,13 +133,8 @@ public class TrackConfig
 /// The audio mix configuration, authored in code (see <see cref="AudioConfigBuilder"/>).
 /// <para>
 /// This is the CODE surface: the mix (masters, per-context scales, crossfade, duck sources, cue
-/// variation) is a plain object graph. The optional <c>audio-config.json</c> wire format lives in
-/// <see cref="AudioConfigJson"/>, which is part of this core package and exists for tooling and
-/// persistence; the file is never required.
-/// </para>
-/// <para>
-/// The file may also carry a build-only "tracks" section consumed by tools; that section is ignored
-/// at runtime by the game but preserved on save.
+/// variation) is a plain object graph. The deprecated <c>audio-config.json</c> wire format has moved
+/// to the <c>legacy/pre-refactor</c> branch.
 /// </para>
 /// </summary>
 public class AudioConfig
@@ -169,18 +164,18 @@ public class AudioConfig
     /// <summary>
     /// Build-only per-track loudness/compress targets (the "tracks" section). Null when the file
     /// has none; omitted from output when null so a plain mix never emits a tracks section.
+    /// <para><b>Deprecated:</b> audio-config.json and its tracks section are deprecated.</para>
     /// </summary>
+    [Obsolete("audio-config.json and its build-only tracks section are deprecated and moved to the 'legacy/pre-refactor' branch.")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public Dictionary<string, TrackConfig>? Tracks { get; set; }
 
     /// <summary>
     /// Build-only JSON sections the runtime model does not describe. Captured on load and
     /// re-emitted on save so a save never drops them.
-    /// <para>
-    /// The code-first surface never touches this: it exists so the JSON door can carry unknown
-    /// sections through a load/save cycle without losing them.
-    /// </para>
+    /// <para><b>Deprecated:</b> audio-config.json ExtensionData is deprecated.</para>
     /// </summary>
+    [Obsolete("audio-config.json ExtensionData is deprecated and moved to the 'legacy/pre-refactor' branch.")]
     [JsonExtensionData]
     public Dictionary<string, JsonElement>? ExtensionData { get; set; }
 

@@ -26,6 +26,94 @@ variation. Duack owns the mix and produces numbers; the user's engine owns playb
   `MusicManager.ReloadDuckSources()` to swap duck params in place (duck state preserved);
   file watching is the host's responsibility.
 
+## Getting started (5 minutes)
+
+### 1. Install
+```sh
+dotnet add package Duack --prerelease
+dotnet add package Duack.MonoGame --prerelease   # desktop (MonoGame/KNI desktop)
+dotnet add package Duack.KNI --prerelease        # browser/WASM
+```
+
+### 2. Organize audio files
+```
+Content/Audio/
+  SFX/       # one-shots (wav preferred)
+    hit.wav
+    notice.ogg
+  Tracks/    # loops/songs (ogg preferred)
+    overworld.ogg
+    battle.ogg
+```
+Drop files in - no cue registration. Classification is case-sensitive (`SFX`/`Tracks`, lowercase extensions).
+
+### 3. Wire up (desktop, MonoGame)
+```csharp
+using Duack;
+using Duack.MonoGame;
+
+var library   = AudioLibrary.ScanDirectory("Content/Audio");
+var playlists = SampleAudio.BuildPlaylists(library);
+var clips     = new SoundEffectClipLibrary(library);
+
+var music = new MusicManager(
+    new SoundEffectMusicBackend(clips),
+    new MusicPlaylistController(playlists),
+    config.Music, masterVolume: config.MasterVolume);
+
+var sfx = new SfxManager(library,
+    new SoundEffectSfxBackend(clips), music,
+    masterVolume: config.MasterVolume,
+    sfxBusVolume: config.Sfx.MasterVolume,
+    sfxConfig: config.Sfx);
+
+music.Play("overworld");
+sfx.Play("notice", duck: true);
+
+// once per frame:
+music.Update(dt);
+```
+
+### 4. Wire up (web, KNI)
+```csharp
+using Duack;
+using Duack.KNI;
+
+var manifest = AudioLibraryManifestJson.Deserialize(manifestJson);
+var library  = AudioLibrary.FromManifest(manifest);
+var playlists = SampleAudio.BuildPlaylists(library);
+
+var host  = new KnMediaPlayerHost();
+var music = new MusicManager(
+    new MediaPlayerMusicBackend(host),
+    new MusicPlaylistController(playlists),
+    config.Music, masterVolume: config.MasterVolume);
+
+music.Play("overworld");
+
+// once per frame:
+music.Update(dt);
+```
+
+### 5. Generate the web manifest
+```sh
+duackcli scan Content/Audio
+```
+
+### 6. Convert WAV masters to OGG for web
+```sh
+duackcli convert Content/Audio/_masters Content/Audio/Tracks --all
+```
+Already-converted files are skipped automatically.
+
+### Common pitfalls
+- **Missing `audio-manifest.json` on web** - run `duackcli scan` and check it in.
+- **Case sensitivity** - `SFX`/`Tracks` and lowercase extensions required; web hosts 404 on mismatch.
+- **OGG decode (KNI)** - KNI's `SoundEffect.FromStream` parses WAV only. See the NVorbis `TotalSamples` pitfall in `adapters`.
+- **No audio on desktop** - ensure `Content/Audio/` is copied to build output.
+
+See `adapters`, `audio-library`, `crossfade`, `playlists` for deeper coverage.
+
 ## Namespace migration
 
 All types live in `Duack` (core), `Duack.MonoGame` (desktop adapter), `Duack.KNI` (web adapter).

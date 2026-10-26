@@ -1,25 +1,17 @@
 ---
 name: cli
-description: Duack CLI (tools/DuackCli) — duackcli init, validate, convert, scan commands, NAudio/OggVorbisEncoder (desktop-only tooling), ExtensionData round-trip contract. Use when scaffolding config, validating audio-config.json, converting WAV to OGG, scanning audio manifests, or building editors against the tooling layer.
+description: Duack CLI (tools/DuackCli) — duackcli convert, scan, normalize commands, NAudio/OggVorbisEncoder (desktop-only tooling). Use when converting WAV to OGG, scanning audio manifests, or normalizing loudness.
 ---
 
 # Duack CLI
 
 `tools/DuackCli` is desktop-only .NET. NAudio and OggVorbisEncoder live here only — never
-referenced by `src/` or `samples/`. Ships commands: `init`, `validate`, `convert`, `scan`.
-The CLI references the `Duack` core package, including its JSON layer.
+referenced by `src/` or `samples/`. Ships commands: `convert`, `scan`, `normalize`.
+The CLI references the `Duack` core package.
 
 ## Commands
 
-### `duackcli init <contentDir>`
-Scaffolds `audio-config.json` from a content directory scan. Generates config with discovered
-contexts/defaults.
-
-### `duackcli validate <config.json>`
-Schema + range validation with clear messages. Checks SchemaVersion, clamping bounds, unknown
-fields preserved. Exit non-zero on failure.
-
-### `duackcli convert <contentDir> <outDir> ...`
+### `duackcli convert <contentDir> <outDir> [--playlists <file>] [--all]`
 
 WAV → OGG for web. SFX stay WAV by default unless `--all` is used (playlist is the
 authoritative song list). A content directory may also hold pre-encoded `.ogg` files (a cue
@@ -44,15 +36,11 @@ or upper-cased extension).
 Measures each WAV track's RMS/peak loudness, reports the loudest track, and (when an output
 directory is given) writes gain-normalized WAV copies so every track matches the loudest
 track's RMS level. Aliases: `loudness`, `analyze`, `analyse`, `measure`, `loudnorm`.
-Use `--write-config` / `--config` to refresh the build-only `tracks` loudnorm targets.
 
-## ExtensionData round-trip contract
+## Deprecated commands
 
-For anyone building an external editor against the tooling layer:
-- Unknown sections/fields are captured on load into `ExtensionData` and re-emitted on save.
-- `Tracks` (build-only) preserved.
-- SchemaVersion: missing → current; higher preserved, not downgraded.
-- Sanitize clamps values; editors should call validate after edits.
+Legacy `audio-config.json` scaffolding and validation (`init`, `validate`, `convert --config`,
+`normalize --write-config`) are deprecated and moved to the `legacy/pre-refactor` branch.
 
 ## Tooling rules
 
@@ -62,7 +50,6 @@ For anyone building an external editor against the tooling layer:
 
 ## Tips
 
-- Run validate in CI to catch hand-edited config drift.
 - convert keeps SFX as WAV (web decodes WAV fine for short clips); tracks become OGG.
 - scan output is the checked-in manifest web hosts read at runtime.
 

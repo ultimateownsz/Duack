@@ -1,13 +1,15 @@
+using System;
+
 namespace Duack;
 
 /// <summary>
-/// The JSON-only additions to <see cref="AudioConfigBuilder"/>.
+/// The JSON additions to <see cref="AudioConfigBuilder"/>.
 /// <para>
-/// Embedding playlists into a config is a WIRE-FORMAT concern, not a mixing concern: the embedded
-/// <c>playlists</c> section exists so the CLI (<c>duackcli convert --config</c>) can find the songs a
-/// game plays. It lives with the core builder because the JSON layer is part of the core package.
+/// <b>Deprecated:</b> Embedding playlists into an <c>audio-config.json</c> is deprecated. Use standalone
+/// playlist configuration (<see cref="PlaylistConfigBuilder"/>) or the two-directory audio convention.
 /// </para>
 /// </summary>
+[Obsolete("audio-config.json is deprecated and moved to the 'legacy/pre-refactor' branch. Use code-first AudioConfigBuilder and two-directory convention instead.")]
 public static class AudioConfigBuilderJsonExtensions
 {
     /// <summary>

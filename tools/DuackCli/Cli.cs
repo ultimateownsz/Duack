@@ -53,14 +53,12 @@ public static class Cli
     {
         writer.WriteLine("usage: duackcli <command> [options]");
         writer.WriteLine();
-        writer.WriteLine("  init     <contentDir> [--out <file>] [--force] [--skills] [--skills-dir <dir>]");
-        writer.WriteLine("  validate <config.json> [--playlists <file>]");
-        writer.WriteLine("  convert  <contentDir> <outDir> [--config <file>] [--playlists <file>]");
+        writer.WriteLine("  convert  <contentDir> <outDir> [--playlists <file>]");
         writer.WriteLine("           [--quality <0..1>] [--force] [--all]");
         writer.WriteLine("           (a playlist source is required; --all converts every WAV)");
         writer.WriteLine("  scan     <audioRoot> [--out <file>]");
         writer.WriteLine("           (writes an audio-manifest.json of the SFX/ + Tracks/ cues)");
-        writer.WriteLine("  normalize <dir> [<outDir>] [--out <dir>] [--config <file>] [--write-config]");
+        writer.WriteLine("  normalize <dir> [<outDir>] [--out <dir>]");
         writer.WriteLine("           (measures track loudness, finds the loudest, and writes gain-normalized WAVs)");
         return 0;
     }
@@ -69,109 +67,14 @@ public static class Cli
 
     private static int RunInit(string[] args, TextWriter output, TextWriter error)
     {
-        if (!TryParseArgs(args, valueOptions: new[] { "--out", "--skills-dir" }, flags: new[] { "--force", "--skills" }, out var parsed, out var errorMessage))
-            return Fail(error, errorMessage);
-
-        if (parsed.Positional.Count != 1)
-            return Fail(error, "init requires exactly one <contentDir>.");
-
-        var contentDir = parsed.Positional[0];
-        if (!Directory.Exists(contentDir))
-            return Fail(error, $"content directory not found: {contentDir}");
-
-        var outPath = parsed.Value("--out") ?? Path.Combine(contentDir, "audio-config.json");
-        if (File.Exists(outPath) && !parsed.Has("--force"))
-            return Fail(error, $"{outPath} already exists; pass --force to overwrite.");
-
-        var wavs = EnumerateWavs(contentDir);
-        var config = ConfigScaffolder.Build(wavs);
-        WriteAllText(outPath, AudioConfigJson.Serialize(config));
-        output.WriteLine($"[duackcli] wrote {outPath} ({config.Tracks?.Count ?? 0} tracks, {wavs.Count} wavs).");
-
-        if (parsed.Has("--skills"))
-        {
-            var src = FindSkillsDirectory();
-            if (src is null)
-            {
-                error.WriteLine("warning: duack-skills directory not found; skipping skill install.");
-            }
-            else
-            {
-                var dest = parsed.Value("--skills-dir");
-                if (string.IsNullOrWhiteSpace(dest))
-                    dest = Directory.Exists(".opencode") ? Path.Combine(".opencode", "duack-skills") : "duack-skills";
-                CopyDirectory(src, dest);
-                output.WriteLine($"[duackcli] installed skills to {dest}");
-            }
-        }
-
-        return 0;
-    }
-
-    private static string? FindSkillsDirectory()
-    {
-        var starts = new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory };
-        foreach (var start in starts)
-        {
-            var dir = start;
-            while (dir is not null)
-            {
-                var candidate = Path.Combine(dir, "duack-skills");
-                if (Directory.Exists(candidate))
-                    return candidate;
-                var parent = Directory.GetParent(dir);
-                dir = parent?.FullName;
-            }
-        }
-        return null;
-    }
-
-    private static void CopyDirectory(string source, string destination)
-    {
-        Directory.CreateDirectory(destination);
-        foreach (var file in Directory.EnumerateFiles(source, "*", SearchOption.AllDirectories))
-        {
-            var relative = Path.GetRelativePath(source, file);
-            var target = Path.Combine(destination, relative);
-            Directory.CreateDirectory(Path.GetDirectoryName(target)!);
-            File.Copy(file, target, overwrite: true);
-        }
+        return Fail(error, "'init' is deprecated. audio-config.json is deprecated and moved to the 'legacy/pre-refactor' branch.");
     }
 
     // ---- validate ----
 
     private static int RunValidate(string[] args, TextWriter output, TextWriter error)
     {
-        if (!TryParseArgs(args, valueOptions: new[] { "--playlists" }, flags: Array.Empty<string>(), out var parsed, out var errorMessage))
-            return Fail(error, errorMessage);
-
-        if (parsed.Positional.Count != 1)
-            return Fail(error, "validate requires exactly one <config.json>.");
-
-        var configPath = parsed.Positional[0];
-        if (!TryReadConfig(configPath, out var config, out errorMessage))
-            return Fail(error, errorMessage);
-
-        PlaylistConfig? playlists = null;
-        if (parsed.Value("--playlists") is { } playlistPath &&
-            !TryReadPlaylists(playlistPath, out playlists, out errorMessage))
-        {
-            return Fail(error, errorMessage);
-        }
-
-        var issues = ConfigValidator.Validate(config!, playlists);
-        foreach (var issue in issues)
-        {
-            var label = issue.Severity == IssueSeverity.Error ? "error" : "warning";
-            error.WriteLine($"{label}: {issue.Message}");
-        }
-
-        if (issues.Any(i => i.Severity == IssueSeverity.Error))
-            return 1;
-
-        if (issues.Count == 0)
-            output.WriteLine("[duackcli] ok");
-        return 0;
+        return Fail(error, "'validate' is deprecated. audio-config.json is deprecated and moved to the 'legacy/pre-refactor' branch.");
     }
 
     // ---- convert ----
@@ -186,6 +89,9 @@ public static class Cli
                 out var errorMessage))
             return Fail(error, errorMessage);
 
+        if (parsed.Value("--config") is not null)
+            return Fail(error, "--config is deprecated. audio-config.json is deprecated and moved to the 'legacy/pre-refactor' branch. Use --playlists <file> or --all.");
+
         if (parsed.Positional.Count != 2)
             return Fail(error, "convert requires <contentDir> and <outDir>.");
 
@@ -195,14 +101,12 @@ public static class Cli
             return Fail(error, $"content directory not found: {contentDir}");
 
         // The playlist is the authoritative song list: only named songs become OGG and SFX stay WAV.
-        // A playlist source (--playlists, or an embedded `playlists` section in --config) is therefore
-        // required; --all is the explicit opt-in to convert EVERY WAV (SFX included) and is mutually
-        // exclusive with a playlist source.
+        // A playlist source (--playlists) is therefore required; --all is the explicit opt-in to
+        // convert EVERY WAV (SFX included) and is mutually exclusive with a playlist source.
         var all = parsed.Has("--all");
         var playlistOption = parsed.Value("--playlists");
-        var configOption = parsed.Value("--config");
-        if (all && (playlistOption is not null || configOption is not null))
-            return Fail(error, "choose either --all or a playlist source (--playlists/--config), not both.");
+        if (all && playlistOption is not null)
+            return Fail(error, "choose either --all or a playlist source (--playlists), not both.");
 
         SongSet? songs = null;
         if (playlistOption is { } playlistPath)
@@ -211,18 +115,9 @@ public static class Cli
                 return Fail(error, errorMessage);
             songs = SongSet.FromPlaylists(playlists!);
         }
-        else if (configOption is { } configPath)
-        {
-            if (!TryReadConfig(configPath, out var config, out errorMessage))
-                return Fail(error, errorMessage);
-            if (PlaylistFile.FromConfig(config!) is { } embedded)
-                songs = SongSet.FromPlaylists(embedded);
-            else
-                return Fail(error, $"{configPath} has no playlists section; pass --playlists or --all.");
-        }
         else if (!all)
         {
-            return Fail(error, "no playlist source: pass --playlists <file>, --config <file> (with a playlists section), or --all to convert every WAV.");
+            return Fail(error, "no playlist source: pass --playlists <file> or --all to convert every WAV.");
         }
 
         var quality = WavToOggConverter.DefaultQuality;
@@ -349,6 +244,9 @@ public static class Cli
                 out var errorMessage))
             return Fail(error, errorMessage);
 
+        if (parsed.Has("--write-config") || parsed.Value("--config") is not null)
+            return Fail(error, "--config / --write-config is deprecated. audio-config.json is deprecated and moved to the 'legacy/pre-refactor' branch.");
+
         if (parsed.Positional.Count < 1 || parsed.Positional.Count > 2)
             return Fail(error, "normalize requires <dir> and an optional <outDir>.");
 
@@ -383,57 +281,6 @@ public static class Cli
         {
             LoudnessAnalyzer.NormalizeDirectory(inputDir, outDir!);
             output.WriteLine($"[duackcli] wrote normalized WAVs to {outDir}");
-        }
-
-        if (parsed.Has("--write-config"))
-        {
-            var configPath = parsed.Value("--config");
-            if (string.IsNullOrWhiteSpace(configPath))
-                configPath = Path.Combine(inputDir, "audio-config.json");
-
-            AudioConfig? config = null;
-            if (File.Exists(configPath))
-            {
-                if (!TryReadConfig(configPath, out config, out errorMessage))
-                    return Fail(error, errorMessage);
-            }
-            else
-            {
-                config = ConfigScaffolder.Build(wavPaths.Select(Path.GetFileName).Where(n => n is not null).Select(n => n!));
-            }
-
-            config!.Tracks ??= new Dictionary<string, TrackConfig>();
-            foreach (var m in measurements)
-            {
-                if (!config.Tracks.TryGetValue(m.Name, out var track))
-                {
-                    track = new TrackConfig();
-                    config.Tracks[m.Name] = track;
-                }
-                track.Loudnorm.I = double.IsFinite(m.RmsDb) ? Math.Round(m.RmsDb, 2) : track.Loudnorm.I;
-            }
-
-            WriteAllText(configPath!, AudioConfigJson.Serialize(config));
-            output.WriteLine($"[duackcli] updated tracks in {configPath}");
-        }
-        else if (parsed.Value("--config") is { } explicitConfigPath)
-        {
-            if (!TryReadConfig(explicitConfigPath, out var config, out errorMessage))
-                return Fail(error, errorMessage);
-
-            config!.Tracks ??= new Dictionary<string, TrackConfig>();
-            foreach (var m in measurements)
-            {
-                if (!config.Tracks.TryGetValue(m.Name, out var track))
-                {
-                    track = new TrackConfig();
-                    config.Tracks[m.Name] = track;
-                }
-                track.Loudnorm.I = double.IsFinite(m.RmsDb) ? Math.Round(m.RmsDb, 2) : track.Loudnorm.I;
-            }
-
-            WriteAllText(explicitConfigPath, AudioConfigJson.Serialize(config));
-            output.WriteLine($"[duackcli] updated tracks in {explicitConfigPath}");
         }
 
         return 0;

@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
     <Deterministic>true</Deterministic>
-    <Version>0.1.0-preview.3</Version>
+    <Version>0.1.0-preview.4</Version>
     <Authors>Duack contributors</Authors>
     <Product>Duack</Product>
     <PackageProjectUrl>https://github.com/ultimateownsz/Duack</PackageProjectUrl>

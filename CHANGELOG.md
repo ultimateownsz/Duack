@@ -13,6 +13,23 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 
 ### Changed
 
+## [0.1.0-preview.4] - 2026-10-26
+
+### Added
+- **NVorbis `TotalSamples` underestimation pitfall documented.** The adapters skill now documents
+  that `VorbisReader.TotalSamples` can underestimate decoded samples (VBR streams), causing
+  `IndexOutOfRangeException` in decoders that pre-allocate from the reported total. `OggPcmWav.Decode`
+  handles this by adding slack and growing on demand. Any custom decoder must do the same.
+- **Release process documented.** `CONTRIBUTING.md` now has a "Releasing a new version" section
+  with the full checklist (version bump, changelog, tag, push, verify). Added `tools/release.ps1`
+  helper script with dry-run support.
+
+### Changed
+- **Music-related test files renamed for consistency.** `MusicDirectorTests` ��' `MusicManagerTests`,
+  `MusicDirectorPlayResetTests` ��' `MusicManagerPlayResetTests`, `SfxDirectorTests` ��'
+  `SfxManagerTests`, `MusicManagerFadeTests` (was `MusicManagerFadeTests`). Test bodies updated to
+  use `MusicManager` naming. No production behavior changed.
+
 #### 2026-10-26
 
 - **Clip-based music/SFX backends moved to core.** `SoundEffectMusicBackend` and

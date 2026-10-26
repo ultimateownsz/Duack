@@ -12,6 +12,20 @@ variation. Duack owns the mix and produces numbers; the user's engine owns playb
 
 **Status**: preview (0.x). API may change between minor versions.
 
+## UX principles (laws of UX)
+
+Duack's design follows laws from [laws of UX](https://lawsofux.com). These explain *why*
+the API and conventions are shaped the way they are:
+
+- **Jakob's Law** (lawsofux.com/jakobs-law) — the two-directory convention (`SFX/` +
+  `Tracks/`) mirrors Unity/Unreal/Godot layouts so new contributors recognize it instantly.
+- **Doherty Threshold** (lawsofux.com/doherty-threshold) — audio responses (ducking attack,
+  SFX playback) stay under ~100 ms so the player perceives instant feedback.
+- **Peak-End Rule** (lawsofux.com/peak-end-rule) — crossfades and ducking release tails are
+  shaped so transitions feel smooth at their peak and end moments, not jarring.
+- **Hick's Law** (lawsofux.com/hicks-law) — the code-first `AudioConfigBuilder` API avoids
+  overwhelming users with a GUI; one knob (`WithCrossfadeSeconds`) controls all transitions.
+
 ## Hard architectural rules
 
 - `src/Duack` is **pure BCL** (`System.Text.Json` only). Zero engine/XNA/MonoGame/KNI references.

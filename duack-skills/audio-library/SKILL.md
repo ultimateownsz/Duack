@@ -8,6 +8,16 @@ description: Duack's two-directory audio convention — AudioLibrary classificat
 Audio root holds `SFX/` (small one-shots, wav preferred) and `Tracks/` (loops/songs, ogg
 preferred). Dropping a file in is all it takes — no cue registration by hand.
 
+### Why two directories? (UX rationale)
+
+The convention follows **Jakob's Law** (lawsofux.com/jakobs-law): users spend most of their
+time in other tools and engines, and prefer familiar patterns. The `SFX/` + `Tracks/`
+split mirrors how every engine (Unity, Unreal, Godot) organizes audio assets, so a new
+contributor recognizes the layout instantly. The case-sensitive classification
+(`SFX`/`Tracks`, lowercase extensions) follows the web-hosting rule: case-sensitive
+filesystems (itch.io, most static hosts) 404 on mismatch, so the strictness prevents a
+"works on Windows, breaks on deploy" failure mode.
+
 ## Classification
 
 - `AudioLibrary.FromFiles(IEnumerable<string> relativePaths)` — classify relative paths.

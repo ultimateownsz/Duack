@@ -10,6 +10,17 @@ eases toward its target ratio with an exponential time constant (attack when duc
 release when coming back up); active sources combine multiplicatively. Ducks apply to the
 music bus, under the master — the master and SFX bus are unaffected.
 
+### Why duck? (UX rationale)
+
+Ducking exists because of the **Doherty Threshold** (lawsofux.com/doherty-threshold): when
+dialogue or an SFX cue plays, the music must dip within ~100 ms or the player perceives a
+clash (two competing signals). Duack's exponential attack (default 60 ms) keeps the dip
+under that threshold. The **Peak-End Rule** (lawsofux.com/peak-end-rule) also applies: a
+smooth release tail (default 0.35 s hold + exponential release) reads as intentional
+sidechain compression, while an instant cut reads as a bug. Use `ReleaseDucks()` for scene
+switches where you want the incoming track at full volume immediately (hard reset), and
+`IsDuckReady()` to gate visual transitions on duck recovery (natural gate).
+
 ## DuckSourceConfig
 
 ```csharp

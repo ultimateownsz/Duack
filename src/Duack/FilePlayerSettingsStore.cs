@@ -5,11 +5,8 @@ using System.Text.Json;
 namespace Duack;
 
 /// <summary>
-/// Per-user store for the desktop heads. Writes outside the content directory on purpose: the
-/// authored <c>Content/Audio/audio-config.json</c> ships with the game and a build or an ffmpeg
-/// re-export can regenerate it, so player preferences cannot live there. The old config-save path
-/// was also CWD-relative, which meant it only resolved next to the executable when the process
-/// happened to be launched from that directory.
+/// Per-user store for the desktop heads. Writes outside the content directory on purpose: player
+/// preferences live in user application data rather than shipped content.
 /// </summary>
 public class FilePlayerSettingsStore : IPlayerSettingsStore
 {

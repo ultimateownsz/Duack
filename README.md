@@ -8,7 +8,7 @@ Duack ships as a **preview** release: the API may change between versions.
 
 ## Why Duack exists
 
-In MonoGame and similar libraries, crossfading two songs is architecturally impossible (`MediaPlayer` is a static, single-song API; requested since 2017: issues #5472, #6153, #6828), song volume is unreliable after the first track, the built-in queue can't be modified at runtime, and nothing provides ducking. XACT, the old Microsoft tool that handled variation and categories, is dead. Duack is the modern, fully managed successor: no dead GUIs, no native runtimes, no ffmpeg.
+In MonoGame and similar libraries, crossfading two songs is architecturally impossible (`MediaPlayer` is a static, single-song API; requested since 2017: issues #5472, #6153), song volume is unreliable after the first track, the built-in queue can't be modified at runtime, and nothing provides ducking. XACT, the old Microsoft tool that handled variation and categories, is dead. Duack is the modern, fully managed successor: no dead GUIs, no native runtimes, no ffmpeg.
 
 Duack does not try to replace FMOD or Wwise: those platforms ship authoring editors, DSP, and profiling that Duack does not attempt. Duack replaces the ad-hoc audio code indie teams write themselves when middleware is too heavy.
 

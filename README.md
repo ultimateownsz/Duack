@@ -101,7 +101,7 @@ Nothing in Duack requires the CLI. The library is fully usable from code alone. 
 |---------|--------|
 | `convert` | `duackcli convert <contentDir> <outDir> [--all]` |
 | `scan` | `duackcli scan <audioRoot> [--out <file>]` |
-| `normalize` | `duackcli normalize <dir> [--out <dir>] [--config <file>] [--write-config]` |
+| `normalize` | `duackcli normalize <dir> [<outDir>] [--out <dir>]` |
 
 In this preview, run it from the repository: `dotnet run --project tools/DuackCli -- <command>`.
 

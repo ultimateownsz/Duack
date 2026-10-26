@@ -3,10 +3,9 @@
 namespace Duack;
 
 /// <summary>
-/// The player-tunable slice of the audio mix, stored per user outside the authored
-/// <c>Content/Audio/audio-config.json</c>. Authored defaults own everything else (per-context
-/// scales, duck sources, loudness/compress targets); this only carries what the settings overlay
-/// lets a player move.
+/// The player-tunable slice of the audio mix, stored per user in player settings. Authored defaults
+/// own everything else (per-context scales, duck sources, cue variation); this only carries what the
+/// settings overlay lets a player move.
 /// </summary>
 public class PlayerAudioSettings
 {

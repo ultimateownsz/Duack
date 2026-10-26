@@ -41,6 +41,21 @@ public interface IMusicBackend
 
 Completion detection: poll `SoundEffectInstance.State` in per-frame update.
 
+## OGG decode (KNI / NVorbis)
+
+KNI's `SoundEffect.FromStream` parses RIFF WAV only, so OGG must be decoded to PCM WAV
+before playback (Duack does this in `OggPcmWav.Decode` using NVorbis; game code that
+rolls its own loader must do the same).
+
+**Pitfall — `VorbisReader.TotalSamples` underestimates.** NVorbis's reported total can be
+less than the samples actually decoded (VBR streams, odd container layouts). A decoder that
+pre-allocates `44 + TotalSamples * channels * 2` bytes and writes by index will overflow
+(`IndexOutOfRangeException`) on the first attempt and may only succeed on a retry by luck.
+`OggPcmWav.Decode` handles this by (a) adding a `4096 * channels * 2` byte slack to the
+initial allocation and (b) growing the buffer on demand before each write chunk, then
+trimming to the actual payload size so `SoundEffect.FromStream` does not read trailing zeros.
+Any custom decoder must do the same.
+
 ## Duack.KNI (web, sequenced)
 
 - `MediaPlayerMusicBackend(IMediaPlayerHost host)` — `SupportsOverlap = false`. Single-track

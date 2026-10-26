@@ -1,3 +1,4 @@
+using System;
 using Duack;
 using System.Collections.Generic;
 using System.IO;
@@ -7,10 +8,10 @@ namespace DuackCli;
 
 /// <summary>
 /// Builds a starting <see cref="AudioConfig"/> from a content directory's WAV files (the pure part
-/// of <c>duackcli init</c>). The result carries the default music/sfx sections, the sfx/dialogue duck
-/// sources, and a placeholder <c>tracks</c> entry for every discovered WAV so the loudness/compress
-/// values have somewhere to be filled in.
+/// of <c>duackcli init</c>).
+/// <para><b>Deprecated:</b> audio-config.json scaffolding is deprecated.</para>
 /// </summary>
+[Obsolete("audio-config.json is deprecated and moved to the 'legacy/pre-refactor' branch.")]
 public static class ConfigScaffolder
 {
     /// <summary>

@@ -87,23 +87,23 @@ public class MusicManagerFadeTests
     {
         var backend = new FakeMusicBackend(supportsOverlap);
         var playlist = new MusicPlaylistController(OneTrack("solo"), new Random(1));
-        var director = new MusicManager(backend, playlist, new MusicConfig { CrossfadeSeconds = 1f });
+        var manager = new MusicManager(backend, playlist, new MusicConfig { CrossfadeSeconds = 1f });
 
-        director.Play("main");
-        director.Update(0.016f);
+        manager.Play("main");
+        manager.Update(0.016f);
 
-        director.Stop(0.5f);
+        manager.Stop(0.5f);
 
         // Not stopped immediately: the fade runs first.
-        Assert.True(director.IsPlaying);
+        Assert.True(manager.IsPlaying);
         Assert.Equal(0, backend.StopCalls);
 
-        director.Update(0.25f);
+        manager.Update(0.25f);
         Assert.True(backend.ActiveVolumes.Last() < 1f);
         Assert.Equal(0, backend.StopCalls);
 
-        director.Update(0.30f);
-        Assert.False(director.IsPlaying);
+        manager.Update(0.30f);
+        Assert.False(manager.IsPlaying);
         Assert.True(backend.StopCalls > 0);
     }
 
@@ -114,16 +114,16 @@ public class MusicManagerFadeTests
     {
         var backend = new FakeMusicBackend(supportsOverlap);
         var playlist = new MusicPlaylistController(OneTrack("solo"), new Random(1));
-        var director = new MusicManager(backend, playlist, new MusicConfig { CrossfadeSeconds = 1f });
+        var manager = new MusicManager(backend, playlist, new MusicConfig { CrossfadeSeconds = 1f });
 
-        director.Play("main", fadeInSeconds: 0.5f);
-        director.Update(0.016f);
+        manager.Play("main", fadeInSeconds: 0.5f);
+        manager.Update(0.016f);
 
         Assert.Equal("solo", backend.Played.Single().Name);
         Assert.Equal(0f, backend.Played.Single().InitialVolume);
         Assert.True(backend.ActiveVolumes.Last() < 1f);
 
-        director.Update(1f);
+        manager.Update(1f);
         Assert.Equal(1f, backend.ActiveVolumes.Last(), 3);
     }
 
@@ -132,14 +132,14 @@ public class MusicManagerFadeTests
     {
         var backend = new FakeMusicBackend(supportsOverlap: true);
         var playlist = new MusicPlaylistController(OneTrack("solo"), new Random(1));
-        var director = new MusicManager(backend, playlist);
+        var manager = new MusicManager(backend, playlist);
 
-        director.Play("main");
-        director.Update(0.016f);
+        manager.Play("main");
+        manager.Update(0.016f);
 
-        director.Stop();
+        manager.Stop();
 
-        Assert.False(director.IsPlaying);
+        Assert.False(manager.IsPlaying);
         Assert.True(backend.StopCalls > 0);
     }
 
@@ -150,16 +150,16 @@ public class MusicManagerFadeTests
     {
         var backend = new FakeMusicBackend(supportsOverlap);
         var playlist = new MusicPlaylistController(OneTrack("solo"), new Random(1));
-        var director = new MusicManager(backend, playlist, new MusicConfig { CrossfadeSeconds = 1f });
+        var manager = new MusicManager(backend, playlist, new MusicConfig { CrossfadeSeconds = 1f });
 
-        director.Play("main", fadeInSeconds: 0.25f);
-        director.Update(0.016f);
+        manager.Play("main", fadeInSeconds: 0.25f);
+        manager.Update(0.016f);
 
-        director.Update(0.1f);
+        manager.Update(0.1f);
         Assert.True(backend.ActiveVolumes.Last() < 1f);
         Assert.True(backend.ActiveVolumes.Last() > 0f);
 
-        director.Update(0.2f);
+        manager.Update(0.2f);
         Assert.Equal(1f, backend.ActiveVolumes.Last(), 3);
     }
 
@@ -170,16 +170,16 @@ public class MusicManagerFadeTests
     {
         var backend = new FakeMusicBackend(supportsOverlap);
         var playlist = new MusicPlaylistController(OneTrackWithFade("solo", fadeIn: 0.25f), new Random(1));
-        var director = new MusicManager(backend, playlist, new MusicConfig { CrossfadeSeconds = 1f });
+        var manager = new MusicManager(backend, playlist, new MusicConfig { CrossfadeSeconds = 1f });
 
-        director.Play("main");
-        director.Update(0.016f);
+        manager.Play("main");
+        manager.Update(0.016f);
 
-        director.Update(0.1f);
+        manager.Update(0.1f);
         Assert.True(backend.ActiveVolumes.Last() < 1f);
         Assert.True(backend.ActiveVolumes.Last() > 0f);
 
-        director.Update(0.2f);
+        manager.Update(0.2f);
         Assert.Equal(1f, backend.ActiveVolumes.Last(), 3);
     }
 
@@ -190,21 +190,21 @@ public class MusicManagerFadeTests
     {
         var backend = new FakeMusicBackend(supportsOverlap);
         var playlist = new MusicPlaylistController(OneTrackWithFade("solo", fadeOut: 0.25f), new Random(1));
-        var director = new MusicManager(backend, playlist, new MusicConfig { CrossfadeSeconds = 1f });
+        var manager = new MusicManager(backend, playlist, new MusicConfig { CrossfadeSeconds = 1f });
 
-        director.Play("main");
-        director.Update(0.016f);
+        manager.Play("main");
+        manager.Update(0.016f);
 
-        director.Stop();
-        Assert.True(director.IsPlaying);
+        manager.Stop();
+        Assert.True(manager.IsPlaying);
         Assert.Equal(0, backend.StopCalls);
 
-        director.Update(0.1f);
+        manager.Update(0.1f);
         Assert.True(backend.ActiveVolumes.Last() < 1f);
         Assert.Equal(0, backend.StopCalls);
 
-        director.Update(0.2f);
-        Assert.False(director.IsPlaying);
+        manager.Update(0.2f);
+        Assert.False(manager.IsPlaying);
         Assert.True(backend.StopCalls > 0);
     }
 
@@ -213,15 +213,15 @@ public class MusicManagerFadeTests
     {
         var backend = new FakeMusicBackend(supportsOverlap: true);
         var playlist = new MusicPlaylistController(TwoTracks("a", "b"), new Random(1));
-        var director = new MusicManager(backend, playlist, new MusicConfig { CrossfadeSeconds = 1f });
+        var manager = new MusicManager(backend, playlist, new MusicConfig { CrossfadeSeconds = 1f });
 
-        director.Play("main");
-        director.Update(0.016f);
-        director.Next();
-        director.Update(0.016f);
+        manager.Play("main");
+        manager.Update(0.016f);
+        manager.Next();
+        manager.Update(0.016f);
 
         // The prior (outgoing) track is already silent while the incoming track is still fading in.
-        director.Update(0.25f);
+        manager.Update(0.25f);
         Assert.True(backend.OutgoingVolumes.Count > 0);
         Assert.Equal(0f, backend.OutgoingVolumes.Last(), 3);
         Assert.True(backend.ActiveVolumes.Last() < 1f);
@@ -233,12 +233,12 @@ public class MusicManagerFadeTests
     {
         var backend = new FakeMusicBackend(supportsOverlap: false);
         var playlist = new MusicPlaylistController(TwoTracks("a", "b"), new Random(1));
-        var director = new MusicManager(backend, playlist, new MusicConfig { CrossfadeSeconds = 1f });
+        var manager = new MusicManager(backend, playlist, new MusicConfig { CrossfadeSeconds = 1f });
 
-        director.Play("main");
-        director.Update(0.016f);
-        director.Next();
-        director.Update(0.25f);
+        manager.Play("main");
+        manager.Update(0.016f);
+        manager.Next();
+        manager.Update(0.25f);
 
         Assert.Equal(2, backend.Played.Count);
         Assert.Equal("b", backend.Played[^1].Name);

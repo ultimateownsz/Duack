@@ -55,13 +55,13 @@ public class MusicManagerPlayResetTests
     {
         var backend = new FakeBackend { SupportsOverlap = true };
         var playlist = new MusicPlaylistController(TwoPlaylists());
-        var director = new MusicManager(backend, playlist, DemoMusic());
+        var manager = new MusicManager(backend, playlist, DemoMusic());
 
         // Start overworld, then switch to battle (crossfade starts).
-        director.Play("overworld");
-        director.Update(0.016f);
+        manager.Play("overworld");
+        manager.Update(0.016f);
         var playedBefore = backend.Played.Count;
-        director.Play("battle");
+        manager.Play("battle");
         // Play() now immediately triggers the transition (Update(0f) internally).
         Assert.True(backend.Played.Count > playedBefore,
             "Play should trigger a fresh transition immediately, not defer to the next Update");
@@ -69,7 +69,7 @@ public class MusicManagerPlayResetTests
 
         // A subsequent Update advances the crossfade without re-triggering PlayTrack.
         var playedAfterPlay = backend.Played.Count;
-        director.Update(0.016f);
+        manager.Update(0.016f);
         // The crossfade advances but doesn't create a new instance (already created).
         Assert.True(backend.Played.Count >= playedAfterPlay);
     }

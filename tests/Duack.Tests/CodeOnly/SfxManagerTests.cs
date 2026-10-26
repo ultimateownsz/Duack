@@ -5,7 +5,7 @@ namespace Duack.Tests.CodeOnly;
 /// <summary>
 /// Pins the <see cref="SfxManager"/>: cue-name one-shot playback against a discovered
 /// <see cref="AudioLibrary"/> with automatic music ducking — a successful play pulses the music
-/// director's duck source, unknown cues and backend refusals never duck, and <see cref="SfxManager.PlayNext"/>
+/// manager's duck source, unknown cues and backend refusals never duck, and <see cref="SfxManager.PlayNext"/>
 /// draws from a shuffle bag so a cue never repeats back-to-back.
 /// </summary>
 public class SfxManagerTests
@@ -26,7 +26,7 @@ public class SfxManagerTests
         public void Stop() { }
     }
 
-    /// <summary>Minimal music backend: the duck test only needs the director's mix math.</summary>
+    /// <summary>Minimal music backend: the duck test only needs the manager's mix math.</summary>
     private sealed class FakeMusicBackend : IMusicBackend
     {
         public bool SupportsOverlap => true;
@@ -53,7 +53,7 @@ public class SfxManagerTests
         "SFX/notice-video-game-sfx.wav",
     });
 
-    /// <summary>A director whose named duck source is configured for an instant 0.3x dip.</summary>
+    /// <summary>A manager whose named duck source is configured for an instant 0.3x dip.</summary>
     private static MusicManager CreateMusicManager(string duckSource = "sfx")
     {
         var music = new MusicConfig { CrossfadeSeconds = 0f };
@@ -68,14 +68,14 @@ public class SfxManagerTests
         var playlists = new PlaylistConfigBuilder()
             .WithPlaylist("solo", p => p.Track("track", ""))
             .Build();
-        var director = new MusicManager(
+        var manager = new MusicManager(
             new FakeMusicBackend(),
             new MusicPlaylistController(playlists, new Random(1)),
             music);
 
-        director.Play("solo");
-        director.Update(0.016f);
-        return director;
+        manager.Play("solo");
+        manager.Update(0.016f);
+        return manager;
     }
 
     [Fact]
@@ -285,7 +285,7 @@ public class SfxManagerTests
     public void Buses_can_be_changed_at_runtime()
     {
         // Settings sliders move the buses live: the next play composes with the new values,
-        // no director rebuild required.
+        // no manager rebuild required.
         var backend = new FakeSfxBackend();
         var music = CreateMusicManager();
         var sfx = new SfxManager(Library, backend, music);

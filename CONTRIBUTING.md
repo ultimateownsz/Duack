@@ -29,6 +29,40 @@ Any refactor of existing behavior and any creation of new behavior is written te
 
 A change that ships with no test needs a written reason in the changelog entry.
 
+## Releasing a new version
+
+The Duack release is **tag-driven**: pushing a `v*` tag triggers the GitHub Actions
+workflow (`.github/workflows/release.yml`), which builds, tests, packs, and publishes
+to NuGet. The critical rule: **the `<Version>` in `Directory.Build.props` must match the
+git tag**, or the publish silently no-ops (a guard step now fails the release if they
+disagree).
+
+### Checklist
+
+1. Make your code changes (TDD: red -> green -> refactor).
+2. Update `CHANGELOG.md` under `## [Unreleased]` (Keep a Changelog format). Detailed
+   notes go in `.opencode/audit-log.md`.
+3. Bump `<Version>` in `Directory.Build.props` to the new version (e.g. `0.1.0-preview.4`).
+4. Run the full suite: `dotnet test Duack.slnx`
+5. Commit, tag, and push:
+   ```powershell
+   git add -A
+   git commit -m "feat: description"
+   git tag v0.1.0-preview.4
+   git push origin master
+   git push origin v0.1.0-preview.4
+   ```
+6. Monitor the workflow: `gh run list --limit 3`
+7. Verify on NuGet: https://www.nuget.org/packages/Duack
+
+Or use the helper script: `.\tools\release.ps1 -Version 0.1.0-preview.4`
+(Dry run: `.\tools\release.ps1 -Version 0.1.0-preview.4 -DryRun`)
+
+### Versioning
+- Preview releases use `0.x.0-preview.N` (e.g. `0.1.0-preview.4`).
+- The version in `Directory.Build.props` is the single source of truth for `dotnet pack`.
+- The git tag must be `v{version}` (e.g. `v0.1.0-preview.4`).
+
 ## Build and test
 
 ```

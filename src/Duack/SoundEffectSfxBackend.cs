@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 
-namespace Duack.MonoGame;
+namespace Duack;
 
 /// <summary>
-/// MonoGame <see cref="ISfxBackend"/>: resolves a cue name through an <see cref="IAudioClipLibrary"/>
+/// Clip-based <see cref="ISfxBackend"/>: resolves a cue name through an <see cref="IAudioClipLibrary"/>
 /// and plays it as a fresh non-looping instance with the requested pitch/volume (clamped to the
 /// engine's ranges). Instances that have finished are reaped on the next play, and
 /// <see cref="Dispose"/> stops everything still sounding - a long session must not leak instances.

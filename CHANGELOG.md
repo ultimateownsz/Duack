@@ -13,6 +13,16 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 
 ### Changed
 
+#### 2026-10-26
+
+- **Clip-based music/SFX backends moved to core.** `SoundEffectMusicBackend` and
+  `SoundEffectSfxBackend` (along with the `IAudioInstance` / `IAudioClip` / `IAudioClipLibrary`
+  seams) moved from `Duack.MonoGame` into `Duack` core. Both are pure BCL now and work against
+  any `IAudioClipLibrary` implementation — desktop (SoundEffect) or web (WebAudio) — so a KNI
+  desktop build can use the overlap crossfade path instead of `MediaPlayerMusicBackend`. The
+  `SoundEffectClipLibrary` / `SoundEffectAudioClip` bindings stay in `Duack.MonoGame`. Adapters
+  reference the moved types via the nested `Duack` namespace, so existing code keeps compiling.
+
 #### 2026-10-25
 
 - **JSON wire-format tests now live with the core suite.** `AudioConfigTests`,

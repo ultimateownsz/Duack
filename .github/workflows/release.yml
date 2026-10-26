@@ -44,6 +44,20 @@ jobs:
           dotnet pack src/Duack.MonoGame/Duack.MonoGame.csproj -c Release -o artifacts
           dotnet pack src/Duack.KNI/Duack.KNI.csproj -c Release -o artifacts
 
+      - name: Verify packed version matches the tag
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          for pkg in Duack Duack.MonoGame Duack.KNI; do
+            if [ ! -f "artifacts/$pkg.$TAG.nupkg" ]; then
+              echo "ERROR: expected artifacts/$pkg.$TAG.nupkg but it was not produced."
+              echo "The <Version> in Directory.Build.props must match the git tag."
+              ls -la artifacts/
+              exit 1
+            fi
+          done
+          echo "All three packages match tag $TAG."
+
       - name: NuGet login (OIDC to temporary API key)
         if: startsWith(github.ref, 'refs/tags/')
         uses: NuGet/login@v1

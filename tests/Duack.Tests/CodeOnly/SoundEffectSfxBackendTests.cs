@@ -1,7 +1,6 @@
 using Duack;
-using Duack.MonoGame;
 
-namespace Duack.Adapters.Tests;
+namespace Duack.Tests.CodeOnly;
 
 /// <summary>
 /// Pins the MonoGame one-shot backend behind the core <see cref="ISfxBackend"/> seam: it starts a

@@ -1,6 +1,6 @@
 ---
 name: adapters
-description: Duack adapters — Duack.MonoGame (SoundEffectMusicBackend, SoundEffectSfxBackend, SoundEffectClipLibrary) and Duack.KNI (MediaPlayerMusicBackend, WebAudioSfxBackend, localStorage store). Use when wiring Duack to MonoGame/KNI, implementing IMusicBackend/ISfxBackend, or handling web autoplay and completion races.
+description: Duack adapters — Duack (core: SoundEffectMusicBackend, SoundEffectSfxBackend, IAudioClip seams), Duack.MonoGame (SoundEffectClipLibrary, SoundEffectAudioClip), and Duack.KNI (MediaPlayerMusicBackend, WebAudioSfxBackend, localStorage store). Use when wiring Duack to MonoGame/KNI, implementing IMusicBackend/ISfxBackend, or handling web autoplay and completion races.
 ---
 
 # Duack — Adapters
@@ -26,16 +26,17 @@ public interface IMusicBackend
 
 ## Duack.MonoGame (desktop, overlap)
 
-- `SoundEffectMusicBackend(IAudioClipLibrary clips)` — `SupportsOverlap = true`. Two tracks
+- `SoundEffectMusicBackend(IAudioClipLibrary clips)` (now in `Duack` core) — `SupportsOverlap = true`. Two tracks
   overlap during crossfade (outgoing + incoming equal-power). Plays tracks non-looped;
   looping is a playlist concern.
-- `SoundEffectSfxBackend(IAudioClipLibrary)` — `ISfxBackend` over clip library: non-looping
+- `SoundEffectSfxBackend(IAudioClipLibrary)` (now in `Duack` core) — `ISfxBackend` over clip library: non-looping
   instance per cue, pitch/volume clamped to engine ranges, finished instances reaped on next
   play, `Dispose` stops everything.
 - `SoundEffectClipLibrary` — clip resolver with `AudioLibrary` candidate paths; optional
   `AudioLibrary` so probes follow `CandidatePaths`; exact legacy flat order when omitted.
   `CandidateUris` helper pins both.
-- `SoundEffectAudioClip` / `SoundEffectAudioInstance` / `IAudioClip` seams (headless testable).
+- `SoundEffectAudioClip` / `SoundEffectAudioInstance` (Duack.MonoGame) and the `IAudioClip` /
+  `IAudioInstance` / `IAudioClipLibrary` seams (now in `Duack` core) — headless testable.
 - Settings store: `FilePlayerSettingsStore` (default).
 
 Completion detection: poll `SoundEffectInstance.State` in per-frame update.

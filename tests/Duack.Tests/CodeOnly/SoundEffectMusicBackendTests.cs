@@ -1,7 +1,7 @@
 using System;
-using Duack.MonoGame;
+using Duack;
 
-namespace Duack.Adapters.Tests;
+namespace Duack.Tests.CodeOnly;
 
 public class SoundEffectMusicBackendTests
 {

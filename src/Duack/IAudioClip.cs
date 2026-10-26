@@ -1,11 +1,11 @@
 using System;
 
-namespace Duack.MonoGame;
+namespace Duack;
 
 /// <summary>
 /// One playing instance of an <see cref="IAudioClip"/>. This is the seam that lets
 /// <see cref="SoundEffectMusicBackend"/> be tested headlessly: the real implementation wraps a
-/// MonoGame <c>SoundEffectInstance</c> (which needs an audio device), while tests supply a fake.
+/// platform <c>SoundEffectInstance</c> (which needs an audio device), while tests supply a fake.
 /// </summary>
 public interface IAudioInstance : IDisposable
 {
@@ -29,7 +29,7 @@ public interface IAudioInstance : IDisposable
 }
 
 /// <summary>
-/// A decoded, ready-to-play audio clip (a MonoGame <c>SoundEffect</c> in production). Created once
+/// A decoded, ready-to-play audio clip (a platform <c>SoundEffect</c> in production). Created once
 /// per track and cached by the library; each play calls <see cref="CreateInstance"/>.
 /// </summary>
 public interface IAudioClip : IDisposable

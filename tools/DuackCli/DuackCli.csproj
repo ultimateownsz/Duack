@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <!-- Offline authoring CLI: `duackcli init`, `duackcli validate`, `duackcli convert`. This is the ONLY
+    <!-- Offline authoring CLI: `duackcli convert`, `duackcli scan`, `duackcli normalize`. This is the ONLY
          Duack project allowed to reference NAudio / OggVorbisEncoder (audio file codecs live here,
          never in src/). Desktop .NET only; never referenced by src/ or samples/. -->
     <OutputType>Exe</OutputType>
@@ -10,7 +10,7 @@
     <PackageId>DuackCli</PackageId>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>duackcli</ToolCommandName>
-    <Description>Offline Duack tooling: scaffold and validate audio-config.json, and convert WAV masters to OGG for web builds.</Description>
+    <Description>Offline Duack tooling: convert WAV masters to OGG for web builds, scan audio manifests, and normalize track loudness.</Description>
     <IsPackable>true</IsPackable>
     <!-- Invoked from build targets; keep startup cheap and never emit build noise (logo off). -->
     <InvariantGlobalization>true</InvariantGlobalization>

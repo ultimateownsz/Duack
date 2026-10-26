@@ -43,109 +43,32 @@ public class CliTests : IDisposable
         Assert.Contains("frobnicate", err);
     }
 
-    // ---- init ----
+    // ---- init (deprecated) ----
 
     [Fact]
-    public void Init_writes_a_config_next_to_the_content()
+    public void Init_is_deprecated_and_fails()
     {
-        File.WriteAllBytes(Path2("theme_a.wav"), Array.Empty<byte>());
-        File.WriteAllBytes(Path2("hit.wav"), Array.Empty<byte>());
-
-        var (code, stdout, err) = Run("init", _dir);
-
-        Assert.Equal(0, code);
-        Assert.Equal("", err);
-        Assert.StartsWith("[duackcli]", stdout);
-        var configPath = Path2("audio-config.json");
-        Assert.True(File.Exists(configPath));
-        var json = File.ReadAllText(configPath);
-        Assert.Contains("theme_a", json);
-        Assert.Contains("hit", json);
-        Assert.Contains("dialogue", json);
-    }
-
-    [Fact]
-    public void Init_refuses_to_overwrite_without_force()
-    {
-        var configPath = Path2("audio-config.json");
-        File.WriteAllText(configPath, "sentinel");
-
         var (code, _, err) = Run("init", _dir);
 
-        Assert.NotEqual(0, code);
-        Assert.Contains("force", err, StringComparison.OrdinalIgnoreCase);
-        Assert.Equal("sentinel", File.ReadAllText(configPath));
+        Assert.Equal(1, code);
+        Assert.Contains("deprecated", err, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("legacy/pre-refactor", err);
+        Assert.False(File.Exists(Path2("audio-config.json")));
     }
 
-    [Fact]
-    public void Init_force_overwrites()
-    {
-        var configPath = Path2("audio-config.json");
-        File.WriteAllText(configPath, "sentinel");
-
-        var (code, _, _) = Run("init", _dir, "--force");
-
-        Assert.Equal(0, code);
-        Assert.NotEqual("sentinel", File.ReadAllText(configPath));
-    }
+    // ---- validate (deprecated) ----
 
     [Fact]
-    public void Init_respects_explicit_out()
-    {
-        var outPath = Path2("nested", "custom.json");
-        var (code, _, _) = Run("init", _dir, "--out", outPath);
-        Assert.Equal(0, code);
-        Assert.True(File.Exists(outPath));
-    }
-
-    // ---- validate ----
-
-    [Fact]
-    public void Validate_a_clean_config_succeeds()
+    public void Validate_is_deprecated_and_fails()
     {
         var configPath = Path2("audio-config.json");
         File.WriteAllText(configPath, CleanJson());
 
         var (code, _, err) = Run("validate", configPath);
 
-        Assert.Equal(0, code);
-        Assert.Equal("", err);
-    }
-
-    [Fact]
-    public void Validate_reports_errors_and_fails()
-    {
-        var configPath = Path2("audio-config.json");
-        File.WriteAllText(configPath, CleanJson().Replace("\"master_volume\": 1.0", "\"master_volume\": 1.5"));
-
-        var (code, _, err) = Run("validate", configPath);
-
-        Assert.NotEqual(0, code);
-        Assert.Contains("master_volume", err);
-    }
-
-    [Fact]
-    public void Validate_a_missing_file_fails()
-    {
-        var (code, _, err) = Run("validate", Path2("nope.json"));
-        Assert.NotEqual(0, code);
-        Assert.NotEqual("", err);
-    }
-
-    [Fact]
-    public void Validate_warns_but_succeeds_on_an_unknown_playlist_context()
-    {
-        var configPath = Path2("audio-config.json");
-        File.WriteAllText(configPath, CleanJson());
-        var playlistPath = Path2("playlists.json");
-        File.WriteAllText(playlistPath, """
-            { "playlists": { "overworld": { "tracks": [ { "name": "theme_a", "context": "Nowhere" } ] } } }
-            """);
-
-        var (code, _, err) = Run("validate", configPath, "--playlists", playlistPath);
-
-        Assert.Equal(0, code);
-        Assert.Contains("Nowhere", err);
+        Assert.Equal(1, code);
+        Assert.Contains("deprecated", err, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("legacy/pre-refactor", err);
     }
 
     // ---- convert ----
@@ -190,7 +113,7 @@ public class CliTests : IDisposable
     }
 
     [Fact]
-    public void Convert_with_a_config_lacking_playlists_fails()
+    public void Convert_with_config_fails_as_deprecated()
     {
         TestWav.WriteSine(Path2("theme_a.wav"));
         var configPath = Path2("audio-config.json");
@@ -198,8 +121,9 @@ public class CliTests : IDisposable
 
         var (code, _, err) = Run("convert", _dir, Path2("out"), "--config", configPath);
 
-        Assert.NotEqual(0, code);
-        Assert.Contains("--all", err);
+        Assert.Equal(1, code);
+        Assert.Contains("deprecated", err, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("legacy/pre-refactor", err);
     }
 
     [Fact]
@@ -261,47 +185,6 @@ public class CliTests : IDisposable
         Assert.Contains("copied=0", outText);
     }
 
-    [Fact]
-    public void Convert_reads_playlists_from_a_config()
-    {
-        TestWav.WriteSine(Path2("theme_a.wav"));
-        TestWav.WriteSine(Path2("hit.wav"));
-        var configPath = Path2("audio-config.json");
-        File.WriteAllText(configPath, """
-            {
-              "master_volume": 1.0,
-              "playlists": { "overworld": { "tracks": [ { "name": "theme_a", "context": "Overworld" } ] } }
-            }
-            """);
-
-        var (code, _, _) = Run("convert", _dir, Path2("out"), "--config", configPath);
-
-        Assert.Equal(0, code);
-        Assert.True(File.Exists(Path2("out", "theme_a.ogg")));
-        Assert.False(File.Exists(Path2("out", "hit.ogg")));
-    }
-
-    [Fact]
-    public void Convert_uses_code_built_playlists_serialized_to_a_config()
-    {
-        TestWav.WriteSine(Path2("theme_a.wav"));
-        TestWav.WriteSine(Path2("hit.wav"));
-
-        // Author the playlist in code, serialize it into an audio config, then let the CLI read it
-        // back: the build-in-code / convert-from-JSON loop the game pipeline relies on.
-        var playlists = new PlaylistConfigBuilder()
-            .WithPlaylist("overworld", p => p.Track("theme_a", "Overworld"))
-            .Build();
-        var config = new AudioConfigBuilder().WithPlaylists(playlists).Build();
-        var configPath = Path2("audio-config.json");
-        File.WriteAllText(configPath, AudioConfigJson.Serialize(config));
-
-        var (code, _, _) = Run("convert", _dir, Path2("out"), "--config", configPath);
-
-        Assert.Equal(0, code);
-        Assert.True(File.Exists(Path2("out", "theme_a.ogg")));
-        Assert.False(File.Exists(Path2("out", "hit.ogg")));
-    }
 
     // ---- scan ----
 

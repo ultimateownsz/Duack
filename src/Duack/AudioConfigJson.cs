@@ -10,17 +10,12 @@ namespace Duack;
 /// The JSON door for <see cref="AudioConfig"/>: parse, serialize, load and save the
 /// <c>audio-config.json</c> wire format.
 /// <para>
-/// This preview is code-first: this is the SECONDARY surface. The mix is authored in code
-/// (<see cref="AudioConfigBuilder"/>) and the JSON file is an optional overlay on top of it, not
-/// the source of truth. The tooling (<c>duackcli init</c> / <c>duackcli validate</c> /
-/// <c>duackcli convert</c>) speaks this format, and so does a game that wants to tune a mix from a
-/// file - but nothing in the core requires a file to exist.
-/// </para>
-/// <para>
-/// The format is snake_case, case-insensitive on read, and preserves unknown sections across a
-/// load/save cycle (see <see cref="AudioConfig.ExtensionData"/>).
+/// <b>Deprecated:</b> <c>audio-config.json</c> is deprecated in favor of code-first configuration
+/// (<see cref="AudioConfigBuilder"/>) and the two-directory audio convention. The legacy config-driven
+/// workflow is preserved on the <c>legacy/pre-refactor</c> branch.
 /// </para>
 /// </summary>
+[Obsolete("audio-config.json is deprecated and moved to the 'legacy/pre-refactor' branch. Use code-first AudioConfigBuilder and two-directory convention instead.")]
 public static class AudioConfigJson
 {
     /// <summary>

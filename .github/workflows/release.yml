@@ -45,17 +45,20 @@ jobs:
           dotnet pack src/Duack.KNI/Duack.KNI.csproj -c Release -o artifacts
 
       - name: NuGet login (OIDC to temporary API key)
+        if: startsWith(github.ref, 'refs/tags/')
         uses: NuGet/login@v1
         id: nuget
         with:
           user: ultimateownsz
 
       - name: Push to NuGet
+        if: startsWith(github.ref, 'refs/tags/')
         run: |
           dotnet nuget push "artifacts/*.nupkg" --source https://api.nuget.org/v3/index.json --api-key ${{ steps.nuget.outputs.NUGET_API_KEY }} --skip-duplicate
           dotnet nuget push "artifacts/*.snupkg" --source https://api.nuget.org/v3/index.json --api-key ${{ steps.nuget.outputs.NUGET_API_KEY }} --skip-duplicate
 
       - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           files: artifacts/*

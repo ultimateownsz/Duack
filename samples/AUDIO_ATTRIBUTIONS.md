@@ -1,7 +1,6 @@
 # Audio attribution
 
-The samples ship **real audio, reused from the open-source game project Duack was extracted
-from** ([upstream repository](https://github.com/vchelaru/MonsterProjectWeb)) — music from
+The samples ship **real audio, music from
 Freesound (e.g. overworld loop by [sirkoto51](https://freesound.org/people/sirkoto51/),
 hospital by [moulaythami](https://freesound.org/people/moulaythami/)) and game SFX. The
 per-file source table (original download names, artists, licenses) lives in the upstream

@@ -34,7 +34,7 @@ If you have ever written `MediaPlayer.Play` and then patched around it, this tab
 | Two songs crossfading | Not possible — `MediaPlayer` plays one song at a time | Crossfade on every track change: overlapped on desktop, sequenced fade → swap → fade on web, plus standalone fade-in/fade-out |
 | A queue you can steer at runtime | The built-in queue is fixed once set; no track-completed contract | `MusicPlaylistController` with `Play`, `Next`, `Stop`, repeat modes, and bag-style shuffle — tracks don't repeat until the bag empties |
 | One place for volume math | Per-song volume is unreliable after the first track | Master → music/SFX buses, per-context scales, and player settings composed in one deterministic chain |
-| Music that ducks under dialogue | Not provided; every game hand-rolls it | Declare duck sources (ratio, attack, hold, release) and fire them by cue; live gain metering and `ReloadDuckSources()` for hot updates |
+| Music that ducks under sound effects | Not provided; every game hand-rolls it | Declare duck sources (ratio, attack, hold, release) and fire them by cue; live gain metering and `ReloadDuckSources()` for hot updates |
 | XACT-style cue variation | XACT did not survive to modern XNA | Marble-bag variant selection plus per-play pitch/volume jitter for music and SFX |
 | Player settings that persist | Your own file/localStorage code | File, localStorage, and in-memory stores, sanitized and layered over the authored mix |
 | The same mix on desktop and web | Desktop and WASM audio paths diverge | One core over `IMusicBackend`/`ISfxBackend`; the MonoGame and KNI adapters share config, playlists, and ducking |

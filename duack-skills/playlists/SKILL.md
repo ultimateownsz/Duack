@@ -42,7 +42,7 @@ var playlists = new PlaylistConfigBuilder()
         .Repeat(PlaylistRepeatMode.Off)
         .Shuffle(PlaylistShuffleMode.Off))
     .WithPlaylist("overworld", p => p
-        .Track("overworld", "Overworld", fadeInSeconds: 1.0f, fadeOutSeconds: 0.5f)
+        .Track("overworld", "Overworld", fadeInSeconds: 0.4f, fadeOutSeconds: 0.25f)
         .Repeat(PlaylistRepeatMode.Track))
     .Build();
 ```
@@ -54,10 +54,10 @@ var controller = new MusicPlaylistController(playlists, random /*optional*/);
 var manager = new MusicManager(backend, controller, config.Music);
 
 manager.Play("battle-sequence");                // starts from top, triggers crossfade
-manager.Play("battle-sequence", fadeInSeconds: 1.0f); // optional fade in
+manager.Play("battle-sequence", fadeInSeconds: 1.0f); // optional fade in (overrides track fade)
 manager.Next();                                // skip track (breaks track-repeat)
 manager.Stop();                                // stop, no TrackCompleted event
-manager.Stop(fadeOutSeconds: 0.5f);            // stop with fade out
+manager.Stop(fadeOutSeconds: 0.5f);            // stop with fade out (uses track fade if null)
 ```
 
 Properties: `IsPlaying`, `CurrentPlaylistName`, `CurrentTrack`.

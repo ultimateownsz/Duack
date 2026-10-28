@@ -29,19 +29,13 @@ ad-hoc audio code indie teams write themselves when middleware is too heavy.
 
 Each sample is a complete runnable game built on the engine — open the source to see real usage patterns.
 
-| Sample | Description | Play |
-|--------|-------------|------|
-| [Duack.Sample.Desktop](samples/Duack.Sample.Desktop) | MonoGame DesktopGL scripted storyline (walk → notice → dialog → battle → loop): live crossfade, duck meter, `SfxManager` auto-duck, marble-bag hit cues. | — |
-| [Duack.Sample.Web](samples/Duack.Sample.Web) | Blazor WASM / KNI version of the same storyline: manifest-driven discovery, WebAudio one-shots, single-instance fade-out/switch/fade-in crossfade. | [Live demo](https://ultimateownsz.github.io/Duack/) · [Crossfade demo](https://ultimateownsz.github.io/Duack/crossfade-demo.html) |
-| [Duack.Sample.Crossfade](samples/Duack.Sample.Crossfade) | Minimal crossfade showcase: keys 1/2/3 switch tracks (crossfade), Space advances, C toggles crossfade on/off (hard cut vs equal-power ramp). | — |
+| Sample | Description | Play                                                                          |
+|--------|-------------|-------------------------------------------------------------------------------|
+| [Duack.Sample.Desktop](samples/Duack.Sample.Desktop) | MonoGame DesktopGL scripted storyline (walk → notice → dialog → battle → loop): live crossfade, duck meter, `SfxManager` auto-duck, marble-bag hit cues. | —                                                                             |
+| [Duack.Sample.Web](samples/Duack.Sample.Web) | **Story demo** (Blazor WASM / KNI): scripted storyline with SFX, ducking, and crossfades. Manifest-driven discovery, WebAudio one-shots. | [▶ Play in browser](https://ultimateownsz.github.io/Duack/)                   |
+| [Duack.Sample.Crossfade](samples/Duack.Sample.Crossfade) | **Crossfade demo** (Blazor WASM / KNI): minimal showcase to A/B crossfade durations (4s/8s/12s/16s), toggle crossfade on/off, and hear hard cut vs equal-power ramp. | [▶ Play crossfade demo](https://ultimateownsz.github.io/Duack/crossfade-demo.html) |
 
-> The web demo needs a click ("Start story") before sound plays — browsers suspend audio until a real user gesture.
->
-> **Feel the difference yourself:** click the bottom-right button (or press `C`) in the live
-> web demo to flip crossfade on/off — green = equal-power ramp, red = instant hard cut, and
-> the next scene switch uses the new setting. Or try the standalone
-> [crossfade demo page](samples/Duack.Sample.Web/wwwroot/crossfade-demo.html) (slider + play
-> buttons). Or set `CrossfadeSeconds = 0` in `SampleAudio.BuildConfig` and re-run.
+> The web demos need a click before sound plays — browsers suspend audio until a real user gesture ("Start").
 
 ## Duack vs the built-in audio path
 
@@ -73,10 +67,6 @@ var config = new AudioConfigBuilder()
     .Build();
 ```
 
-> **Browser autoplay:** browsers suspend audio until a real user gesture. The web sample's
-> "Start story" button is that gesture — playback begins on the first click. This is
-> documented up front rather than worked around silently. Desktop builds play immediately.
-
 Wire it to your engine and play (desktop, MonoGame):
 
 ```csharp
@@ -105,7 +95,7 @@ sfx.Play("notice", duck: true);   // the music dips and recovers automatically
 music.Update(dt);
 ```
 
-The full loop — contexts, crossfades, duck metering, a scripted story — runs in `samples/Duack.Sample.Desktop`, and the same mix runs on the web in `samples/Duack.Sample.Web`. Both build and run from a clean clone.
+The full loop — contexts, crossfades, duck metering, a scripted story — runs in `samples/Duack.Sample.Desktop` (**Story demo**). The same mix runs on the web in `samples/Duack.Sample.Web` (**Story demo**) with a separate **[Crossfade demo](https://ultimateownsz.github.io/Duack/crossfade-demo.html)** (`samples/Duack.Sample.Crossfade`) to isolate crossfade behavior. All build and run from a clean clone.
 
 This preview is **code-first**: the mix lives in C#, in your code, where it can be diffed, refactored, and version-controlled.
 

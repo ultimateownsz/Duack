@@ -11,7 +11,35 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 
 ### Added
 
+#### 2026-10-28
+
+- **GitHub Pages workflow for the web sample.** New `.github/workflows/pages.yml` builds and
+  publishes `samples/Duack.Sample.Web` (WASM workload) to GitHub Pages on push to `master` or
+  manual dispatch, so the crossfade + ducking demo is viewable in a browser without a local
+  build. Autoplay requires a click ("Start story") — documented up front.
+
 ### Changed
+
+#### 2026-10-28
+
+- **README clarifies the CLI is desktop-only build-time tooling**, not a runtime dependency:
+  it runs on the dev machine and never ships to the browser; the web head reads the checked-in
+  `audio-manifest.json`. README also notes that files the loader cannot open are reported (scan
+  warnings + runtime `[Audio] Could not load ...` lines) rather than failing silently, adds a
+  compact five-line config sample, an autoplay/user-gesture note, a "who adopts first"
+  (MonoGame, then FlatRedBall2) answer, and an old-way-vs-new-way crossfade table.
+- **Web sample README brought up to date**: it now documents `WebAudioSfxBackend` for
+  overlapping one-shot cues instead of the obsolete "no sfx backend" note.
+
+### Fixed
+
+#### 2026-10-28
+
+- **Renamed `AudioLibrary.SfxManageryName` to `AudioLibrary.SfxDirectoryName`.** The
+  director→manager rename pass had accidentally rewritten the `SfxDirectoryName` constant
+  (no "Director" substring intended) into `SfxManageryName`. Value (`"SFX"`) and behavior
+  unchanged; the public constant now has the intended name. Any consumer referencing the
+  misspelled name must update to `SfxDirectoryName`.
 
 ## [0.1.0-preview.4] - 2026-10-26
 

@@ -233,6 +233,33 @@ public class MusicManagerTests
     }
 
     [Fact]
+    public void Non_overlap_transition_exposes_tracks_and_total_duration()
+    {
+        var backend = new FakeMusicBackend(supportsOverlap: false);
+        var playlist = new MusicPlaylistController(TwoTracks("a", "b"), new Random(1));
+        var manager = new MusicManager(backend, playlist, new MusicConfig { CrossfadeSeconds = 8f });
+
+        manager.Play("main");
+        manager.Update(0.016f);
+        var source = manager.CurrentTrack?.Name;
+        manager.Next();
+        var target = manager.CurrentTrack?.Name;
+        manager.Update(0f);
+
+        Assert.True(manager.IsTransitioning);
+        Assert.NotNull(manager.TransitionFromTrack);
+        Assert.NotNull(manager.TransitionToTrack);
+        Assert.NotEqual(manager.TransitionFromTrack, manager.TransitionToTrack);
+        Assert.Equal(8f, manager.TransitionDurationSeconds);
+
+        manager.Update(4f);
+
+        Assert.Equal(source, manager.TransitionFromTrack);
+        Assert.Equal(target, manager.TransitionToTrack);
+        Assert.InRange(manager.TransitionElapsedSeconds, 3.99f, 4.01f);
+    }
+
+    [Fact]
     public void Non_overlap_first_play_fades_in_from_silence()
     {
         var backend = new FakeMusicBackend(supportsOverlap: false);

@@ -31,8 +31,14 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 - **Web sample README brought up to date**: it now documents `WebAudioSfxBackend` for
   overlapping one-shot cues instead of the obsolete "no sfx backend" note.
 - **README gains a Samples table** with a Play column linking to the GitHub Pages live demo.
-- **README documents the one-line crossfade toggle** (`CrossfadeSeconds = 0`) to compare old
-  hard-cut vs. new equal-power ramp.
+- **Web sample gains a live crossfade toggle.** Press `C` to flip `CrossfadeSeconds` between
+  the authored value and 0 (instant hard cut); a corner indicator shows green (ramp) / red
+  (hard cut). README points at it.
+- **New `samples/Duack.Sample.Crossfade`** minimal showcase: click tracks or press 1/2/3/Space,
+  click preset buttons for crossfade duration (4s/8s/12s/16s), toggle crossfade on/off.
+  Config mirrors `WithCrossfadeSeconds` usage.
+- **Added `crossfade-demo.html`** standalone WebAudio page (slider + play buttons) under the
+  web sample's wwwroot for a lightweight feature showcase.
 
 ### Fixed
 

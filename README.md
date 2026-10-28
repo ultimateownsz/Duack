@@ -25,6 +25,21 @@ Duack does not try to replace FMOD or Wwise: those platforms ship authoring
 editors, DSP, and profiling that Duack does not attempt. Duack replaces the
 ad-hoc audio code indie teams write themselves when middleware is too heavy.
 
+### Samples
+
+Each sample is a complete runnable game built on the engine — open the source to see real usage patterns.
+
+| Sample | Description | Play |
+|--------|-------------|------|
+| [Duack.Sample.Desktop](samples/Duack.Sample.Desktop) | MonoGame DesktopGL scripted storyline (walk → notice → dialog → battle → loop): live crossfade, duck meter, `SfxManager` auto-duck, marble-bag hit cues. | — |
+| [Duack.Sample.Web](samples/Duack.Sample.Web) | Blazor WASM / KNI version of the same storyline: manifest-driven discovery, WebAudio one-shots, single-instance fade-out/switch/fade-in crossfade. | [Live demo](https://ultimateownsz.github.io/Duack/) |
+
+> The web demo needs a click ("Start story") before sound plays — browsers suspend audio until a real user gesture.
+>
+> **Feel the difference yourself:** set `CrossfadeSeconds = 0` in `SampleAudio.BuildConfig` and re-run —
+> the scene switch becomes an instant hard cut instead of the equal-power ramp. That one-line
+> toggle is the whole "old way vs. new way" comparison.
+
 ## Duack vs the built-in audio path
 
 If you have ever written `MediaPlayer.Play` and then patched around it, this table is the pitch:

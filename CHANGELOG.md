@@ -30,6 +30,9 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
   (MonoGame, then FlatRedBall2) answer, and an old-way-vs-new-way crossfade table.
 - **Web sample README brought up to date**: it now documents `WebAudioSfxBackend` for
   overlapping one-shot cues instead of the obsolete "no sfx backend" note.
+- **README gains a Samples table** with a Play column linking to the GitHub Pages live demo.
+- **README documents the one-line crossfade toggle** (`CrossfadeSeconds = 0`) to compare old
+  hard-cut vs. new equal-power ramp.
 
 ### Fixed
 

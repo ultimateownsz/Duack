@@ -72,7 +72,7 @@ public class SampleAudioTests
     {
         var playlists = SampleAudio.BuildPlaylists(DemoLibrary());
 
-        var config = SampleAudio.BuildConfig(playlists);
+        var config = SampleAudio.BuildConfig();
 
         Assert.Equal(0.8f, config.MasterVolume);
         Assert.Equal(0.8f, config.Music.MasterVolume);
@@ -87,19 +87,4 @@ public class SampleAudioTests
         Assert.Equal(0.1f, duck.ReleaseSeconds);
     }
 
-    [Fact]
-    public void BuildConfig_embeds_the_playlists_it_was_given()
-    {
-        var playlists = SampleAudio.BuildPlaylists(DemoLibrary());
-
-        var embedded = PlaylistJson.FromConfig(SampleAudio.BuildConfig(playlists));
-
-        Assert.NotNull(embedded);
-        Assert.Equal(
-            playlists.Playlists.Keys.OrderBy(k => k, StringComparer.Ordinal),
-            embedded!.Playlists.Keys.OrderBy(k => k, StringComparer.Ordinal));
-        Assert.Equal(
-            playlists.Playlists["music"].Tracks.Select(t => t.Name),
-            embedded.Playlists["music"].Tracks.Select(t => t.Name));
-    }
 }

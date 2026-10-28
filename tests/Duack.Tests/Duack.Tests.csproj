@@ -17,9 +17,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Duack\Duack.csproj" />
-    <!-- The core now carries its own JSON layer (AudioConfigJson / PlaylistJson), so the
-         config and playlist wire-format pins live in JsonRoundTrip alongside the rest of the
-         serialization tests and this suite still references only src/Duack. -->
   </ItemGroup>
 
 </Project>

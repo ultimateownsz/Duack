@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Duack;
@@ -63,92 +62,12 @@ public class SfxConfig
 }
 
 /// <summary>
-/// Per-track loudness normalization targets for the audio preprocessing pipeline
-/// (loudnorm: I = integrated loudness in LUFS, TP = true peak in dBTP, LRA = loudness range in LU).
-/// </summary>
-public class LoudnormConfig
-{
-    /// <summary>
-    /// Integrated loudness in LUFS.
-    /// </summary>
-    public double I { get; set; }
-
-    /// <summary>
-    /// True peak in dBTP.
-    /// </summary>
-    public double Tp { get; set; }
-
-    /// <summary>
-    /// Loudness range in LU.
-    /// </summary>
-    public double Lra { get; set; }
-}
-
-/// <summary>
-/// Optional per-track compressor settings for the audio preprocessing pipeline
-/// (threshold/makeup in dB, ratio as a multiplier, attack/release in ms).
-/// </summary>
-public class CompressConfig
-{
-    /// <summary>
-    /// Threshold in dB.
-    /// </summary>
-    public double Threshold { get; set; }
-
-    /// <summary>
-    /// Ratio as a multiplier.
-    /// </summary>
-    public double Ratio { get; set; }
-
-    /// <summary>
-    /// Attack time in ms.
-    /// </summary>
-    public double AttackMs { get; set; }
-
-    /// <summary>
-    /// Release time in ms.
-    /// </summary>
-    public double ReleaseMs { get; set; }
-
-    /// <summary>
-    /// Makeup gain in dB.
-    /// </summary>
-    public double MakeupDb { get; set; }
-}
-
-/// <summary>One build-time track's loudness/compress targets (the "tracks" section).</summary>
-public class TrackConfig
-{
-    /// <summary>
-    /// Loudness normalization targets for the audio preprocessing pipeline (loudnorm: I, TP, LRA).
-    /// </summary>
-    public LoudnormConfig Loudnorm { get; set; } = new();
-
-    /// <summary>Null when the track has no compressor settings.</summary>
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public CompressConfig? Compress { get; set; }
-}
-
-/// <summary>
 /// The audio mix configuration, authored in code (see <see cref="AudioConfigBuilder"/>).
-/// <para>
-/// This is the CODE surface: the mix (masters, per-context scales, crossfade, duck sources, cue
-/// variation) is a plain object graph. The deprecated <c>audio-config.json</c> wire format has moved
-/// to the <c>legacy/pre-refactor</c> branch.
-/// </para>
+/// The mix (masters, per-context scales, crossfade, duck sources, and cue variation) is a plain
+/// object graph.
 /// </summary>
 public class AudioConfig
 {
-    /// <summary>The schema version this build writes.</summary>
-    public const int CurrentSchemaVersion = 1;
-
-    /// <summary>
-    /// Schema stamp for migrations. A missing stamp reads as <see cref="CurrentSchemaVersion"/>;
-    /// <see cref="Sanitize"/> normalizes a zero/legacy stamp up to 1 and preserves a higher
-    /// (future) stamp rather than silently downgrading it.
-    /// </summary>
-    public int SchemaVersion { get; set; } = CurrentSchemaVersion;
-
     /// <summary>Global output master volume applied to both music and sound effects.</summary>
     public float MasterVolume { get; set; } = 1f;
 
@@ -161,30 +80,9 @@ public class AudioConfig
     /// </summary>
     public SfxConfig Sfx { get; set; } = new();
 
-    /// <summary>
-    /// Build-only per-track loudness/compress targets (the "tracks" section). Null when the file
-    /// has none; omitted from output when null so a plain mix never emits a tracks section.
-    /// <para><b>Deprecated:</b> audio-config.json and its tracks section are deprecated.</para>
-    /// </summary>
-    [Obsolete("audio-config.json and its build-only tracks section are deprecated and moved to the 'legacy/pre-refactor' branch.")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public Dictionary<string, TrackConfig>? Tracks { get; set; }
-
-    /// <summary>
-    /// Build-only JSON sections the runtime model does not describe. Captured on load and
-    /// re-emitted on save so a save never drops them.
-    /// <para><b>Deprecated:</b> audio-config.json ExtensionData is deprecated.</para>
-    /// </summary>
-    [Obsolete("audio-config.json ExtensionData is deprecated and moved to the 'legacy/pre-refactor' branch.")]
-    [JsonExtensionData]
-    public Dictionary<string, JsonElement>? ExtensionData { get; set; }
-
-    /// <summary>Clamps values to safe ranges and normalizes the schema stamp.</summary>
+    /// <summary>Clamps values to safe ranges.</summary>
     public void Sanitize()
     {
-        if (SchemaVersion < 1)
-            SchemaVersion = 1;
-
         MasterVolume = System.Math.Clamp(MasterVolume, 0f, 1f);
         Music.MasterVolume = System.Math.Clamp(Music.MasterVolume, 0f, 1f);
         Sfx.MasterVolume = System.Math.Clamp(Sfx.MasterVolume, 0f, 1f);

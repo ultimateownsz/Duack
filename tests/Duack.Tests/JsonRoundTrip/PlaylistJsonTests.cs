@@ -4,8 +4,7 @@ namespace Duack.Tests.JsonRoundTrip;
 
 /// <summary>
 /// Pins the playlist wire format: a code-built <see cref="PlaylistConfig"/> serializes to snake_case
-/// JSON and parses back, and the same map can be embedded in / extracted from an
-/// <see cref="AudioConfig"/> (the author-in-code, convert-from-JSON path the CLI consumes).
+/// JSON and parses back.
 /// </summary>
 public class PlaylistJsonTests
 {
@@ -95,45 +94,4 @@ public class PlaylistJsonTests
         Assert.Null(playlists);
     }
 
-    [Fact]
-    public void Embed_then_FromConfig_round_trips_code_built_playlists_through_an_audio_config()
-    {
-        var config = new AudioConfigBuilder().WithPlaylists(CodeBuilt()).Build();
-
-        // The playlist map rides as an unknown build-only section and survives a save/reload.
-        var reparsed = AudioConfigJson.Parse(AudioConfigJson.Serialize(config));
-        var playlists = PlaylistJson.FromConfig(reparsed);
-
-        Assert.NotNull(playlists);
-        Assert.True(playlists!.TryGet("overworld", out var overworld));
-        Assert.Equal(PlaylistRepeatMode.Playlist, overworld.Repeat);
-        Assert.Equal("theme_a", overworld.Tracks[0].Name);
-    }
-
-    [Fact]
-    public void Embed_writes_a_playlists_key_into_the_serialized_config()
-    {
-        var config = new AudioConfigBuilder().WithPlaylists(CodeBuilt()).Build();
-
-        Assert.Contains("\"playlists\"", AudioConfigJson.Serialize(config));
-    }
-
-    [Fact]
-    public void FromConfig_returns_null_when_the_config_has_no_playlists()
-    {
-        Assert.Null(PlaylistJson.FromConfig(AudioConfigJson.Parse("""{ "master_volume": 1.0 }""")));
-    }
-
-    [Fact]
-    public void FromElement_reads_a_bare_playlist_map()
-    {
-        // The embedded value is the map itself, not a document with its own `playlists` wrapper.
-        var element = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(
-            """{ "overworld": { "tracks": [ { "name": "theme_a", "context": "Overworld" } ] } }""");
-
-        var playlists = PlaylistJson.FromElement(element);
-
-        Assert.NotNull(playlists);
-        Assert.True(playlists!.TryGet("overworld", out _));
-    }
 }

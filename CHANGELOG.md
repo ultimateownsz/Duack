@@ -22,6 +22,12 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 
 #### 2026-10-28
 
+- **Removed authored `audio-config.json` compatibility from master.** `AudioConfigJson`,
+  playlist embedding, build-only track metadata, CLI `init`/`validate`/`--config` compatibility,
+  and their scaffolding/validation tests are gone from the active codebase. The prior
+  implementation remains available on `legacy/pre-refactor`; active configuration is authored
+  with `AudioConfigBuilder` and `PlaylistConfigBuilder`. Standalone playlist, audio-manifest,
+  and player-settings JSON remain supported because current CLI and runtime flows use them.
 - **README adds a browser/WASM gotcha for copied Duack skills.** If a project targets the
   browser, keep the audio flow in Duack's C# API and adapters instead of re-implementing it in
   vanilla HTML/JS or raw browser audio code. Desktop builds are already C# and do not involve

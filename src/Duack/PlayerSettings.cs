@@ -45,8 +45,6 @@ public static class PlayerSettings
                 MasterVolume = saved.SfxMasterVolume,
                 CueVariation = authored.Sfx.CueVariation
             },
-            Tracks = authored.Tracks,
-            ExtensionData = authored.ExtensionData
         };
 
         effective.Sanitize();

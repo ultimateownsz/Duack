@@ -27,7 +27,7 @@ ad-hoc audio code indie teams write themselves when middleware is too heavy.
 
 ### Samples
 
-Each sample is a complete runnable game built on the engine — open the source to see real usage patterns.
+Each sample is a complete runnable game built on the library — open the source to see real usage patterns.
 
 | Sample | Description | Play                                                                          |
 |--------|-------------|-------------------------------------------------------------------------------|

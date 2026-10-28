@@ -143,25 +143,6 @@ In this preview, run it from the repository: `dotnet run --project tools/DuackCl
 
 The same preview also ships markdown agent skills under `duack-skills/` (installable via the CLI, or by copying the directory into your agent folder, e.g. `.claude/skills/`).
 
-## Who adopts first?
-
-MonoGame desktop users first — that is where the XNA audio pain (no crossfade, unreliable
-volume, fixed queue) bites hardest and where Duack's overlap crossfade and live gain metering
-pay off immediately. FlatRedBall2 users follow on the same KNI/web path, since FlatRedBall2
-is built on the same audio surface Duack targets; the web sample's autoplay-gesture and
-manifest-driven discovery (`duackcli scan`) are the bits they need on day one.
-
-## Old way vs. new way (crossfade)
-
-| | Built-in `MediaPlayer` | Duack |
-|---|---|---|
-| Switching songs | Hard cut, or no crossfade at all | Equal-power overlap on desktop; fade-out → swap → fade-in on web |
-| Volume after first track | Unreliable | Deterministic `master × bus × context × duck × player` |
-| Ducking under a hit | Hand-rolled or none | Declared `DuckSource`, fired by cue, metered live |
-
-A runnable version of the "before/after" lives in `samples/Duack.Sample.Desktop` (rectangles +
-duck meter) and `samples/Duack.Sample.Web`.
-
 ## Scope
 
 Duack owns the mix and produces the numbers; your engine plays the sound. Desktop (MonoGame DesktopGL) and web (KNI) are first-class. Mobile is not supported yet.

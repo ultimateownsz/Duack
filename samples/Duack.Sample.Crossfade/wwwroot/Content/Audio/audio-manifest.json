@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "sfx": [
+    "battle-start",
+    "hit",
+    "hit-1",
+    "hit-2",
+    "hit-3",
+    "notice-video-game-sfx"
+  ],
+  "tracks": [
+    "battle",
+    "hospital",
+    "overworld"
+  ]
+}

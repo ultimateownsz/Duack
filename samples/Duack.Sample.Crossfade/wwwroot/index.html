@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Duack — Web Sample (KNI / Blazor WASM)</title>
+    <title>Duack — Crossfade Demo (KNI / Blazor WASM)</title>
     <base href="./" />
     <style>
         html, body { margin: 0; padding: 0; height: 100%; width: 100%; background: #000; overflow: hidden; }
@@ -20,23 +20,20 @@
     </style>
 </head>
 <body>
-    <div id="app">Loading Duack crossfade sample…</div>
+    <div id="app">Loading Duack Crossfade demo…</div>
     <div id="legend" style="position:fixed; top:8px; left:8px; background:rgba(0,0,0,.9); color:#fff; padding:.75rem 1rem; border-radius:6px; font-family:system-ui,sans-serif; font-size:.9rem; z-index:50; line-height:1.6;">
-        <b>Duack Crossfade Demo</b><br/>
+        <b>Duack — Crossfade Demo</b><br/>
         <b style="color:#60a5fa">Bottom row → [4s] [8s] [12s] [16s]</b> Pick a crossfade duration<br/>
         <b>Click track rows</b> or <b>1/2/3</b> Switch tracks to hear crossfade<br/>
         <b>Space</b> Next track<br/>
         <b>Bottom-left</b> or <b>C</b> Toggle crossfade on/off<br/>
         <span style="color:#4ade80">■</span> Equal-power ramp &nbsp; <span style="color:#f87171">■</span> Hard cut<br/>
-        <small style="color:#aaa">Compare 4s vs 16s to clearly hear tracks overlapping.</small>
+        <small style="color:#aaa">Using Duack.KNI + MusicManager (PlaylistTrack.FadeInSeconds/FadeOutSeconds).</small>
     </div>
     <div id="boot-screen">
-        <h1>Duack — Web Sample</h1>
+        <h1>Duack — Crossfade Demo</h1>
         <p>Click anywhere to start (browser requires a gesture for audio)</p>
         <button class="start-btn" id="start-btn">Start</button>
-    </div>
-    <div id="legend" style="position:fixed; bottom:8px; left:8px; background:rgba(0,0,0,.6); color:#fff; padding:.5rem .75rem; border-radius:6px; font-family:system-ui,sans-serif; font-size:.85rem; z-index:50;">
-        <b>Crossfade demo</b> — click bottom-right button or press C to toggle. Green = ramp, Red = hard cut.
     </div>
     <div id="blazor-error-ui" style="display:none; position:fixed; bottom:0; left:0; width:100%; padding:0.6rem 1.25rem; background:lightyellow; z-index:1000;">
         An unhandled error has occurred.

@@ -24,17 +24,17 @@ longer fades (2-4 s) for deliberate mood shifts.
 var playlists = new PlaylistConfig();
 playlists.Playlists["overworld"] = new PlaylistDefinition
 {
-    Tracks = { new PlaylistTrack { Name = "overworld", Context = "Overworld", FadeInSeconds = null, FadeOutSeconds = null } },
+    Tracks = { new PlaylistTrack { Name = "overworld", Context = "Overworld", FadeInSeconds = 0.4f, FadeOutSeconds = 0.25f } },
     Repeat = PlaylistRepeatMode.Track,
 };
 playlists.Playlists["battle"] = new PlaylistDefinition
 {
-    Tracks = { new PlaylistTrack { Name = "battle", Context = "Battle" } },
+    Tracks = { new PlaylistTrack { Name = "battle", Context = "Battle", FadeInSeconds = 0.4f, FadeOutSeconds = 0.25f } },
     Repeat = PlaylistRepeatMode.Track,
 };
 playlists.Playlists["hospital"] = new PlaylistDefinition
 {
-    Tracks = { new PlaylistTrack { Name = "hospital", Context = "Overworld" } },
+    Tracks = { new PlaylistTrack { Name = "hospital", Context = "Overworld", FadeInSeconds = 0.4f, FadeOutSeconds = 0.25f } },
     Repeat = PlaylistRepeatMode.Track,
 };
 
@@ -45,7 +45,7 @@ var config = new AudioConfigBuilder()
 
 var manager = new MusicManager(backend, new MusicPlaylistController(playlists), config.Music);
 
-manager.Play("overworld");  // uses AudioConfig.Music.CrossfadeSeconds
+manager.Play("overworld");  // uses AudioConfig.Music.CrossfadeSeconds + track fades
 manager.Stop(fadeOutSeconds: 0.5f);
 
 // Each Play() is an independent crossfade:
@@ -215,8 +215,9 @@ right after the last action in the previous scene.
   Default is 1.2s. Both desktop and web use the same duration.
 - **Per-call overrides**: `Play(name, fadeInSeconds)` / `Stop(fadeOutSeconds)` override the config
   duration for that transition. Pass `null` (the default) to honour `AudioConfig.Music.CrossfadeSeconds`.
+- **Track entry/exit fades**: Use `PlaylistTrack.FadeInSeconds` / `FadeOutSeconds` to smooth track starts/stops. `MusicManager` applies these for both overlap and sequenced backends (including web/KNI). Example: set `FadeInSeconds = 0.4f`, `FadeOutSeconds = 0.25f` on tracks for a polished feel.
 - **Web (KNI)**: Single-track player (fade-out → swap → fade-in). Each transition costs
-  `CrossfadeSeconds` total. The sequencing logic is identical to desktop.
+  `CrossfadeSeconds` total. The sequencing logic is identical to desktop. Always use Duack's C# API (`MusicManager`/`PlaylistTrack`) in games — do not hand-roll fades with raw browser `<audio>`/JS.
 - **Ducking during crossfades**: The duck ratio applies to whatever track is active. During
   a crossfade, both outgoing and incoming tracks are affected by the current duck ratio. Use
   `ReleaseDucks()` before a scene switch to ensure the incoming track starts at full volume.

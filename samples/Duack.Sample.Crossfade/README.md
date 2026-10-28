@@ -8,4 +8,4 @@ Minimal **Crossfade demo** using the KNI (web) adapter. Built to isolate and A/B
 - Click preset buttons at the bottom: `4s` / `8s` / `12s` / `16s`
 - Click the bottom-left toggle or press `C` — toggle crossfade on/off (green = equal-power ramp, red = hard cut)
 
-The legend overlay explains the controls. Use longer durations (12s/16s) to clearly hear tracks overlapping on the web backend. For a full scripted example with SFX and ducking, see [Duack.Sample.Web](../Duack.Sample.Web) (**Game demo**).
+The legend overlay explains the controls. Tracks use `PlaylistTrack.FadeInSeconds`/`FadeOutSeconds` so starts/stops are smoothed via `MusicManager`. Use longer durations (12s/16s) to clearly hear tracks overlapping on the web backend. For a full scripted example with SFX and ducking, see [Duack.Sample.Web](../Duack.Sample.Web) (**Story demo**).

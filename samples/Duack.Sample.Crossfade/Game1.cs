@@ -70,7 +70,7 @@ public class Game1 : Game, IDisposable
         foreach (var t in _tracks)
         {
             var def = new PlaylistDefinition();
-            def.Tracks.Add(new PlaylistTrack { Name = t, Context = t });
+            def.Tracks.Add(new PlaylistTrack { Name = t, Context = t, FadeInSeconds = 0.4f, FadeOutSeconds = 0.25f });
             playlists.Playlists[t] = def;
         }
 

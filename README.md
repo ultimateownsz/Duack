@@ -33,7 +33,7 @@ Each sample is a complete runnable game built on the engine — open the source 
 |--------|-------------|-------------------------------------------------------------------------------|
 | [Duack.Sample.Desktop](samples/Duack.Sample.Desktop) | MonoGame DesktopGL scripted storyline (walk → notice → dialog → battle → loop): live crossfade, duck meter, `SfxManager` auto-duck, marble-bag hit cues. | —                                                                             |
 | [Duack.Sample.Web](samples/Duack.Sample.Web) | **Story demo** (Blazor WASM / KNI): scripted storyline with SFX, ducking, and crossfades. Manifest-driven discovery, WebAudio one-shots. | [▶ Play in browser](https://ultimateownsz.github.io/Duack/)                   |
-| [Duack.Sample.Crossfade](samples/Duack.Sample.Crossfade) | **Crossfade demo** (Blazor WASM / KNI): minimal showcase to A/B crossfade durations (4s/8s/12s/16s), toggle crossfade on/off, and hear hard cut vs equal-power ramp. | [▶ Play crossfade demo](https://ultimateownsz.github.io/Duack/crossfade-demo.html) |
+| [Duack.Sample.Crossfade](samples/Duack.Sample.Crossfade) | **Crossfade demo** (Blazor WASM / KNI): real Duack integration using `MusicManager`, `PlaylistTrack.FadeInSeconds`/`FadeOutSeconds`, preset durations (4s/8s/12s/16s), toggle crossfade on/off, hard cut vs equal-power ramp. | [▶ Play crossfade demo](https://ultimateownsz.github.io/Duack/crossfade-demo.html) |
 
 > The web demos need a click before sound plays — browsers suspend audio until a real user gesture ("Start").
 

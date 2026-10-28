@@ -17,6 +17,7 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
   publishes `samples/Duack.Sample.Web` (WASM workload) to GitHub Pages on push to `master` or
   manual dispatch, so the crossfade + ducking demo is viewable in a browser without a local
   build. Autoplay requires a click ("Start story") — documented up front.
+- Added MusicManager transition telemetry: IsTransitioning, elapsed/duration seconds, and source/target track names for UI, diagnostics, and progress indicators.
 
 ### Changed
 

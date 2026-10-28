@@ -75,8 +75,7 @@ public class WebPlayerSettingsStore : IPlayerSettingsStore
             var json = JsonSerializer.Serialize(
                 settings,
                 PlayerAudioSettingsJsonContext.Default.PlayerAudioSettings);
-            _storage.Set(_key, json);
-            return true;
+            return _storage.Set(_key, json);
         }
         catch (Exception ex)
         {

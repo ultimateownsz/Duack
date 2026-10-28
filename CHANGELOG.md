@@ -48,6 +48,10 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 
 #### 2026-10-28
 
+- **Fixed the Crossfade sample's duration presets.** Per-track `FadeInSeconds = 0.4f`
+  accidentally overrode `MusicManager`'s configured crossfade duration, making the 4s/8s/12s/16s
+  controls switch tracks after only 0.4 seconds. Removing those per-track overrides restores the
+  configured transition durations.
 - **GitHub Pages now deploys the actual Blazor/KNI Crossfade sample at
   `/crossfade-demo/`.** The workflow previously published only the Story sample, so the
   documented Crossfade route was missing and the `.html` link opened the separate standalone

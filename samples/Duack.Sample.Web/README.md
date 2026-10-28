@@ -1,11 +1,13 @@
-# Duack.Sample.Web
+# Duack.Sample.Web — Game Demo
 
-Self-contained Blazor WebAssembly sample for Duack's KNI (web) adapter. No additional engine
+Self-contained Blazor WebAssembly **Game demo** for Duack's KNI (web) adapter. No additional engine
 dependency — it drives `Duack.KNI.MediaPlayerMusicBackend` (platform `MediaPlayer`, an HTML
 `<audio>` element on BlazorGL) directly with a render-loop timer. The storyline itself is the
 shared, engine-free `samples/Duack.Sample.Core` (the same `StoryController` the desktop sample
 uses); story cues now play through `WebAudioSfxBackend`, so one-shots overlap the music track
 while `DuckMixer` dips the music volume.
+
+For an isolated look at crossfading behavior, see [Duack.Sample.Crossfade](../Duack.Sample.Crossfade) (**Crossfade demo**).
 
 ## Run
 

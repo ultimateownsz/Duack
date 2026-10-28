@@ -41,6 +41,10 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 - **New `samples/Duack.Sample.Crossfade`** minimal showcase: click tracks or press 1/2/3/Space,
   click preset buttons for crossfade duration (4s/8s/12s/16s), toggle crossfade on/off.
   Config mirrors `WithCrossfadeSeconds` usage.
+- **Crossfade demo UX clarified.** The player now presents a guided choose-track/play flow,
+  labeled transport actions, larger touch targets, clearer transition and playback feedback,
+  visible keyboard guidance, and an expandable explanation of the desktop and web transition
+  paths. The UI remains a sample-only Blazor surface over Duack's C# API.
 - **Added `crossfade-demo.html`** standalone WebAudio page (slider + play buttons) under the
   web sample's wwwroot for a lightweight feature showcase.
 

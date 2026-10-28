@@ -95,6 +95,10 @@ sfx.Play("notice", duck: true);   // the music dips and recovers automatically
 music.Update(dt);
 ```
 
+The essential interaction is small: create a `MusicManager`, call `Play`, and call `Next`
+when the game changes context. Duack applies the configured transition instead of requiring
+each game state to implement its own fade timers and volume math.
+
 The full loop — contexts, crossfades, duck metering, a scripted story — runs in `samples/Duack.Sample.Desktop` (**Story demo**). The same mix runs on the web in `samples/Duack.Sample.Web` (**Story demo**) with a separate **[Crossfade demo](https://ultimateownsz.github.io/Duack/crossfade-demo/)** (`samples/Duack.Sample.Crossfade`) to isolate crossfade behavior. All build and run from a clean clone.
 
 This preview is **code-first**: the mix lives in C#, in your code, where it can be diffed, refactored, and version-controlled.

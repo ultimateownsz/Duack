@@ -45,17 +45,19 @@ If the built-in path were enough, you would not be reading this — the crossfad
 
 ## Quickstart
 
-Configure the mix in code:
+Configure the mix in code (five lines):
 
 ```csharp
-using Duack;
-
 var config = new AudioConfigBuilder()
     .WithMasterVolume(0.9f)
     .WithCrossfadeSeconds(1.5f)
-    .WithDuckSource("notice", new DuckSourceConfig { Ratio = 0.25f, AttackSeconds = 0.06f })
+    .WithDuckSource("notice", new DuckSourceConfig { Ratio = 0.25f })
     .Build();
 ```
+
+> **Browser autoplay:** browsers suspend audio until a real user gesture. The web sample's
+> "Start story" button is that gesture — playback begins on the first click. This is
+> documented up front rather than worked around silently. Desktop builds play immediately.
 
 Wire it to your engine and play (desktop, MonoGame):
 
@@ -107,6 +109,11 @@ with the master entering once at the top. Duck sources target the music bus, und
 
 Nothing in Duack requires the CLI. The library is fully usable from code alone. It exists for the moments automation is faster than typing:
 
+- **Files that won't load are reported, not swallowed.** `duackcli scan` warns (exit 0) about
+  files the loader can never open — wrong type or an upper-cased extension — and the runtime
+  loaders log a line per failed cue (`[Audio] Could not load ...`) instead of failing silently.
+  Silent audio failures are the XNA pain Duack refuses to repeat.
+
 - **Web builds without ceremony.** `convert` produces the OGG files a KNI/WASM project needs; SFX stay WAV unless asked. `scan` writes the AOT-safe audio manifest the web head loads instead of directory scanning.
 - **Loudness you can measure.** `normalize` measures track loudness and writes gain-adjusted WAVs.
 
@@ -118,7 +125,30 @@ Nothing in Duack requires the CLI. The library is fully usable from code alone. 
 
 In this preview, run it from the repository: `dotnet run --project tools/DuackCli -- <command>`.
 
+> **Desktop-only tooling, not a runtime dependency.** The CLI runs on your dev machine at build
+> time (encoding, scanning, normalizing). It never ships to the browser and is not required at
+> runtime — the web head only reads the checked-in `audio-manifest.json` it produced.
+
 The same preview also ships markdown agent skills under `duack-skills/` (installable via the CLI, or by copying the directory into your agent folder, e.g. `.claude/skills/`).
+
+## Who adopts first?
+
+MonoGame desktop users first — that is where the XNA audio pain (no crossfade, unreliable
+volume, fixed queue) bites hardest and where Duack's overlap crossfade and live gain metering
+pay off immediately. FlatRedBall2 users follow on the same KNI/web path, since FlatRedBall2
+is built on the same audio surface Duack targets; the web sample's autoplay-gesture and
+manifest-driven discovery (`duackcli scan`) are the bits they need on day one.
+
+## Old way vs. new way (crossfade)
+
+| | Built-in `MediaPlayer` | Duack |
+|---|---|---|
+| Switching songs | Hard cut, or no crossfade at all | Equal-power overlap on desktop; fade-out → swap → fade-in on web |
+| Volume after first track | Unreliable | Deterministic `master × bus × context × duck × player` |
+| Ducking under a hit | Hand-rolled or none | Declared `DuckSource`, fired by cue, metered live |
+
+A runnable version of the "before/after" lives in `samples/Duack.Sample.Desktop` (rectangles +
+duck meter) and `samples/Duack.Sample.Web`.
 
 ## Scope
 

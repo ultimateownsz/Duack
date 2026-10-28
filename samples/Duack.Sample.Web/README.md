@@ -4,8 +4,8 @@ Self-contained Blazor WebAssembly sample for Duack's KNI (web) adapter. No addit
 dependency — it drives `Duack.KNI.MediaPlayerMusicBackend` (platform `MediaPlayer`, an HTML
 `<audio>` element on BlazorGL) directly with a render-loop timer. The storyline itself is the
 shared, engine-free `samples/Duack.Sample.Core` (the same `StoryController` the desktop sample
-uses); web cues surface as duck pulses because the web host has no sound-effect backend yet
-(see the root `AGENTS.md` known limitation).
+uses); story cues now play through `WebAudioSfxBackend`, so one-shots overlap the music track
+while `DuckMixer` dips the music volume.
 
 ## Run
 
@@ -35,9 +35,9 @@ Then open the launched URL (e.g. https://localhost:5000) and click a button.
 - Code-first config via `SampleAudio` in the shared core (no JSON required for the mix itself).
 - `MusicPlaylistController` + `MusicManager` driving `Duack.KNI.IMusicBackend` over the
   platform player, including the single-instance fade-out/switch/fade-in crossfade.
-- **Story cues as duck pulses**: the web host has no sfx backend, so each cue (notice, dialog,
-  hit) pulses the same `sfx` duck source with the same configured hold as desktop's
-  `SfxManager` auto-duck — the mix reacts identically; only the one-shot audio is missing.
+- **Story cues play through `WebAudioSfxBackend`** (WebAudio `AudioBufferSourceNode`), so
+  one-shots overlap the music track while `DuckMixer` dips the music volume — the same mix
+  reaction as desktop, including the `MarbleBag<string>` hit-cue variation.
 - Browser settings store wired via `WebPlayerSettingsStore` + `LocalStorageKeyValueStorage`
   (the `Duack.KNI` localStorage seam).
 

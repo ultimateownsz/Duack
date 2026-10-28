@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Duack;
@@ -33,6 +34,11 @@ public class Game1 : Game, IDisposable
     private int _current;
     private KeyboardState _previousKeyboard;
     private MouseState _previousMouse;
+
+    public IReadOnlyList<string> Tracks => _tracks;
+    public int CurrentTrackIndex => _current;
+    public bool CrossfadeEnabled => _crossfadeEnabled;
+    public int CrossfadePresetIndex => _crossfadePresetIndex;
 
     public Game1()
     {
@@ -163,6 +169,41 @@ public class Game1 : Game, IDisposable
 
         _previousKeyboard = keyboard;
         base.Update(gameTime);
+    }
+
+    public void SelectTrack(int index)
+    {
+        if ((uint)index >= (uint)_tracks.Length)
+            return;
+
+        _current = index;
+        _manager.Play(_tracks[index]);
+    }
+
+    public void NextTrack()
+    {
+        if (_tracks.Length == 0)
+            return;
+
+        _current = (_current + 1) % _tracks.Length;
+        _manager.Play(_tracks[_current]);
+    }
+
+    public void ToggleCrossfade()
+    {
+        _crossfadeEnabled = !_crossfadeEnabled;
+        _config.Music.CrossfadeSeconds = _crossfadeEnabled ? _originalCrossfade : 0f;
+    }
+
+    public void SelectCrossfadePreset(int index)
+    {
+        if ((uint)index >= (uint)_crossfadePresets.Length)
+            return;
+
+        _crossfadePresetIndex = index;
+        _originalCrossfade = _crossfadePresets[index];
+        if (_crossfadeEnabled)
+            _config.Music.CrossfadeSeconds = _originalCrossfade;
     }
 
     protected override void Draw(GameTime gameTime)

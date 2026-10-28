@@ -45,6 +45,7 @@ public partial class Index
                 _game = GameFactory();
                 _game.Run();
                 _gameRunning = true;
+                InvokeAsync(StateHasChanged);
             }
             catch (Exception ex)
             {
@@ -63,4 +64,14 @@ public partial class Index
         if (!_started) return;
         _game?.Tick();
     }
+
+    private Game1? CrossfadeGame => _game as Game1;
+
+    private void SelectTrack(int index) => CrossfadeGame?.SelectTrack(index);
+
+    private void NextTrack() => CrossfadeGame?.NextTrack();
+
+    private void ToggleCrossfade() => CrossfadeGame?.ToggleCrossfade();
+
+    private void SelectPreset(int index) => CrossfadeGame?.SelectCrossfadePreset(index);
 }

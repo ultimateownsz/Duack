@@ -48,6 +48,11 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 
 #### 2026-10-28
 
+- **Added an HTML/Blazor control overlay to the Crossfade sample.** Track selection, next-track,
+  crossfade toggle, and 4s/8s/12s/16s presets now invoke the running C# `Game1` and Duack
+  `MusicManager`; the canvas and browser/KNI audio path remain unchanged. No separate audio
+  behavior test was added because this is a thin UI event bridge; existing `MusicManager` tests
+  cover the delegated transition behavior.
 - **Fixed the Crossfade sample's duration presets.** Per-track `FadeInSeconds = 0.4f`
   accidentally overrode `MusicManager`'s configured crossfade duration, making the 4s/8s/12s/16s
   controls switch tracks after only 0.4 seconds. Removing those per-track overrides restores the

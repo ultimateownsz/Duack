@@ -8,23 +8,135 @@
 
 @if (_game is Game1 game && _gameRunning)
 {
-    <div style="position:fixed; top:8px; right:8px; z-index:60; width:min(280px, calc(100vw - 16px)); padding:12px; color:#fff; background:rgba(0,0,0,.86); border:1px solid #596273; border-radius:8px; font-family:system-ui,sans-serif; font-size:.85rem; pointer-events:none;">
-        <div style="font-weight:700; margin-bottom:8px;">HTML / Blazor controls</div>
-        <div style="display:flex; gap:6px; flex-wrap:wrap; pointer-events:auto;">
-            @for (var i = 0; i < game.Tracks.Count; i++)
-            {
-                var trackIndex = i;
-                <button @onclick="() => SelectTrack(trackIndex)" style="cursor:pointer;">@(trackIndex + 1)</button>
-            }
-            <button @onclick="NextTrack" style="cursor:pointer;">Next</button>
-        </div>
-        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; pointer-events:auto;">
-            @for (var i = 0; i < 4; i++)
-            {
-                var presetIndex = i;
-                <button @onclick="() => SelectPreset(presetIndex)" style="cursor:pointer;">@($"{4 << presetIndex}s")</button>
-            }
-            <button @onclick="ToggleCrossfade" style="cursor:pointer;">@(game.CrossfadeEnabled ? "Disable" : "Enable") crossfade</button>
+    <div class="crossfade-overlay">
+        <div class="crossfade-card">
+            <h1>Duack — Crossfade Demo</h1>
+            <p class="crossfade-lead">Blazor / KNI controls driven by Duack's <code>MusicManager</code>.</p>
+
+            <div class="crossfade-player">
+                <section>
+                    <h2>Tracks</h2>
+                    <ul class="crossfade-playlist">
+                        @for (var i = 0; i < game.Tracks.Count; i++)
+                        {
+                            var trackIndex = i;
+                            <li class="@(trackIndex == game.CurrentTrackIndex ? "active" : "")">
+                                <button @onclick="() => SelectTrack(trackIndex)">
+                                    <span>@game.Tracks[trackIndex]</span>
+                                    <span class="track-number">@(trackIndex + 1)</span>
+                                </button>
+                            </li>
+                        }
+                    </ul>
+                </section>
+
+                <section>
+                    <h2>Controls</h2>
+                    <div class="transport-controls">
+                        <button @onclick="PreviousTrack" title="Previous">⏮</button>
+                        <button @onclick="TogglePlayback" class="primary" title="Play or pause">@(game.IsPlaying ? "⏸" : "▶")</button>
+                        <button @onclick="NextTrack" title="Next">⏭</button>
+                    </div>
+                    <div class="crossfade-controls">
+                        <label class="crossfade-toggle">
+                            <input type="checkbox" checked="@game.CrossfadeEnabled" @onchange="ToggleCrossfade" />
+                            Crossfade
+                        </label>
+                        <div class="duration-controls">
+                            <span>Duration:</span>
+                            @for (var i = 0; i < 4; i++)
+                            {
+                                var presetIndex = i;
+                                <button class="@(presetIndex == game.CrossfadePresetIndex ? "selected" : "")"
+                                        @onclick="() => SelectPreset(presetIndex)">@($"{4 << presetIndex}s")</button>
+                            }
+                        </div>
+                    </div>
+                    <p class="crossfade-status">
+                        @if (game.IsTransitioning)
+                        {
+                            @($"Crossfading {game.TransitionFromTrack} → {game.TransitionToTrack} ({game.TransitionElapsedSeconds:0.0}s / {game.TransitionDurationSeconds:0.0}s)")
+                        }
+                        else
+                        {
+                            @(game.IsPlaying ? $"Playing {game.CurrentTrackName}" : $"Selected {game.CurrentTrackName}")
+                        }
+                    </p>
+                    <div class="crossfade-legend">
+                        <span><i class="legend-dot active-dot"></i>active</span>
+                        <span><i class="legend-dot transition-dot"></i>Duack transition</span>
+                    </div>
+                </section>
+            </div>
+
+            <div class="crossfade-meter" aria-label="Duack transition progress">
+                <div class="meter-track">
+                    <div class="meter-out" style="width:@($"{(game.IsTransitioning ? (1f - game.TransitionProgress) : 0f) * 100f:0.##}%")"></div>
+                    <div class="meter-in" style="width:@($"{(game.IsTransitioning ? game.TransitionProgress : 1f) * 100f:0.##}%")"></div>
+                </div>
+                <div class="meter-label">
+                    <span>@(game.IsTransitioning ? game.TransitionFromTrack : game.CurrentTrackName)</span>
+                    <span>@(game.IsTransitioning ? game.TransitionToTrack : "steady")</span>
+                </div>
+            </div>
+            <p class="crossfade-hint">Click a track to switch through Duack's C# crossfade. Keyboard: 1/2/3, Space, C.</p>
         </div>
     </div>
 }
+
+<style>
+    .crossfade-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 60;
+        overflow: auto;
+        padding: 2rem;
+        pointer-events: none;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+
+    .crossfade-card {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 1.25rem;
+        color: #1a1a1a;
+        background: rgba(255, 255, 255, .96);
+        border: 1px solid #d0d3d9;
+        border-radius: 12px;
+        box-shadow: 0 2px 14px rgba(0, 0, 0, .35);
+        pointer-events: auto;
+    }
+
+    .crossfade-card h1 { margin: 0 0 .25rem; font-size: 1.5rem; }
+    .crossfade-card h2 { margin: 0 0 .5rem; font-size: 1rem; }
+    .crossfade-lead, .crossfade-status, .crossfade-hint { color: #5f6368; }
+    .crossfade-lead { margin: 0 0 1rem; font-size: .9rem; }
+    .crossfade-player { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .crossfade-playlist { list-style: none; padding: 0; margin: 0; }
+    .crossfade-playlist li { margin: .35rem 0; border: 1px solid #d0d3d9; border-radius: 8px; }
+    .crossfade-playlist li.active { border-color: #2e7d32; background: #e8f5e9; }
+    .crossfade-playlist button { display: flex; justify-content: space-between; width: 100%; padding: .6rem .75rem; border: 0; border-radius: 8px; background: transparent; color: inherit; text-align: left; cursor: pointer; font: inherit; }
+    .track-number { color: #5f6368; font-size: .8rem; }
+    .transport-controls, .crossfade-controls, .duration-controls, .crossfade-legend { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+    .transport-controls button, .duration-controls button { min-width: 2.4rem; padding: .55rem .8rem; border: 1px solid #d0d3d9; border-radius: 8px; background: #fff; cursor: pointer; font: inherit; }
+    .transport-controls button.primary, .duration-controls button.selected { background: #2e7d32; color: #fff; border-color: #2e7d32; }
+    .crossfade-controls { margin-top: .9rem; }
+    .crossfade-toggle { display: flex; align-items: center; gap: .4rem; padding: .4rem .6rem; border: 1px solid #d0d3d9; border-radius: 8px; }
+    .duration-controls { color: #5f6368; font-size: .9rem; }
+    .crossfade-status { min-height: 1.2em; margin: .75rem 0 .4rem; font-size: .9rem; }
+    .crossfade-legend { color: #5f6368; font-size: .85rem; }
+    .legend-dot { display: inline-block; width: 10px; height: 10px; margin-right: .3rem; border-radius: 50%; vertical-align: middle; }
+    .active-dot { background: #2e7d32; }
+    .transition-dot { background: #ef6c00; }
+    .crossfade-meter { margin-top: 1rem; padding: 1rem; overflow: hidden; border-radius: 8px; background: #e8eaed; }
+    .meter-track { display: flex; height: 24px; overflow: hidden; border-radius: 4px; background: #c9cdd3; }
+    .meter-out { height: 100%; background: #ef6c00; transition: width .05s linear; }
+    .meter-in { height: 100%; margin-left: -1px; background: #2e7d32; transition: width .05s linear; }
+    .meter-label { display: flex; justify-content: space-between; gap: .75rem; margin-top: .45rem; color: #5f6368; font-size: .8rem; }
+    .crossfade-hint { margin: .6rem 0 0; font-size: .8rem; }
+
+    @@media (max-width: 680px) {
+        .crossfade-overlay { padding: .75rem; }
+        .crossfade-player { grid-template-columns: 1fr; }
+    }
+</style>

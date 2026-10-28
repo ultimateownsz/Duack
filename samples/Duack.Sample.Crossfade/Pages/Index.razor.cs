@@ -63,13 +63,18 @@ public partial class Index
     {
         if (!_started) return;
         _game?.Tick();
+        _ = InvokeAsync(StateHasChanged);
     }
 
     private Game1? CrossfadeGame => _game as Game1;
 
     private void SelectTrack(int index) => CrossfadeGame?.SelectTrack(index);
 
+    private void PreviousTrack() => CrossfadeGame?.PreviousTrack();
+
     private void NextTrack() => CrossfadeGame?.NextTrack();
+
+    private void TogglePlayback() => CrossfadeGame?.TogglePlayback();
 
     private void ToggleCrossfade() => CrossfadeGame?.ToggleCrossfade();
 

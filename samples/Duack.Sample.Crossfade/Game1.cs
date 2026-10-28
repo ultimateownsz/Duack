@@ -18,8 +18,6 @@ namespace Duack.Sample.Crossfade;
 public class Game1 : Game, IDisposable
 {
     private readonly GraphicsDeviceManager _graphics;
-    private SpriteBatch? _spriteBatch;
-    private Texture2D _pixel = null!;
 
     private AudioLibrary _library = null!;
     private MusicPlaylistController _controller = null!;
@@ -33,12 +31,21 @@ public class Game1 : Game, IDisposable
     private string[] _tracks = Array.Empty<string>();
     private int _current;
     private KeyboardState _previousKeyboard;
-    private MouseState _previousMouse;
 
     public IReadOnlyList<string> Tracks => _tracks;
     public int CurrentTrackIndex => _current;
     public bool CrossfadeEnabled => _crossfadeEnabled;
     public int CrossfadePresetIndex => _crossfadePresetIndex;
+    public bool IsPlaying => _manager.IsPlaying;
+    public string CurrentTrackName => _tracks.Length == 0 ? "No tracks found" : _tracks[_current];
+    public bool IsTransitioning => _manager.IsTransitioning;
+    public float TransitionProgress => _manager.TransitionDurationSeconds <= 0f
+        ? 1f
+        : Math.Clamp(_manager.TransitionElapsedSeconds / _manager.TransitionDurationSeconds, 0f, 1f);
+    public float TransitionElapsedSeconds => _manager.TransitionElapsedSeconds;
+    public float TransitionDurationSeconds => _manager.TransitionDurationSeconds;
+    public string TransitionFromTrack => _manager.TransitionFromTrack ?? CurrentTrackName;
+    public string TransitionToTrack => _manager.TransitionToTrack ?? CurrentTrackName;
 
     public Game1()
     {
@@ -96,9 +103,6 @@ public class Game1 : Game, IDisposable
 
     protected override void LoadContent()
     {
-        _spriteBatch = new SpriteBatch(GraphicsDevice);
-        _pixel = new Texture2D(GraphicsDevice, 1, 1);
-        _pixel.SetData(new[] { Color.White });
     }
 
     protected override void Update(GameTime gameTime)
@@ -128,45 +132,6 @@ public class Game1 : Game, IDisposable
             _config.Music.CrossfadeSeconds = _crossfadeEnabled ? _originalCrossfade : 0f;
         }
 
-        // Clickable crossfade toggle button + duration presets
-        var mouse = Mouse.GetState();
-        var vp = GraphicsDevice.Viewport;
-        var cx = vp.Width / 2;
-
-        var toggleBtn = new Rectangle(cx - 260, vp.Height - 110, 200, 48);
-        if (mouse.LeftButton == ButtonState.Pressed && _previousMouse.LeftButton == ButtonState.Released &&
-            toggleBtn.Contains(mouse.Position))
-        {
-            _crossfadeEnabled = !_crossfadeEnabled;
-            _config.Music.CrossfadeSeconds = _crossfadeEnabled ? _originalCrossfade : 0f;
-        }
-
-        var presetPanel = new Rectangle(cx - 40, vp.Height - 110, 300, 48);
-        for (int i = 0; i < _crossfadePresets.Length; i++)
-        {
-            var b = new Rectangle(cx - 30 + i * 72, vp.Height - 102, 60, 32);
-            if (mouse.LeftButton == ButtonState.Pressed && _previousMouse.LeftButton == ButtonState.Released &&
-                b.Contains(mouse.Position))
-            {
-                _crossfadePresetIndex = i;
-                _originalCrossfade = _crossfadePresets[_crossfadePresetIndex];
-                if (_crossfadeEnabled)
-                    _config.Music.CrossfadeSeconds = _originalCrossfade;
-            }
-        }
-        // Click track rows
-        for (int i = 0; i < _tracks.Length; i++)
-        {
-            var rect = new Rectangle(vp.Width / 2 - 240, 130 + i * 40, 480, 32);
-            if (mouse.LeftButton == ButtonState.Pressed && _previousMouse.LeftButton == ButtonState.Released &&
-                rect.Contains(mouse.Position))
-            {
-                _current = i;
-                _manager.Play(_tracks[i]);
-            }
-        }
-        _previousMouse = mouse;
-
         _previousKeyboard = keyboard;
         base.Update(gameTime);
     }
@@ -189,6 +154,23 @@ public class Game1 : Game, IDisposable
         _manager.Play(_tracks[_current]);
     }
 
+    public void PreviousTrack()
+    {
+        if (_tracks.Length == 0)
+            return;
+
+        _current = (_current - 1 + _tracks.Length) % _tracks.Length;
+        _manager.Play(_tracks[_current]);
+    }
+
+    public void TogglePlayback()
+    {
+        if (_manager.IsPlaying)
+            _manager.Stop();
+        else if (_tracks.Length > 0)
+            _manager.Play(_tracks[_current]);
+    }
+
     public void ToggleCrossfade()
     {
         _crossfadeEnabled = !_crossfadeEnabled;
@@ -209,58 +191,8 @@ public class Game1 : Game, IDisposable
     protected override void Draw(GameTime gameTime)
     {
         GraphicsDevice.Clear(new Color(15, 17, 21));
-        _spriteBatch!.Begin(samplerState: SamplerState.PointClamp);
-
-        var vp = GraphicsDevice.Viewport;
-        var cx = vp.Width / 2;
-
-        // Player panel
-        DrawRect(new Rectangle(cx - 260, 100, 520, 220), new Color(27, 31, 39));
-        DrawRectOutline(new Rectangle(cx - 260, 100, 520, 220), new Color(68, 74, 86));
-
-        // Track list
-        for (int i = 0; i < _tracks.Length; i++)
-        {
-            var rect = new Rectangle(cx - 240, 130 + i * 40, 480, 32);
-            var bg = i == _current ? new Color(46, 125, 50) : new Color(35, 39, 47);
-            DrawRect(rect, bg);
-            DrawRectOutline(rect, new Color(88, 94, 108));
-            // "play" marker
-            if (i == _current) DrawRect(new Rectangle(rect.X + 12, rect.Y + 10, 12, 12), Color.White);
-        }
-
-        // Crossfade toggle button
-        var toggleBtn = new Rectangle(cx - 260, vp.Height - 110, 200, 48);
-        DrawRect(toggleBtn, _crossfadeEnabled ? new Color(46, 125, 50) : new Color(180, 60, 60));
-        DrawRectOutline(toggleBtn, new Color(150, 156, 170));
-        DrawRect(new Rectangle(toggleBtn.X + 16, toggleBtn.Y + 16, 16, 16), Color.White * (_crossfadeEnabled ? 1f : 0.5f));
-
-        // Duration presets panel
-        var presetPanel = new Rectangle(cx - 40, vp.Height - 110, 300, 48);
-        DrawRect(presetPanel, new Color(27, 31, 39));
-        DrawRectOutline(presetPanel, new Color(88, 94, 108));
-
-        for (int i = 0; i < _crossfadePresets.Length; i++)
-        {
-            var b = new Rectangle(cx - 30 + i * 72, vp.Height - 102, 60, 32);
-            var active = i == _crossfadePresetIndex;
-            DrawRect(b, active ? new Color(59, 130, 246) : new Color(55, 59, 68));
-            DrawRectOutline(b, active ? new Color(147, 197, 253) : new Color(110, 116, 128));
-        }
-
-        _spriteBatch.End();
         base.Draw(gameTime);
     }
-
-    private void DrawRectOutline(Rectangle r, Color c)
-    {
-        DrawRect(new Rectangle(r.X, r.Y, r.Width, 2), c);
-        DrawRect(new Rectangle(r.X, r.Bottom - 2, r.Width, 2), c);
-        DrawRect(new Rectangle(r.X, r.Y, 2, r.Height), c);
-        DrawRect(new Rectangle(r.Right - 2, r.Y, 2, r.Height), c);
-    }
-
-    private void DrawRect(Rectangle r, Color c) => _spriteBatch!.Draw(_pixel, r, c);
 
     private static bool WasKeyPressed(KeyboardState cur, KeyboardState prev, Keys key) =>
         cur.IsKeyDown(key) && !prev.IsKeyDown(key);

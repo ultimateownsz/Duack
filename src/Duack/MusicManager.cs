@@ -175,7 +175,11 @@ public class MusicManager
     /// <param name="fadeOutSeconds">Optional fade out duration in seconds.</param>
     public void Stop(float? fadeOutSeconds = null)
     {
-        var duration = fadeOutSeconds ?? _fadeOutDurationOverride ?? 0f;
+        var duration = fadeOutSeconds 
+            ?? _fadeOutDurationOverride 
+            ?? _active?.FadeOutSeconds 
+            ?? _playlist.CurrentTrack?.FadeOutSeconds 
+            ?? 0f;
         if (duration > 0f && (_active != null || _outgoing != null || _backend.IsTrackPlaying))
         {
             _stoppingWithFade = true;
@@ -350,6 +354,8 @@ public class MusicManager
             _isCrossfading = true;
             _crossfadeElapsed = 0f;
             _transitionDuration = _fadeInDurationOverride ?? _music.CrossfadeSeconds;
+            _fadeInDurationOverride = null;
+            _fadeOutDurationOverride = null;
         }
         else if (_backend.IsTrackPlaying)
         {
@@ -357,7 +363,19 @@ public class MusicManager
             _pending = desired;
             _sequencer.BeginFadeOut();
             _isCrossfading = true;
-            _transitionDuration = _fadeInDurationOverride ?? _music.CrossfadeSeconds;
+            var dur = _fadeInDurationOverride ?? _music.CrossfadeSeconds;
+            if (dur <= 0f)
+            {
+                _transitionDuration = 0f;
+                _fadeOutDuration = 0f;
+            }
+            else
+            {
+                _transitionDuration = dur * 0.5f;
+                _fadeOutDuration = dur * 0.5f;
+            }
+            _fadeInDurationOverride = null;
+            _fadeOutDurationOverride = null;
         }
         else
         {
@@ -367,6 +385,8 @@ public class MusicManager
             _backend.PlayTrack(desired.Name, Compose(_sequencer.InGain, desired.Context), NextCuePitch());
             _isCrossfading = true;
             _transitionDuration = _fadeInDurationOverride ?? _music.CrossfadeSeconds;
+            _fadeInDurationOverride = null;
+            _fadeOutDurationOverride = null;
         }
     }
 

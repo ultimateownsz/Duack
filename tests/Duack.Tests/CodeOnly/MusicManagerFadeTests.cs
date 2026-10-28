@@ -238,7 +238,7 @@ public class MusicManagerFadeTests
         manager.Play("main");
         manager.Update(0.016f);
         manager.Next();
-        manager.Update(0.25f);
+        manager.Update(0.6f);
 
         Assert.Equal(2, backend.Played.Count);
         Assert.Equal("b", backend.Played[^1].Name);

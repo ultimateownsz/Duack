@@ -22,6 +22,10 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 
 #### 2026-10-28
 
+- **README adds a browser/WASM gotcha for copied Duack skills.** If a project targets the
+  browser, keep the audio flow in Duack's C# API and adapters instead of re-implementing it in
+  vanilla HTML/JS or raw browser audio code. Desktop builds are already C# and do not involve
+  HTML/JS.
 - **README clarifies the CLI is desktop-only build-time tooling**, not a runtime dependency:
   it runs on the dev machine and never ships to the browser; the web head reads the checked-in
   `audio-manifest.json`. README also notes that files the loader cannot open are reported (scan

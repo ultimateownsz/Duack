@@ -7,6 +7,10 @@ quick reference). This directory is the **single source of truth** for the skill
 Duack ships these as plain Markdown you copy into your project so your AI coding assistant
 has Duack context without you pasting anything manually. Each file is self-contained.
 
+Browser gotcha: if you copy these into a browser/WASM project, keep the audio flow in Duack's
+C# API and adapter layer instead of re-implementing it with vanilla HTML/JS or raw browser
+audio code. Desktop builds already use C# and do not involve HTML/JS.
+
 ## Add the skill files to your project
 
 Run from your project's root folder (e.g. `YourGame/`):

@@ -31,7 +31,7 @@
 </head>
 <body>
   <h1>Duack — Crossfade Demo</h1>
-  <p class="lead">Click a track to switch and crossfade. Pick a duration preset (4s/8s/12s/16s) to clearly hear tracks overlapping. Toggle crossfade off for an instant hard cut.</p>
+  <p class="lead">Click a track to switch and crossfade. Pick a duration preset (4s/8s/12s/16s) to hear tracks overlapping. Short track fade-ins/outs smooth starts/stops; longer crossfades show the overlap best.</p>
 
   <div class="card player">
     <div>
@@ -74,8 +74,9 @@
 
     let current = 0;
     let playing = false;
-    let fading = false, fadeStart = 0, fadeDur = 1.5, fromIdx = -1, toIdx = -1;
+    let fading = false, fadeStart = 0, fadeDur = 4, fromIdx = -1, toIdx = -1;
     let crossfadeOn = true;
+    let trackFade = { active: false, start: 0, dur: 0.4, type: 'in', idx: -1 }; // in/out for start/pause
 
     const playlist = document.getElementById('playlist');
     names.forEach((n, i) => {
@@ -107,7 +108,8 @@
       if (current === -1 || !crossfadeOn || fadeDur <= 0 || !playing) {
         // (re)start chosen track
         audios.forEach((a, idx) => { if (idx !== i) { a.pause(); a.currentTime = 0; a.volume = 0; } });
-        const a = audios[i]; a.volume = 1; a.currentTime = 0;
+        const a = audios[i]; a.volume = 0; a.currentTime = 0;
+        trackFade = { active: true, start: performance.now(), dur: 0.4, type: 'in', idx: i };
         if (playing) a.play().catch(()=>{});
         current = i; fading = false;
         status.textContent = (playing ? 'Playing ' : 'Selected ') + names[i] + (crossfadeOn ? '' : ' (crossfade off)');
@@ -122,12 +124,18 @@
     playBtn.addEventListener('click', () => {
       if (!playing) {
         playing = true; playBtn.textContent = '⏸';
-        const a = audios[current]; a.volume = 1; a.currentTime = a.currentTime || 0; a.play().catch(()=>{});
+        const a = audios[current];
+        a.volume = 0;
+        a.currentTime = a.currentTime || 0;
+        a.play().catch(()=>{});
+        trackFade = { active: true, start: performance.now(), dur: 0.4, type: 'in', idx: current };
         status.textContent = 'Playing ' + names[current];
       } else {
+        if (trackFade.active && trackFade.type === 'out') return;
         playing = false; playBtn.textContent = '▶';
-        audios.forEach(a => a.pause());
-        status.textContent = 'Paused.';
+        const a = audios[current];
+        trackFade = { active: true, start: performance.now(), dur: 0.25, type: 'out', idx: current };
+        status.textContent = 'Pausing...';
       }
     });
     document.getElementById('next').addEventListener('click', () => { const n = (current+1)%names.length; select(n); if (!playing) { playing=true; playBtn.textContent='⏸'; audios[current].play().catch(()=>{}); } });
@@ -136,6 +144,28 @@
     const meter = document.getElementById('meter');
     const mctx = meter.getContext('2d');
     function tick() {
+      if (trackFade.active && trackFade.idx >= 0 && trackFade.idx < audios.length) {
+        const a = audios[trackFade.idx];
+        const t = Math.min(1, (performance.now() - trackFade.start) / (trackFade.dur * 1000));
+        if (trackFade.type === 'in') {
+          a.volume = t;
+          if (t >= 1) {
+            a.volume = 1;
+            trackFade.active = false;
+            if (playing && status.textContent.startsWith('Playing') === false && status.textContent.includes('Pausing') === false) {
+              // keep status as playing
+            }
+          }
+        } else if (trackFade.type === 'out') {
+          a.volume = 1 - t;
+          if (t >= 1) {
+            a.volume = 0;
+            a.pause();
+            trackFade.active = false;
+            if (!playing) status.textContent = 'Paused.';
+          }
+        }
+      }
       if (fading && playing) {
         const t = Math.min(1, (performance.now() - fadeStart) / (fadeDur * 1000));
         const outGain = Math.cos(t * Math.PI / 2);
@@ -144,9 +174,9 @@
         audios[toIdx].volume = inGain;
         if (t >= 1) {
           if (fromIdx >= 0) { audios[fromIdx].pause(); audios[fromIdx].currentTime = 0; audios[fromIdx].volume = 0; }
-          audios[toIdx].volume = 1;
+          audios[toIdx].volume = 0;
           current = toIdx; fading = false; fromIdx = -1;
-          status.textContent = 'Playing ' + names[current];
+          trackFade = { active: true, start: performance.now(), dur: 0.4, type: 'in', idx: current };
         }
       }
       // update playlist visuals

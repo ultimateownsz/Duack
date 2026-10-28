@@ -33,7 +33,7 @@ Each sample is a complete runnable game built on the engine — open the source 
 |--------|-------------|-------------------------------------------------------------------------------|
 | [Duack.Sample.Desktop](samples/Duack.Sample.Desktop) | MonoGame DesktopGL scripted storyline (walk → notice → dialog → battle → loop): live crossfade, duck meter, `SfxManager` auto-duck, marble-bag hit cues. | —                                                                             |
 | [Duack.Sample.Web](samples/Duack.Sample.Web) | **Story demo** (Blazor WASM / KNI): scripted storyline with SFX, ducking, and crossfades. Manifest-driven discovery, WebAudio one-shots. | [▶ Play in browser](https://ultimateownsz.github.io/Duack/)                   |
-| [Duack.Sample.Crossfade](samples/Duack.Sample.Crossfade) | **Crossfade demo** (Blazor WASM / KNI): real Duack integration using `MusicManager`, `PlaylistTrack.FadeInSeconds`/`FadeOutSeconds`, preset durations (4s/8s/12s/16s), toggle crossfade on/off, hard cut vs equal-power ramp. | [▶ Play crossfade demo](https://ultimateownsz.github.io/Duack/crossfade-demo.html) |
+| [Duack.Sample.Crossfade](samples/Duack.Sample.Crossfade) | **Crossfade demo** (Blazor WASM / KNI): minimal showcase to A/B crossfade durations (4s/8s/12s/16s), toggle crossfade on/off, and hear hard cut vs equal-power ramp. | [▶ Play crossfade demo](https://ultimateownsz.github.io/Duack/crossfade-demo/) |
 
 > The web demos need a click before sound plays — browsers suspend audio until a real user gesture ("Start").
 
@@ -95,7 +95,7 @@ sfx.Play("notice", duck: true);   // the music dips and recovers automatically
 music.Update(dt);
 ```
 
-The full loop — contexts, crossfades, duck metering, a scripted story — runs in `samples/Duack.Sample.Desktop` (**Story demo**). The same mix runs on the web in `samples/Duack.Sample.Web` (**Story demo**) with a separate **[Crossfade demo](https://ultimateownsz.github.io/Duack/crossfade-demo.html)** (`samples/Duack.Sample.Crossfade`) to isolate crossfade behavior. All build and run from a clean clone.
+The full loop — contexts, crossfades, duck metering, a scripted story — runs in `samples/Duack.Sample.Desktop` (**Story demo**). The same mix runs on the web in `samples/Duack.Sample.Web` (**Story demo**) with a separate **[Crossfade demo](https://ultimateownsz.github.io/Duack/crossfade-demo/)** (`samples/Duack.Sample.Crossfade`) to isolate crossfade behavior. All build and run from a clean clone.
 
 This preview is **code-first**: the mix lives in C#, in your code, where it can be diffed, refactored, and version-controlled.
 

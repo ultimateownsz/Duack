@@ -29,19 +29,18 @@ jobs:
       - name: Install WASM workload
         run: dotnet workload install wasm-tools
 
-      - name: Publish crossfade demo (Duack.KNI WASM)
-        run: dotnet publish samples/Duack.Sample.Crossfade/Duack.Sample.Crossfade.csproj -c Release -o _site_crossfade
-
-      - name: Publish story demo (Duack.Sample.Web)
+      - name: Publish story sample
         run: dotnet publish samples/Duack.Sample.Web/Duack.Sample.Web.csproj -c Release -o _site_story
 
-      - name: Assemble site
+      - name: Publish crossfade sample
+        run: dotnet publish samples/Duack.Sample.Crossfade/Duack.Sample.Crossfade.csproj -c Release -o _site_crossfade
+
+      - name: Assemble Pages site
         run: |
           mkdir -p _site
           cp -r _site_story/wwwroot/* _site/
           mkdir -p _site/crossfade-demo
           cp -r _site_crossfade/wwwroot/* _site/crossfade-demo/
-          cp _site/crossfade-demo/index.html _site/crossfade-demo.html
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

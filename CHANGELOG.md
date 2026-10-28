@@ -48,6 +48,11 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 
 #### 2026-10-28
 
+- **GitHub Pages now deploys the actual Blazor/KNI Crossfade sample at
+  `/crossfade-demo/`.** The workflow previously published only the Story sample, so the
+  documented Crossfade route was missing and the `.html` link opened the separate standalone
+  vanilla-JavaScript showcase instead. The Blazor sample is now published as its own directory,
+  preserving the configured 4s/8s/12s/16s Duack crossfade controls.
 - **Renamed `AudioLibrary.SfxManageryName` to `AudioLibrary.SfxDirectoryName`.** The
   director→manager rename pass had accidentally rewritten the `SfxDirectoryName` constant
   (no "Director" substring intended) into `SfxManageryName`. Value (`"SFX"`) and behavior

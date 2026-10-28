@@ -39,7 +39,8 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
   director→manager rename pass had accidentally rewritten the `SfxDirectoryName` constant
   (no "Director" substring intended) into `SfxManageryName`. Value (`"SFX"`) and behavior
   unchanged; the public constant now has the intended name. Any consumer referencing the
-  misspelled name must update to `SfxDirectoryName`.
+  misspelled name must update to `SfxDirectoryName`. Pins:
+  `Convention_directory_constants_have_the_intended_names`.
 
 ## [0.1.0-preview.4] - 2026-10-26
 

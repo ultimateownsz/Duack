@@ -295,4 +295,12 @@ public class AudioLibraryTests : IDisposable
         Assert.False(config.TryGet("music", out _));
         Assert.True(config.TryGet("overworld", out _));
     }
+
+    [Fact]
+    public void Convention_directory_constants_have_the_intended_names()
+    {
+        // Guard against the director->manager rename pass mangling "DirectoryName".
+        Assert.Equal("SFX", AudioLibrary.SfxDirectoryName);
+        Assert.Equal("Tracks", AudioLibrary.TracksDirectoryName);
+    }
 }

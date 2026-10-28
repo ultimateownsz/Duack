@@ -30,27 +30,29 @@
   </style>
 </head>
 <body>
-  <h1>Crossfade showcase</h1>
-  <p class="lead">A tiny media player. Click a track to play it; switching tracks crossfades the old one out while the new one fades in. Toggle crossfade off for an instant hard cut.</p>
+  <h1>Duack — Crossfade Demo</h1>
+  <p class="lead">Click a track to switch and crossfade. Pick a duration preset (4s/8s/12s/16s) to clearly hear tracks overlapping. Toggle crossfade off for an instant hard cut.</p>
 
   <div class="card player">
     <div>
-      <h3 style="margin:0 0 .5rem">Playlist</h3>
+      <h3 style="margin:0 0 .5rem">Tracks</h3>
       <ul class="playlist" id="playlist"></ul>
     </div>
     <div>
-      <h3 style="margin:0 0 .5rem">Transport</h3>
+      <h3 style="margin:0 0 .5rem">Controls</h3>
       <div class="controls">
         <button id="prev" title="Previous">⏮</button>
         <button id="play" class="primary" title="Play/Pause">▶</button>
         <button id="next" title="Next">⏭</button>
       </div>
-      <div class="controls" style="margin-top:.75rem">
+      <div class="controls" style="margin-top:.75rem; flex-wrap:wrap">
         <label class="toggle"><input type="checkbox" id="cf" checked /> Crossfade</label>
-        <div class="slider">
-          <label for="dur">Duration</label>
-          <input type="range" id="dur" min="0" max="3" step="0.1" value="1.5" />
-          <span id="durv">1.5s</span>
+        <div class="controls" style="gap:.4rem">
+          <span style="color:var(--muted); font-size:.9rem">Duration:</span>
+          <button class="dur-preset" data-dur="4">4s</button>
+          <button class="dur-preset" data-dur="8">8s</button>
+          <button class="dur-preset" data-dur="12">12s</button>
+          <button class="dur-preset" data-dur="16">16s</button>
         </div>
       </div>
       <p class="status" id="status">Idle — pick a track.</p>
@@ -86,9 +88,18 @@
     const playBtn = document.getElementById('play');
     const status = document.getElementById('status');
     const cf = document.getElementById('cf');
-    const dur = document.getElementById('dur');
-    const durv = document.getElementById('durv');
-    dur.addEventListener('input', () => { fadeDur = parseFloat(dur.value); durv.textContent = fadeDur.toFixed(1)+'s'; });
+    const durPresets = document.querySelectorAll('.dur-preset');
+    durPresets.forEach(btn => {
+      btn.addEventListener('click', () => {
+        fadeDur = parseFloat(btn.getAttribute('data-dur') || '4');
+        durPresets.forEach(b => b.classList.toggle('primary', b === btn));
+        status.textContent = `Crossfade duration set to ${fadeDur}s`;
+      });
+    });
+    // default 4s
+    const defBtn = document.querySelector('.dur-preset[data-dur="4"]');
+    if (defBtn) defBtn.classList.add('primary');
+    fadeDur = 4;
     cf.addEventListener('change', () => { crossfadeOn = cf.checked; });
 
     function select(i) {

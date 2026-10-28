@@ -213,7 +213,7 @@ public static class Cli
     {
         foreach (var (directory, supported) in new[]
                  {
-                     (AudioLibrary.SfxManageryName, AudioLibrary.SfxExtensions),
+                     (AudioLibrary.SfxDirectoryName, AudioLibrary.SfxExtensions),
                      (AudioLibrary.TracksDirectoryName, AudioLibrary.TrackExtensions),
                  })
         {

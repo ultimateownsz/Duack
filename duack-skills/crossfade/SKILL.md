@@ -1,6 +1,6 @@
 ---
 name: crossfade
-description: Duack crossfades and scene transitions — sequential crossfades between any number of tracks, desktop (overlap) vs web (sequenced) backends, playlists, ducking during transitions, hard-reset vs natural-gate patterns. Triggers on: crossfade, scene transition, MusicManager.Play, ReleaseDucks, IsDuckReady, overworld, battle, hospital, ducking delay.
+description: "Duack crossfades and scene transitions — sequential crossfades between any number of tracks, desktop (overlap) vs web (sequenced) backends, playlists, ducking during transitions, hard-reset vs natural-gate patterns. Triggers on: crossfade, scene transition, MusicManager.Play, ReleaseDucks, IsDuckReady, sound effects (SFX) ducking delay."
 ---
 
 # Duack — Crossfades and Scene Transitions
@@ -12,11 +12,26 @@ pre-queue all tracks — each call to `MusicManager.Play()` triggers an independ
 from whatever is currently playing to the new track.
 
 
-a transition by how it felt at its worst moment and its final moment, not by the average. A
-hard cut between tracks creates a jarring peak (silence gap) that players remember; an
+- A transition by how it felt at its worst moment and its final moment, not by the average.
+- Judge a transition by how it felt at its worst moment and its final moment, not by the average.
+- A hard cut between tracks creates a jarring peak (silence gap) that players remember; an
 equal-power crossfade smooths the peak so the transition reads as seamless. The
 feel instant, so keep `CrossfadeSeconds` at or below 1.5 s for scene switches and reserve
 longer fades (2-4 s) for deliberate mood shifts.
+
+### Runnable reference: the crossfade sample
+
+`samples/Duack.Sample.Crossfade` is a complete KNI / Blazor WASM project that wires
+crossfades, playlists, and the transition telemetry end to end: track selection,
+4s/8s/12s/16s crossfade presets, a live toggle (crossfade vs hard cut), and a
+transition meter driven by `IsTransitioning` / `TransitionElapsedSeconds` /
+`TransitionDurationSeconds`. Read its source before hand-authoring web wiring —
+the backend construction (`MediaPlayerMusicBackend(new KniMediaPlayerHost(),
+contentRoot: "Content/Audio/Tracks", extension: ".ogg")`), the manifest-based
+library, and the manifest → playlist flow are all pinned there and covered by
+`tests/Duack.Sample.Tests`.
+
+The same demo runs in the browser (GitHub Pages): the crossfade demo listed in the README's samples table. Browsers suspend audio until a user gesture, so the demo starts on a click.
 
 ## 2. Basic usage
 
@@ -40,7 +55,6 @@ playlists.Playlists["hospital"] = new PlaylistDefinition
 
 var config = new AudioConfigBuilder()
     .WithCrossfadeSeconds(1.5f)
-    .WithPlaylists(playlists)
     .Build();
 
 var manager = new MusicManager(backend, new MusicPlaylistController(playlists), config.Music);
@@ -72,16 +86,41 @@ becomes the new outgoing. The new track starts at volume 0 and crossfades in.
 
 Single-track player (HTML `<audio>` / MediaPlayer). Transition is sequenced:
 1. Current track fades out over `CrossfadeSeconds / 2`
-2. Backend swaps to the new track
+2. Back end swaps to the new track
 3. New track fades in over `CrossfadeSeconds / 2`
 
 Total wall-clock time is the same as desktop (`CrossfadeSeconds`).
 
+### Transition telemetry (backend-agnostic)
+
+`MusicManager` exposes the same transition timeline on both back ends, computed
+differently under the hood but consumed identically:
+
+- `IsTransitioning` — true while a crossfade is in flight
+- `TransitionFromTrack` / `TransitionToTrack` — the two tracks in the current transition
+  (not the playlist contents; membership lives in `PlaylistConfig` / the controller)
+- `TransitionElapsedSeconds` / `TransitionDurationSeconds` — one normalized clock: on
+  desktop it spans the overlap; on web it composes the fade-out and fade-in phases.
+  The ratio is a valid progress value on either backend.
+
+```csharp
+// Backend-agnostic progress gate: identical code on desktop and web.
+if (manager.IsTransitioning)
+{
+    var progress = manager.TransitionElapsedSeconds / manager.TransitionDurationSeconds;
+    // e.g. hold the old scene's visuals until the new track is audible
+}
+```
+
+Telemetry does not remove the acoustic difference: desktop overlaps two live tracks,
+web is still a single-instance player (fade-out → swap → fade-in). It removes the
+observable difference — transition-gated logic writes once and runs on both.
+
 ## 4. Ducking during transitions
 
-The `DuckMixer` handles sidechain ducking independently. When an SFX plays, it pulses the
+The `DuckMixer` handles side chain ducking independently. When an SFX plays, it pulses the
 duck ratio. The duck applies to whatever track is currently active (including during
-crossfades).
+cross fades).
 
 ### Two complementary patterns
 
@@ -199,13 +238,13 @@ complementary tools:
 
 The `CurrentTrack?.Name` guard prevents re-triggering a track that is already playing.
 
-## 7. Key insight: Play() triggers transition immediately
+## 8. Key insight: Play() triggers transition immediately
 
 `MusicManager.Play()` calls `Update(0f)` internally, so the crossfade starts on the same
 frame instead of waiting for the next `Update()` call. This ensures the audio track plays
 right after the last action in the previous scene.
 
-## 8. Limitations
+## 9. Limitations
 
 - **Max 2 simultaneous tracks** (during a crossfade). You cannot have 3+ tracks playing at
   once. But sequential transitions are unlimited — chain as many `Play()` calls as needed.
@@ -229,7 +268,7 @@ right after the last action in the previous scene.
 - **Crossfade / Ramp**: In DAWs and mixing consoles, transitions between signals and automation ramps are drawn as fades/crossfades. Duack's equal-power crossfade curve preserves acoustic power across track transitions.
 - **Fade up / Fade down**: Studio/broadcast verbs corresponding to track fade-in and fade-out automation.
 
-## 8b. Minimal config-driven example (copy-paste starting point)
+## 9b. Minimal config-driven example (copy-paste starting point)
 
 ```csharp
 // 1) Playlists: null fades => CrossfadeSeconds drives the transition
@@ -247,7 +286,7 @@ new AudioConfigBuilder()
 Swap the track name/context and the crossfade seconds for your game; `null` overrides are what
 make the single `WithCrossfadeSeconds` knob take effect.
 
-## 9. API quick reference
+## 10. API quick reference
 
 | Method | Description |
 |---|---|
@@ -263,3 +302,8 @@ make the single `WithCrossfadeSeconds` knob take effect.
 | `MusicManager.GainReduction` / `Attenuation` | Current combined gain reduction (1 − DuckRatio) |
 | `MusicManager.CurrentTrack` | The track that should be playing |
 | `MusicManager.IsPlaying` | True while a playlist is running |
+| `MusicManager.IsTransitioning` | True while a crossfade is in flight |
+| `MusicManager.TransitionFromTrack` | Track being faded out (null when none) |
+| `MusicManager.TransitionToTrack` | Track being faded in (null when none) |
+| `MusicManager.TransitionElapsedSeconds` | Normalized transition clock (web: fade-out + fade-in) |
+| `MusicManager.TransitionDurationSeconds` | Total transition length (web: both phases) |

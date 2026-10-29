@@ -1,16 +1,18 @@
 ---
 name: audio-core
-description: Duack audio library — core types, namespaces, quick reference. Use when working with Duack's audio mixing, ducking, crossfades, playlists, SFX variation, player settings, or the two-directory audio convention. Triggers on: Duack, DuckMixer, MusicManager, MusicVolumeMath, AudioConfig, SfxManager, MarbleBag, AudioLibrary, ISfxBackend, IMusicBackend, PlayerSettings.
+description: "Duack audio library — core types, namespaces, quick reference. Use when working with Duack's audio mixing, ducking, crossfades, playlists, SFX variation, player settings, or the two-directory audio convention. Triggers on: Duack, DuckMixer, MusicManager, MusicVolumeMath, AudioConfig, SfxManager, MarbleBag, AudioLibrary, ISfxBackend, IMusicBackend, PlayerSettings."
 ---
 
-# Duack — Audio Library for XNA-Family Engines
+# Duack — Audio Library for XNA-related libraries
 
-Duack is a config-driven audio mixer for MonoGame, KNI, FlatRedBall2, and FNA on desktop and
+Duack is a config-driven audio mixer for MonoGame, KNI, FlatRedBall2 on desktop and
 web. It adds what engine audio APIs don't ship: sidechain ducking, per-context music volumes,
 crossfades, playlists, player-facing volume settings with persistence, and per-cue SFX
 variation. Duack owns the mix and produces numbers; the user's engine owns playback.
 
-**Status**: preview (0.x). API may change between minor versions.
+**Status**: preview. Verified against 0.1.0-preview.4 (see CHANGELOG for the current
+version). API may change between preview versions; check CHANGELOG's migration notes
+before applying skill snippets to a newer package.
 
 ## Hard architectural rules
 
@@ -52,8 +54,8 @@ Drop files in - no cue registration. Classification is case-sensitive (`SFX`/`Tr
 using Duack;
 using Duack.MonoGame;
 
-var library   = AudioLibrary.ScanDirectory("Content/Audio");
-var playlists = SampleAudio.BuildPlaylists(library);
+var library   = AudioLibrary.ScanDirectory(audioRoot);   // SFX/ + Tracks/ convention, no cue registration
+var playlists = library.BuildPlaylists();    // one looping playlist per track, plus a bag-shuffled "music" playlist
 var clips     = new SoundEffectClipLibrary(library);
 
 var music = new MusicManager(
@@ -67,8 +69,8 @@ var sfx = new SfxManager(library,
     sfxBusVolume: config.Sfx.MasterVolume,
     sfxConfig: config.Sfx);
 
-music.Play("overworld");
-sfx.Play("notice", duck: true);
+music.Play("overworld");          // playlist lookup: BuildPlaylists() named this single-track playlist after the track
+sfx.Play("sfx", duck: true);   // pulses the "sfx" duck source: the music dips and recovers automatically
 
 // once per frame:
 music.Update(dt);
@@ -79,20 +81,31 @@ music.Update(dt);
 using Duack;
 using Duack.KNI;
 
-var manifest = AudioLibraryManifestJson.Deserialize(manifestJson);
-var library  = AudioLibrary.FromManifest(manifest);
-var playlists = SampleAudio.BuildPlaylists(library);
+var manifest = AudioLibraryManifestJson.Deserialize(manifestJson); // duackcli scan writes audio-manifest.json
+var library = AudioLibrary.FromManifest(manifest);
+var playlists = library.BuildPlayList();    // same auto playlists as desktop
 
-var host  = new KnMediaPlayerHost();
 var music = new MusicManager(
-    new MediaPlayerMusicBackend(host),
+    // contentRoot must point at Tracks/ — the backend default (Content/Audio) predates the
+    // two-directory convention and 404s under the standard layout.
+    new MediaPlayerMusicBackend(new KniMediaPlayerHost()), contenrRoot: "Content/Audio/Tracks"),
     new MusicPlaylistController(playlists),
     config.Music, masterVolume: config.MasterVolume);
 
-music.Play("overworld");
+/ contentRoot must point at Tracks/ — the backend default (Content/Audio) predates the
+    // two-directory convention and 404s under the standard layout.
+    new MediaPlayerMusicBackend(new KniMediaPlayerHost(), contentRoot: "Content/Audio/Tracks"),
+    new MusicPlaylistController(playlists),
+    config.Music, masterVolume: config.MasterVolume);
 
-// once per frame:
-music.Update(dt);
+// One-shot cues: WebAudio, URLs relative to the app root.
+var sfxUrls = library.Sfx.Select(cue => new KeyValuePair<string, string>(cue, $"Content/Audio/SFX/{cue}.wav"));
+var sfx = new SfxManager(library, new WebAudioSfxBackend(new WebAudioNative(), sfxUrls), music,
+    masterVolume: config.MasterVolume,
+    sfxBusVolume: config.Sfx.MasterVolume,
+    sfxConfig: config.Sfx);
+
+// music.Update(dt) once per frame, as on desktop.
 ```
 
 ### 5. Generate the web manifest
@@ -109,8 +122,11 @@ Already-converted files are skipped automatically.
 ### Common pitfalls
 - **Missing `audio-manifest.json` on web** - run `duackcli scan` and check it in.
 - **Case sensitivity** - `SFX`/`Tracks` and lowercase extensions required; web hosts 404 on mismatch.
-- **OGG decode (KNI)** - KNI's `SoundEffect.FromStream` parses WAV only. See the NVorbis `TotalSamples` pitfall in `adapters`.
+- **OGG decode (KNI)** - KNI's `SoundEffect.FromStream` parses WAV only. ...
 - **No audio on desktop** - ensure `Content/Audio/` is copied to build output.
++ - **Silent no-op ducking** - a `duck: true` play against a source missing from
++   `MusicConfig.DuckSources` does nothing silently. Verify the `SfxManager` duckSource
++   name (default "sfx") is declared in the config.
 
 See `adapters`, `audio-library`, `crossfade`, `playlists` for deeper coverage.
 
@@ -147,9 +163,8 @@ Every namespace → `Duack`.
 
 ### SFX variation
 - `MarbleBag<T>` — draw-without-replacement randomizer (swap-remove, refill on empty, optional avoidImmediateRepeat, injectable Random)
-- `CueVariation` / `CuePlay` — per-play pitch/volume jitter (`MusicManager.NextCuePitch()` /
-  `SfxManager` per-play resolve)
-- `SfxManager` — cue-name one-shot playback with automatic music ducking and per-play cue jitter
+- Cue variation: resolved internally from config.Music.CueVariation on every track start;
+- sfx.PlayNext() draws the next bag variant. NextCuePitch is private — do not call it.
 
 ### Settings
 - `PlayerAudioSettings`, `PlayerSettings` — player volume settings
@@ -196,7 +211,7 @@ var config = new AudioConfigBuilder()
     .WithSfxMasterVolume(0.7f)
     .WithCrossfadeSeconds(1.5f)
     .WithContext("battle", 0.8f)
-    .WithDuckSource("dialogue", new DuckSourceConfig { Ratio = 0.25f, AttackSeconds = 0.06f, ReleaseSeconds = 0.35f })
+    .WithDuckSource("sfx", new DuckSourceConfig { Ratio = 0.25f, AttackSeconds = 0.06f, ReleaseSeconds = 0.35f })
     .Build();
 
 // Music manager
@@ -231,12 +246,15 @@ PlayerSettings.Store = PlayerSettingsStoreSelector.Select(
     isBrowser: isBrowser,
     fileStore: new FilePlayerSettingsStore(),
     browserStore: new WebPlayerSettingsStore(storage));
-var settings = PlayerSettings.Load();  // or PlayerSettings.Current
-settings.MusicVolume = 0.8f;
-settings.Save();
+
+var effective = PlayerSettings.ApplyOverrides(authoredConfig);  // layered read
+// ... settings UI mutates effective ...
+bool ok = PlayerSettings.SaveOverrides(effective);              // returns the store's verdict
 ```
 - `VolumeCurve.ToAmplitude(slider)` — perceptual (quadratic, −60 dB floor at 0)
 - `VolumeCurve.ToSlider(amplitude)` — exact inverse
++ - Volume properties are live: assigning `music.MasterVolume`, `sfx.MasterVolume`, or
++   `sfx.SfxBusVolume` applies on the next frame or play — a settings slider needs no rebuild.
 
 ### Buses
 Three default buses: **master**, **music**, **SFX**. The master bus scales everything (music and SFX alike) and is the top of the chain; music and SFX are the domain buses. Composition: `master bus × bus volume × context × duck × player settings`, master entering once at the top. Duck sources target the music bus, under the master.
@@ -275,20 +293,18 @@ See the `crossfade` skill for detailed crossfade and scene transition patterns.
 - `tests/DuackCli.Tests` — CLI end-to-end
 
 ### CLI tools (`tools/DuackCli`)
-- `duackcli init <contentDir>` — scaffold audio-config.json from content scan
-- `duackcli validate <config.json>` — schema + range validation
-- `duackcli convert <input> <output>` — WAV to OGG for web
+- `duackcli convert <contentDir> <outDir>` (--playlists <file> | --all) — one of the two flags is required
 - `duackcli scan <audioRoot>` — write audio-manifest.json for web hosts
 - NAudio/OggVorbisEncoder live here only. Never referenced by src/ or samples/.
 
 ## Quickstart (install + wire)
 
 Install:
-`
+```
 dotnet add package Duack
 dotnet add package Duack.MonoGame   # desktop
 # or Duack.KNI for web
-`
+```
 
 Config (code-first):
 `csharp

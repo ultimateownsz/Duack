@@ -519,4 +519,43 @@ public class MusicManagerTests
         Assert.Equal(0.7f, manager.GainReduction, 3);
         Assert.Equal(0.7f, manager.Attenuation, 3);
     }
+
+    [Fact]
+    public void Non_overlap_first_play_reports_only_the_fade_in_duration()
+    {
+        var backend = new FakeMusicBackend(supportsOverlap: false);
+        var playlist = new MusicPlaylistController(OneTrack("solo"), new Random(1));
+        var manager = new MusicManager(backend, playlist, new MusicConfig { CrossfadeSeconds = 8f });
+
+        manager.Play("main");
+        manager.Update(0.016f);
+
+        Assert.True(manager.IsTransitioning);
+        Assert.Equal(8f, manager.TransitionDurationSeconds);
+        Assert.InRange(manager.TransitionElapsedSeconds, 0f, 0.02f);
+    }
+
+    [Fact]
+    public void Non_overlap_repeat_track_fade_in_does_not_inherit_the_previous_fade_out()
+    {
+        var backend = new FakeMusicBackend(supportsOverlap: false);
+        var playlist = new MusicPlaylistController(TwoTracks("a", "b", PlaylistRepeatMode.Track), new Random(1));
+        var manager = new MusicManager(backend, playlist, new MusicConfig { CrossfadeSeconds = 8f });
+
+        manager.Play("main");
+        manager.Update(0.016f);
+
+        manager.Next();                 // establishes a real 4s fade-out + 4s fade-in
+        manager.Update(0.016f);
+        Assert.True(manager.IsTransitioning);
+        manager.Update(8f);
+        Assert.False(manager.IsTransitioning);
+
+        backend.RaiseTrackEnded();      // Repeat=Track restarts "b" with a standalone fade-in
+        manager.Update(0f);
+
+        Assert.True(manager.IsTransitioning);
+        Assert.Equal("b", manager.CurrentTrack?.Name);
+        Assert.Equal(8f, manager.TransitionDurationSeconds);
+    }
 }

@@ -9,6 +9,7 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 
 ## [Unreleased]
 
+
 ### Added
 
 #### 2026-10-28
@@ -18,6 +19,21 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
   manual dispatch, so the crossfade + ducking demo is viewable in a browser without a local
   build. Autoplay requires a click ("Start story") — documented up front.
 - Added MusicManager transition telemetry: IsTransitioning, elapsed/duration seconds, and source/target track names for UI, diagnostics, and progress indicators.
+  
+  
+#### 2026-10-29
+
+- **`MusicManager` no longer reports a stale fade-out duration in transition telemetry on
+  non-overlapping (web/KNI) backends.** `TransitionDurationSeconds` is `_fadeOutDuration +
+  _transitionDuration` there, but the two standalone fade-in paths (first play with no track
+  playing, and a `Repeat=Track` restart after a completed crossfade) never reset
+  `_fadeOutDuration`, so first play reported `8.2s` instead of `8s` and a repeat-track
+  fade-in reported `12s` (progress started at ~33%). Both paths now set `_fadeOutDuration = 0f`,
+  matching the overlap backend. Regression tests:
+  `Non_overlap_first_play_reports_only_the_fade_in_duration`,
+  `Non_overlap_repeat_track_fade_in_does_not_inherit_the_previous_fade_out`.
+  Also made `MusicTransitionSequencer.Advance` consume a delta across phase boundaries so a
+  single large `Update()` can complete a multi-phase transition.
 
 ### Changed
 
@@ -83,20 +99,6 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
   unchanged; the public constant now has the intended name. Any consumer referencing the
   misspelled name must update to `SfxDirectoryName`. Pins:
   `Convention_directory_constants_have_the_intended_names`.
-
-#### 2026-10-29
-
-- **`MusicManager` no longer reports a stale fade-out duration in transition telemetry on
-  non-overlapping (web/KNI) backends.** `TransitionDurationSeconds` is `_fadeOutDuration +
-  _transitionDuration` there, but the two standalone fade-in paths (first play with no track
-  playing, and a `Repeat=Track` restart after a completed crossfade) never reset
-  `_fadeOutDuration`, so first play reported `8.2s` instead of `8s` and a repeat-track
-  fade-in reported `12s` (progress started at ~33%). Both paths now set `_fadeOutDuration = 0f`,
-  matching the overlap backend. Regression tests:
-  `Non_overlap_first_play_reports_only_the_fade_in_duration`,
-  `Non_overlap_repeat_track_fade_in_does_not_inherit_the_previous_fade_out`.
-  Also made `MusicTransitionSequencer.Advance` consume a delta across phase boundaries so a
-  single large `Update()` can complete a multi-phase transition.
 
 ## [0.1.0-preview.4] - 2026-10-26
 

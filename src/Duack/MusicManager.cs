@@ -425,6 +425,7 @@ public class MusicManager
             _backend.PlayTrack(desired.Name, Compose(_sequencer.InGain, desired.Context), NextCuePitch());
             _isCrossfading = true;
             _transitionDuration = _fadeInDurationOverride ?? _music.CrossfadeSeconds;
+            _fadeOutDuration = 0f;
             _fadeInDurationOverride = null;
             _fadeOutDurationOverride = null;
         }
@@ -475,6 +476,7 @@ public class MusicManager
             _isCrossfading = true;
             _crossfadeElapsed = 0f;
             _transitionDuration = _fadeInDurationOverride ?? _music.CrossfadeSeconds;
+            _fadeOutDuration = 0f;
         }
     }
 }

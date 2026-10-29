@@ -111,29 +111,55 @@ public sealed class MusicTransitionSequencer
         if (!float.IsFinite(deltaSeconds) || deltaSeconds <= 0f)
             return false;
 
-        var phaseDuration = Phase == MusicFadePhase.FadingOut
-            ? FadeOutDuration
-            : (_splitFadeIn ? FadeInDuration : FadeInDuration);
-
-        Progress = !float.IsFinite(phaseDuration) || phaseDuration <= 0f
-            ? 1f
-            : Math.Clamp(Progress + deltaSeconds / phaseDuration, 0f, 1f);
-
         var fadeOutCompleted = false;
-        if (Progress >= 1f)
+        var remaining = deltaSeconds;
+        // Consume the whole delta, crossing phase boundaries (fade-out -> fade-in -> steady)
+        // so a single large Update() can complete a multi-phase transition.
+        while (remaining > 0f && Phase != MusicFadePhase.Steady)
         {
-            if (Phase == MusicFadePhase.FadingOut)
+            var phaseDuration = Phase == MusicFadePhase.FadingOut
+                ? FadeOutDuration
+                : (_splitFadeIn ? FadeInDuration : FadeInDuration);
+
+            if (!float.IsFinite(phaseDuration) || phaseDuration <= 0f)
             {
-                Phase = MusicFadePhase.FadingIn;
-                Progress = 0f;
-                _splitFadeIn = true;
-                fadeOutCompleted = true;
+                Progress = 1f;
+                remaining = 0f;
             }
             else
             {
-                Phase = MusicFadePhase.Steady;
-                Progress = 1f;
-                _splitFadeIn = false;
+                var needed = (1f - Progress) * phaseDuration;
+                if (needed <= 0f)
+                {
+                    Progress = 1f;
+                }
+                else if (remaining >= needed)
+                {
+                    remaining -= needed;
+                    Progress = 1f;
+                }
+                else
+                {
+                    Progress += remaining / phaseDuration;
+                    remaining = 0f;
+                }
+            }
+
+            if (Progress >= 1f)
+            {
+                if (Phase == MusicFadePhase.FadingOut)
+                {
+                    Phase = MusicFadePhase.FadingIn;
+                    Progress = 0f;
+                    _splitFadeIn = true;
+                    fadeOutCompleted = true;
+                }
+                else
+                {
+                    Phase = MusicFadePhase.Steady;
+                    Progress = 1f;
+                    _splitFadeIn = false;
+                }
             }
         }
 

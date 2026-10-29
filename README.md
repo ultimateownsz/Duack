@@ -1,6 +1,6 @@
 # Duack
 
-Duack is a config-driven audio mixer for XNA related libraries/engines (MonoGame, KNI, and FlatRedBall2) on desktop and in the browser. It adds what the engine audio APIs don't ship: sidechain ducking, per-context music volumes, crossfades, playlists, and player-facing volume settings that actually persist.
+Duack is a configuration-driven audio mixer (config authored in C#) for XNA-related engines and libraries (MonoGame, KNI, and FlatRedBall2) on desktop and in the browser. It adds what the engine audio APIs don't ship: sidechain ducking, per-context music volumes, crossfades, playlists, and player-facing volume settings that actually persist.
 
 Not duck, not quack. Duack.
 

@@ -1,6 +1,6 @@
 # Duack
 
-Duack is a config-driven audio mixer for XNA related libraries/engines (MonoGame, KNI, and FlatRedBall2) on desktop and in the browser. It adds what the engine audio APIs don't ship: sidechain ducking, per-context music volumes, crossfades, playlists, and player-facing volume settings that actually persist.
+Duack is a configuration-driven audio mixer (config authored in C#) for XNA-related engines and libraries (MonoGame, KNI, and FlatRedBall2) on desktop and in the browser. It adds what the engine audio APIs don't ship: sidechain ducking, per-context music volumes, crossfades, playlists, and player-facing volume settings that actually persist.
 
 Not duck, not quack. Duack.
 
@@ -122,8 +122,7 @@ var music = new MusicManager(
 
 The full loop — contexts, crossfades, duck metering, a scripted story — runs in `samples/Duack.Sample.Desktop` (**Game demo**). The same mix runs on the web in `samples/Duack.Sample.Web` (**Game demo**) with a separate **[Crossfade demo](https://ultimateownsz.github.io/Duack/crossfade-demo/)** (`samples/Duack.Sample.Crossfade`) to isolate crossfade behavior. All build and run from a clean clone.
 
-This preview is **code-first**: the mix lives in C#, in your code, where it can be diffed, refactored, and version-controlled.
-
+This preview is **code-first**: the mix lives in C#, in your code, where it can be diffed, refactored, and version-controlled. Ducking, crossfades, playlists, and per-context volumes are all **configuration-driven** — but the configuration is authored in code (via `AudioConfigBuilder` / `PlaylistConfigBuilder`).
 ## Music contexts
 
 Music contexts work like scenes in OBS: named audio states the game switches between. Each entry in the config is the context of a game state, for example the context of the battle state or the context of an overworld, each with its own volume scale.

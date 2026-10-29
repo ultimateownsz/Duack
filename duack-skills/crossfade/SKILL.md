@@ -268,7 +268,7 @@ right after the last action in the previous scene.
 - **Crossfade / Ramp**: In DAWs and mixing consoles, transitions between signals and automation ramps are drawn as fades/crossfades. Duack's equal-power crossfade curve preserves acoustic power across track transitions.
 - **Fade up / Fade down**: Studio/broadcast verbs corresponding to track fade-in and fade-out automation.
 
-## 9b. Minimal config-driven example (copy-paste starting point)
+## 9b. Minimal configuration-driven example (code-authored; copy-paste starting point)
 
 ```csharp
 // 1) Playlists: null fades => CrossfadeSeconds drives the transition

@@ -5,7 +5,7 @@ description: "Duack audio library — core types, namespaces, quick reference. U
 
 # Duack — Audio Library for XNA-related libraries
 
-Duack is a config-driven audio mixer for MonoGame, KNI, FlatRedBall2 on desktop and
+Duack is a configuration-driven audio mixer (config authored in C#) for MonoGame, KNI, FlatRedBall2 on desktop and
 web. It adds what engine audio APIs don't ship: sidechain ducking, per-context music volumes,
 crossfades, playlists, player-facing volume settings with persistence, and per-cue SFX
 variation. Duack owns the mix and produces numbers; the user's engine owns playback.

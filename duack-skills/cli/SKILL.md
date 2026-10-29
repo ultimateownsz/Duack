@@ -37,11 +37,6 @@ Measures each WAV track's RMS/peak loudness, reports the loudest track, and (whe
 directory is given) writes gain-normalized WAV copies so every track matches the loudest
 track's RMS level. Aliases: `loudness`, `analyze`, `analyse`, `measure`, `loudnorm`.
 
-## Deprecated commands
-
-Legacy `audio-config.json` scaffolding and validation (`init`, `validate`, `convert --config`,
-`normalize --write-config`) are deprecated and moved to the `legacy/pre-refactor` branch.
-
 ## Tooling rules
 
 - Tools target desktop .NET only.

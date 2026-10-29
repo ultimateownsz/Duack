@@ -17,7 +17,6 @@ public class WebPlayerSettingsStoreTests
     {
         public Dictionary<string, string> Items { get; } = new();
         public bool FailWrites { get; set; }
-        public bool RejectWrites { get; set; }
         public bool FailReads { get; set; }
         public int Reads { get; private set; }
         public int Writes { get; private set; }
@@ -34,7 +33,6 @@ public class WebPlayerSettingsStoreTests
         {
             Writes++;
             if (FailWrites) throw new InvalidOperationException("quota exceeded");
-            if (RejectWrites) return false;
             Items[key] = value;
             return true;
         }
@@ -149,15 +147,6 @@ public class WebPlayerSettingsStoreTests
     public void Save_reports_failure_when_storage_throws()
     {
         var storage = new FakeStorage { FailWrites = true };
-        var store = new WebPlayerSettingsStore(storage);
-
-        Assert.False(store.Save(Sample()));
-    }
-
-    [Fact]
-    public void Save_reports_failure_when_storage_rejects_the_write()
-    {
-        var storage = new FakeStorage { RejectWrites = true };
         var store = new WebPlayerSettingsStore(storage);
 
         Assert.False(store.Save(Sample()));

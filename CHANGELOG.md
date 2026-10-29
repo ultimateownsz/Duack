@@ -69,10 +69,6 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 
 #### 2026-10-28
 
-- **Web player settings now propagate a storage rejection.** `WebPlayerSettingsStore.Save`
-  previously returned success whenever `IKeyValueStorage.Set` returned normally, even when the
-  storage adapter explicitly returned `false`; the settings UI could therefore report "Saved!"
-  although the new values were not persisted. A regression test now covers this path.
 - **Added an HTML/Blazor control overlay to the Crossfade sample.** The overlay now mirrors the
   former two-column player layout with track list, previous/play/next controls, status, meter,
   crossfade toggle, and 4s/8s/12s/16s presets. All actions invoke the running C# `Game1` and

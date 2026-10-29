@@ -64,12 +64,11 @@ The format is defined **once in core** (`Duack.PlaylistJson`, source-generated s
 head can read it at runtime); this tool's `PlaylistFile` is a thin wrapper over it, so the CLI
 and the game never drift on the format.
 
-## Deprecated: `audio-config.json`
+## Configuration boundary
 
-The legacy `audio-config.json` file format and associated CLI commands (`init`, `validate`,
-`--config`, `--write-config`) are deprecated and moved to the `legacy/pre-refactor` branch.
-Duack configuration is code-first via `AudioConfigBuilder` and `PlaylistConfigBuilder`, and
-asset discovery uses the two-directory convention (`SFX/`, `Tracks/`) with `duackcli scan`.
+Duack configuration is code-first via `AudioConfigBuilder` and `PlaylistConfigBuilder`.
+The CLI does not scaffold, validate, read, or write authored audio configuration; asset
+discovery uses the two-directory convention (`SFX/`, `Tracks/`) with `duackcli scan`.
 
 ## Tests
 
@@ -80,4 +79,3 @@ dotnet test tests/Duack.Tools.Tests
 Covers the song-set / conversion-decision policy, the WAV to OGG round trip (temp directory),
 the loudness analyzer, the playlist loader, and the CLI end-to-end (exit codes + filesystem
 effects) for `convert`, `scan`, and `normalize`.
-

@@ -28,17 +28,14 @@ A change that ships with no test needs a written reason in the changelog entry.
   engine/XNA/MonoGame/KNI package present. Never add a package or project reference to it.
 - Backend glue (engine, XNA, browser interop) lives in adapter packages, not the core.
 - **This preview is code-first.** The configuration surface is the C# API
-  (`AudioConfigBuilder`, `PlaylistConfigBuilder`, model objects). The JSON layer ships in the
-  core for tooling and persistence: `AudioConfigJson` / `PlaylistJson`, the snake_case
-  serialization contexts, and the playlist-embedding builder extension. No `audio-config.json`
-  ships with the library and none is required at runtime. There is no separate `Duack.Config`
-  project. JSON round-trip tests live in `tests/Duack.Tests/JsonRoundTrip`; the core test suite
-  references only `src/Duack`. A concrete JSON use case may justify splitting the layer into its
-  own package later; until then keep it in the core.
+  (`AudioConfigBuilder`, `PlaylistConfigBuilder`, model objects). Authored audio configuration
+  has no `audio-config.json` compatibility layer in master; the old implementation remains on
+  `legacy/pre-refactor`. JSON remains only for active persistence/tooling formats such as
+  standalone playlists, audio manifests, and player settings.
 - Playlists have their OWN source-generated context (`Duack.PlaylistJson`), so the AOT web
-  head can read them at runtime; a game may author them in code with `PlaylistConfigBuilder`
-  and embed them via `AudioConfigBuilderJsonExtensions.WithPlaylists`. The CLI's `PlaylistFile`
-  delegates to `PlaylistJson`, so tool and runtime never drift on the format.
+  head can read standalone playlist files at runtime; a game may author them in code with
+  `PlaylistConfigBuilder`. The CLI's `PlaylistFile` delegates to `PlaylistJson`, so tool and
+  runtime never drift on the format.
 
 ## Layout
 
@@ -48,12 +45,12 @@ A change that ships with no test needs a written reason in the changelog entry.
 - `src/Duack.KNI` — web adapter: `IMusicBackend` over the platform `MediaPlayer`, plus the browser
   `localStorage` settings storage.
 - `tests/Duack.Tests/CodeOnly` — behavior with no serialization surface.
-- `tests/Duack.Tests/JsonRoundTrip` — config/player-settings wire-format pins.
+- `tests/Duack.Tests/JsonRoundTrip` — active player-settings and manifest wire-format pins.
 - `tests/Duack.Adapters.Tests` — behavior of the two adapter packages, driven through their
   headless seams (fake clip library / fake media-player host); no audio device or browser needed.
-- `tools/DuackCli` — the desktop-only `duackcli` CLI (`init`/`validate`/`convert`/`scan`); the only
+- `tools/DuackCli` — the desktop-only `duackcli` CLI (`convert`/`scan`/`normalize`); the only
   place `NAudio`/`OggVorbisEncoder` live. Never referenced by `src/` or `samples/`. See its
-  `README.md` for the CLI and the `ExtensionData` round-trip contract.
+  `README.md` for the CLI and standalone playlist format.
 - `tests/Duack.Tools.Tests` — the tool's pure logic plus CLI end-to-end (exit codes +
   filesystem effects) against temp directories.
 - `samples/Duack.Sample.Core` — the engine-free sample core both heads share: the scripted
@@ -100,4 +97,3 @@ To prove the core stays BCL-only, restore into an empty package cache:
 $env:NUGET_PACKAGES = "$env:TEMP\duack-empty-cache"
 dotnet test tests/Duack.Tests
 ```
-

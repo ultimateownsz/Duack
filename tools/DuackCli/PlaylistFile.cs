@@ -15,13 +15,5 @@ public static class PlaylistFile
     public static bool TryParse(string json, out PlaylistConfig? playlists) =>
         PlaylistJson.TryParse(json, out playlists);
 
-    /// <summary>
-    /// Extracts an embedded <c>playlists</c> section from an audio config's
-    /// <see cref="AudioConfig.ExtensionData"/>, or null when the config has none.
-    /// <para><b>Deprecated:</b> embedding playlists into audio-config.json is deprecated.</para>
-    /// </summary>
-    [System.Obsolete("Embedding playlists into audio-config.json is deprecated and moved to the 'legacy/pre-refactor' branch.")]
-    public static PlaylistConfig? FromConfig(AudioConfig config) => PlaylistJson.FromConfig(config);
 }
-
 

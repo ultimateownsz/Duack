@@ -26,8 +26,6 @@ public static class Cli
         {
             return args[0] switch
             {
-                "init" => RunInit(args[1..], output, error),
-                "validate" => RunValidate(args[1..], output, error),
                 "convert" => RunConvert(args[1..], output, error),
                 "scan" => RunScan(args[1..], output, error),
                 "normalize" or "loudness" or "analyze" or "analyse" or "measure" or "loudnorm" => RunNormalize(args[1..], output, error),
@@ -63,34 +61,17 @@ public static class Cli
         return 0;
     }
 
-    // ---- init ----
-
-    private static int RunInit(string[] args, TextWriter output, TextWriter error)
-    {
-        return Fail(error, "'init' is deprecated. audio-config.json is deprecated and moved to the 'legacy/pre-refactor' branch.");
-    }
-
-    // ---- validate ----
-
-    private static int RunValidate(string[] args, TextWriter output, TextWriter error)
-    {
-        return Fail(error, "'validate' is deprecated. audio-config.json is deprecated and moved to the 'legacy/pre-refactor' branch.");
-    }
-
     // ---- convert ----
 
     private static int RunConvert(string[] args, TextWriter output, TextWriter error)
     {
         if (!TryParseArgs(
                 args,
-                valueOptions: new[] { "--config", "--playlists", "--quality" },
+                valueOptions: new[] { "--playlists", "--quality" },
                 flags: new[] { "--force", "--all" },
                 out var parsed,
                 out var errorMessage))
             return Fail(error, errorMessage);
-
-        if (parsed.Value("--config") is not null)
-            return Fail(error, "--config is deprecated. audio-config.json is deprecated and moved to the 'legacy/pre-refactor' branch. Use --playlists <file> or --all.");
 
         if (parsed.Positional.Count != 2)
             return Fail(error, "convert requires <contentDir> and <outDir>.");
@@ -238,14 +219,11 @@ public static class Cli
     {
         if (!TryParseArgs(
                 args,
-                valueOptions: new[] { "--out", "--config" },
-                flags: new[] { "--write-config" },
+                valueOptions: new[] { "--out" },
+                flags: Array.Empty<string>(),
                 out var parsed,
                 out var errorMessage))
             return Fail(error, errorMessage);
-
-        if (parsed.Has("--write-config") || parsed.Value("--config") is not null)
-            return Fail(error, "--config / --write-config is deprecated. audio-config.json is deprecated and moved to the 'legacy/pre-refactor' branch.");
 
         if (parsed.Positional.Count < 1 || parsed.Positional.Count > 2)
             return Fail(error, "normalize requires <dir> and an optional <outDir>.");
@@ -301,25 +279,6 @@ public static class Cli
         Directory.EnumerateFiles(directory, "*.ogg")
             .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
             .ToList();
-
-    private static bool TryReadConfig(string path, out AudioConfig? config, out string errorMessage)
-    {
-        config = null;
-        if (!File.Exists(path))
-        {
-            errorMessage = $"config file not found: {path}";
-            return false;
-        }
-
-        if (!AudioConfigJson.TryParse(File.ReadAllText(path), out config) || config is null)
-        {
-            errorMessage = $"could not parse config: {path}";
-            return false;
-        }
-
-        errorMessage = "";
-        return true;
-    }
 
     private static bool TryReadPlaylists(string path, out PlaylistConfig? playlists, out string errorMessage)
     {
@@ -408,6 +367,4 @@ public static class Cli
         public string? Value(string name) => Options.TryGetValue(name, out var value) ? value : null;
     }
 }
-
-
 

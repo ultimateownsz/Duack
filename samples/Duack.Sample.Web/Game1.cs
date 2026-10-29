@@ -86,7 +86,7 @@ public class Game1 : Game, IDisposable
         _hitBag = new MarbleBag<string>(hitCues.Count > 0 ? hitCues : new[] { StoryController.HitCue }, avoidImmediateRepeat: true);
 
         var playlists = SampleAudio.BuildPlaylists(_library);
-        var config = SampleAudio.BuildConfig(playlists);
+        var config = SampleAudio.BuildConfig();
 
         // KNI adapter: platform MediaPlayer (HTML <audio>) for music.
         var backend = new MediaPlayerMusicBackend(

@@ -1,9 +1,8 @@
 namespace DuackCli.Tests;
 
 /// <summary>
-/// Pins how a <see cref="PlaylistConfig"/> is read: a standalone JSON file (snake_case, string or
-/// numeric enums, comments/trailing commas allowed) and a <c>playlists</c> section embedded in an
-/// audio-config.json (captured by its <c>ExtensionData</c>).
+/// Pins how a <see cref="PlaylistConfig"/> is read from a standalone JSON file (snake_case, string
+/// or numeric enums, comments/trailing commas allowed).
 /// </summary>
 public class PlaylistFileTests
 {
@@ -45,31 +44,5 @@ public class PlaylistFileTests
         Assert.True(playlists.TryGet("overworld", out _));
     }
 
-    [Fact]
-    public void Reads_playlists_embedded_in_an_audio_config()
-    {
-        const string json = """
-            {
-              "master_volume": 1.0,
-              "playlists": {
-                "overworld": { "tracks": [ { "name": "theme_a", "context": "Overworld" } ] }
-              }
-            }
-            """;
-
-        var config = AudioConfigJson.Parse(json);
-        var playlists = PlaylistFile.FromConfig(config);
-
-        Assert.NotNull(playlists);
-        Assert.True(playlists!.TryGet("overworld", out _));
-    }
-
-    [Fact]
-    public void An_audio_config_without_playlists_yields_null()
-    {
-        var config = AudioConfigJson.Parse("""{ "master_volume": 1.0 }""");
-        Assert.Null(PlaylistFile.FromConfig(config));
-    }
 }
-
 

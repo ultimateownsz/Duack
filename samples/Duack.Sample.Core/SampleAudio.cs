@@ -24,7 +24,7 @@ public static class SampleAudio
         });
 
     /// <summary>Builds the shared demo mix: masters, contexts, crossfade, ducking, playlists.</summary>
-    public static AudioConfig BuildConfig(PlaylistConfig playlists) =>
+    public static AudioConfig BuildConfig() =>
         new AudioConfigBuilder()
             .WithMasterVolume(0.8f)
             .WithMusicMasterVolume(0.8f)
@@ -38,6 +38,5 @@ public static class SampleAudio
                 ReleaseSeconds = 0.1f,
             })
             .WithCrossfadeSeconds(1.2f)
-            .WithPlaylists(playlists)
             .Build();
 }

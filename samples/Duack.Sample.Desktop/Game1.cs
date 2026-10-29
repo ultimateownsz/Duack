@@ -75,7 +75,7 @@ public class Game1 : Game
         Console.WriteLine("[Sample] playlists:");
         Console.WriteLine(PlaylistJson.Serialize(playlists));
 
-        var config = SampleAudio.BuildConfig(playlists);
+        var config = SampleAudio.BuildConfig();
 
         // --- Wire the desktop adapters: music + one-shot sfx over one clip library ---
         _clips = new SoundEffectClipLibrary(_library);

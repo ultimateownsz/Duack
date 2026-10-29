@@ -19,10 +19,9 @@ before applying skill snippets to a newer package.
 - `src/Duack` is **pure BCL** (`System.Text.Json` only). Zero engine/XNA/MonoGame/KNI references.
   Never add a package or project reference to it.
 - Backend glue lives in adapter packages: `Duack.MonoGame` (desktop) and `Duack.KNI` (web).
-- **This preview is code-first.** The configuration surface is the C# API. The core also carries
-  the JSON layer for tooling and persistence (`AudioConfigJson` / `PlaylistJson`); no
-  `audio-config.json` ships with the library and none is required at runtime. Unknown sections
-  are preserved via `[JsonExtensionData]`.
+- **This preview is code-first.** The configuration surface is the C# API. The core carries
+  `PlaylistJson` for the standalone playlist wire format (tooling/runtime). No authored
+  config file ships with the library and none is required at runtime.
 - Playlists have their own source-generated context (`Duack.PlaylistJson`), AOT-safe for WASM.
 - Hot reload is **not built in**: hosts can re-parse config and call
   `MusicManager.ReloadDuckSources()` to swap duck params in place (duck state preserved);

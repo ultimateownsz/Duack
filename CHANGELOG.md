@@ -9,6 +9,11 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 
 ## [Unreleased]
 
+### Changed
+
+#### 2026-10-29
+- Player-settings diagnostics are now silent by default and opt-in via an injectable `IPlayerSettingsDiagnostics` sink (`PlayerSettings.Diagnostics`); consumers enable them by assigning `ConsolePlayerSettingsDiagnostics` or a custom sink. Web store read/save failure messages route through the sink. Removed the per-play `"[WebAudioSfxBackend] Playing ..."` success log line.
+
 
 ### Added
 

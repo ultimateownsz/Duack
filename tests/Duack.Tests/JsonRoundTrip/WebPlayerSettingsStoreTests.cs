@@ -46,6 +46,42 @@ public class WebPlayerSettingsStoreTests
         }
     }
 
+    private sealed class RecordingSink : IPlayerSettingsDiagnostics
+    {
+        public List<string> Messages { get; } = new();
+        public void Report(string message) => Messages.Add(message);
+    }
+
+    [Fact]
+    public void Diagnostics_are_silent_by_default_on_read_failure()
+    {
+        var storage = new FakeStorage { FailReads = true };
+        var store = new WebPlayerSettingsStore(storage);
+        Assert.False(store.TryLoad(out _));
+        // no sink wired => no console output expected (sink is null)
+    }
+
+    [Fact]
+    public void Diagnostics_sink_receives_read_failure_message()
+    {
+        var storage = new FakeStorage { FailReads = true };
+        var sink = new RecordingSink();
+        var store = new WebPlayerSettingsStore(storage, diagnostics: sink);
+        Assert.False(store.TryLoad(out _));
+        Assert.Single(sink.Messages);
+        Assert.Contains("could not be read", sink.Messages[0]);
+    }
+
+    [Fact]
+    public void Diagnostics_sink_receives_save_failure_message()
+    {
+        var storage = new FakeStorage { FailWrites = true };
+        var sink = new RecordingSink();
+        var store = new WebPlayerSettingsStore(storage, diagnostics: sink);
+        Assert.False(store.Save(Sample()));
+        Assert.Single(sink.Messages);
+        Assert.Contains("saving", sink.Messages[0]);
+    }
     private static PlayerAudioSettings Sample() => new()
     {
         MusicMasterVolume = 0.35f,

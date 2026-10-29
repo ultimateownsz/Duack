@@ -28,11 +28,13 @@ public class WebPlayerSettingsStore : IPlayerSettingsStore
 
     private readonly IKeyValueStorage _storage;
     private readonly string _key;
+    private readonly IPlayerSettingsDiagnostics? _diagnostics;
 
-    public WebPlayerSettingsStore(IKeyValueStorage storage, string? key = null)
+    public WebPlayerSettingsStore(IKeyValueStorage storage, string? key = null, IPlayerSettingsDiagnostics? diagnostics = null)
     {
         _storage = storage ?? throw new ArgumentNullException(nameof(storage));
         _key = string.IsNullOrEmpty(key) ? DefaultKey : key;
+        _diagnostics = diagnostics;
     }
 
     public bool TryLoad(out PlayerAudioSettings? settings)
@@ -59,7 +61,7 @@ public class WebPlayerSettingsStore : IPlayerSettingsStore
             // settings saved yet", so the reason is reported. Console.WriteLine, not Debug.WriteLine:
             // Debug is [Conditional("DEBUG")] and this is a shipping build, where the call and its
             // message are removed entirely. Pinned by SettingsDiagnosticsVisibilityTests.
-            Console.WriteLine(
+            _diagnostics?.Report(
                 $"[Settings] stored settings for '{_key}' could not be read; using authored " +
                 $"defaults. The stored value is likely corrupt. Cause: {ex.Message}");
             settings = null;
@@ -86,7 +88,7 @@ public class WebPlayerSettingsStore : IPlayerSettingsStore
             // Release, which made a genuine web save failure undiagnosable - the browser console had
             // nothing at all to show for it. Console.WriteLine, not Debug.WriteLine: see the comment
             // in TryLoad and Tests/Build/SettingsDiagnosticsVisibilityTests.cs.
-            Console.WriteLine(
+            _diagnostics?.Report(
                 $"[Settings] saving '{_key}' failed; any previously stored settings were left " +
                 $"untouched. If this happens every time, volume changes will not survive a reload. " +
                 $"Cause: {ex.Message}");

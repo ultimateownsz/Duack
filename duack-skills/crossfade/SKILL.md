@@ -12,11 +12,10 @@ pre-queue all tracks — each call to `MusicManager.Play()` triggers an independ
 from whatever is currently playing to the new track.
 
 
-- A transition by how it felt at its worst moment and its final moment, not by the average.
 - Judge a transition by how it felt at its worst moment and its final moment, not by the average.
 - A hard cut between tracks creates a jarring peak (silence gap) that players remember; an
-equal-power crossfade smooths the peak so the transition reads as seamless. The
-feel instant, so keep `CrossfadeSeconds` at or below 1.5 s for scene switches and reserve
+equal-power crossfade smooths the peak so the transition reads as seamless. The ear notices a
+gap instantly, so keep `CrossfadeSeconds` at or below 1.5 s for scene switches and reserve
 longer fades (2-4 s) for deliberate mood shifts.
 
 ### Runnable reference: the crossfade sample
@@ -28,8 +27,9 @@ transition meter driven by `IsTransitioning` / `TransitionElapsedSeconds` /
 `TransitionDurationSeconds`. Read its source before hand-authoring web wiring —
 the backend construction (`MediaPlayerMusicBackend(new KniMediaPlayerHost(),
 contentRoot: "Content/Audio/Tracks", extension: ".ogg")`), the manifest-based
-library, and the manifest → playlist flow are all pinned there and covered by
-`tests/Duack.Sample.Tests`.
+library, and the manifest → playlist flow are all in that sample. The sample is not part of
+`Duack.slnx` (build it explicitly); `tests/Duack.Sample.Tests` pins the shared
+`Duack.Sample.Core`, not this web head.
 
 The same demo runs in the browser (GitHub Pages): the crossfade demo listed in the README's samples table. Browsers suspend audio until a user gesture, so the demo starts on a click.
 
@@ -99,9 +99,9 @@ differently under the hood but consumed identically:
 - `IsTransitioning` — true while a crossfade is in flight
 - `TransitionFromTrack` / `TransitionToTrack` — the two tracks in the current transition
   (not the playlist contents; membership lives in `PlaylistConfig` / the controller)
-- `TransitionElapsedSeconds` / `TransitionDurationSeconds` — one normalized clock: on
-  desktop it spans the overlap; on web it composes the fade-out and fade-in phases.
-  The ratio is a valid progress value on either backend.
+- `TransitionElapsedSeconds` / `TransitionDurationSeconds` — elapsed and total seconds for
+  one timeline: on desktop it spans the overlap; on web it composes the fade-out and fade-in
+  phases. Their ratio is a valid progress value on either backend.
 
 ```csharp
 // Backend-agnostic progress gate: identical code on desktop and web.
@@ -272,12 +272,14 @@ right after the last action in the previous scene.
 
 ```csharp
 // 1) Playlists: null fades => CrossfadeSeconds drives the transition
-builder.WithPlaylist("Overworld", p => p
-    .Track("overworld", "Overworld", fadeInSeconds: null, fadeOutSeconds: null)
-    .Repeat(PlaylistRepeatMode.Track));
+var playlists = new PlaylistConfigBuilder()
+    .WithPlaylist("Overworld", p => p
+        .Track("overworld", "Overworld", fadeInSeconds: null, fadeOutSeconds: null)
+        .Repeat(PlaylistRepeatMode.Track))
+    .Build();
 
 // 2) Mix: one knob controls every transition
-new AudioConfigBuilder()
+var config = new AudioConfigBuilder()
     .WithCrossfadeSeconds(2.0f)   // change here to tune all transitions
     .WithContext("Overworld", 1f)
     .Build();
@@ -305,5 +307,5 @@ make the single `WithCrossfadeSeconds` knob take effect.
 | `MusicManager.IsTransitioning` | True while a crossfade is in flight |
 | `MusicManager.TransitionFromTrack` | Track being faded out (null when none) |
 | `MusicManager.TransitionToTrack` | Track being faded in (null when none) |
-| `MusicManager.TransitionElapsedSeconds` | Normalized transition clock (web: fade-out + fade-in) |
+| `MusicManager.TransitionElapsedSeconds` | Elapsed seconds in the current transition |
 | `MusicManager.TransitionDurationSeconds` | Total transition length (web: both phases) |

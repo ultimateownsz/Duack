@@ -79,6 +79,12 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
   misspelled name must update to `SfxDirectoryName`. Pins:
   `Convention_directory_constants_have_the_intended_names`.
 
+#### 2026-10-29
+
+- **Crossfade sample preset buttons now show their real durations (4s/8s/12s/16s).** The
+  labels were generated as `4 << index` (4s/8s/16s/32s), which did not match the actual
+  preset values (4/8/12/16s). Labels now read from `_crossfadePresets`.
+
 ## [0.1.0-preview.4] - 2026-10-26
 
 ### Added

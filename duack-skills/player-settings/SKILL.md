@@ -5,7 +5,7 @@ description: Player audio settings in Duack — PlayerAudioSettings, PlayerSetti
 
 # Duack — Player Settings
 
-Authored `audio-config.json` stays source of truth; the store only carries the handful of
+Authored code config stays source of truth; the store only carries the handful of
 values the settings overlay exposes. Re-exporting/hot-reloading authored config never
 discards a player's volume choice and never writes back into shipped content.
 

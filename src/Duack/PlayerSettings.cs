@@ -15,6 +15,13 @@ public static class PlayerSettings
     /// </summary>
     public static IPlayerSettingsStore Store { get; set; } = new FilePlayerSettingsStore();
 
+    /// <summary>
+    /// Diagnostic sink used for player-settings load/save failures. Defaults to a silent sink so
+    /// consumers see nothing unless they opt in. Assign <see cref="ConsolePlayerSettingsDiagnostics"/>
+    /// (or a custom sink) to surface problems.
+    /// </summary>
+    public static IPlayerSettingsDiagnostics Diagnostics { get; set; } = new NullPlayerSettingsDiagnostics();
+
     /// <summary>Returns the effective config: authored defaults with the player's values layered on.</summary>
     public static AudioConfig ApplyOverrides(AudioConfig authored) => ApplyOverrides(authored, Store);
 
@@ -45,8 +52,6 @@ public static class PlayerSettings
                 MasterVolume = saved.SfxMasterVolume,
                 CueVariation = authored.Sfx.CueVariation
             },
-            Tracks = authored.Tracks,
-            ExtensionData = authored.ExtensionData
         };
 
         effective.Sanitize();
@@ -68,13 +73,7 @@ public static class PlayerSettings
 
         if (!saved)
         {
-            // Console.WriteLine, not Debug.WriteLine: Debug is [Conditional("DEBUG")], so Release
-            // drops the call and the code building the message with it - and Release is the build
-            // the browser runs. This line was Debug-based and existed only in bin/Debug, which is how
-            // the shipped web head reported "Save failed" with no explanation anywhere. The store
-            // logs the underlying cause; this names which store was at fault. Pinned by
-            // Tests/Build/SettingsDiagnosticsVisibilityTests.cs.
-            Console.WriteLine($"[PlayerSettings] could not persist settings via {store.GetType().Name}");
+            Diagnostics.Report($"[PlayerSettings] could not persist settings via {store.GetType().Name}");
         }
 
         return saved;

@@ -43,34 +43,6 @@ public class CliTests : IDisposable
         Assert.Contains("frobnicate", err);
     }
 
-    // ---- init (deprecated) ----
-
-    [Fact]
-    public void Init_is_deprecated_and_fails()
-    {
-        var (code, _, err) = Run("init", _dir);
-
-        Assert.Equal(1, code);
-        Assert.Contains("deprecated", err, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("legacy/pre-refactor", err);
-        Assert.False(File.Exists(Path2("audio-config.json")));
-    }
-
-    // ---- validate (deprecated) ----
-
-    [Fact]
-    public void Validate_is_deprecated_and_fails()
-    {
-        var configPath = Path2("audio-config.json");
-        File.WriteAllText(configPath, CleanJson());
-
-        var (code, _, err) = Run("validate", configPath);
-
-        Assert.Equal(1, code);
-        Assert.Contains("deprecated", err, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("legacy/pre-refactor", err);
-    }
-
     // ---- convert ----
 
     [Fact]
@@ -110,20 +82,6 @@ public class CliTests : IDisposable
 
         Assert.NotEqual(0, code);
         Assert.NotEqual("", err);
-    }
-
-    [Fact]
-    public void Convert_with_config_fails_as_deprecated()
-    {
-        TestWav.WriteSine(Path2("theme_a.wav"));
-        var configPath = Path2("audio-config.json");
-        File.WriteAllText(configPath, CleanJson());
-
-        var (code, _, err) = Run("convert", _dir, Path2("out"), "--config", configPath);
-
-        Assert.Equal(1, code);
-        Assert.Contains("deprecated", err, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("legacy/pre-refactor", err);
     }
 
     [Fact]
@@ -285,5 +243,4 @@ public class CliTests : IDisposable
         }
         """;
 }
-
 

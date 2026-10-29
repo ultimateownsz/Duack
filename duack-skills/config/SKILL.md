@@ -22,11 +22,6 @@ var config = new AudioConfigBuilder()
     .Build();
 ```
 
-## Deprecated: `audio-config.json`
-
-The JSON wire format for `AudioConfig` (`audio-config.json`, `AudioConfigJson`, `AudioConfigBuilderJsonExtensions`)
-is deprecated and moved to the `legacy/pre-refactor` branch.
-
 ## Schema & versioning
 
 - `AudioConfig.CurrentSchemaVersion = 1`.

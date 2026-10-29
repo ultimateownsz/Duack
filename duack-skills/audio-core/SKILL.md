@@ -70,7 +70,7 @@ var sfx = new SfxManager(library,
     sfxConfig: config.Sfx);
 
 music.Play("overworld");          // playlist lookup: BuildPlaylists() named this single-track playlist after the track
-sfx.Play("sfx", duck: true);   // pulses the "sfx" duck source: the music dips and recovers automatically
+sfx.Play("notice", duck: true);   // plays the "notice" cue; the "sfx" duck source dips the music automatically
 
 // once per frame:
 music.Update(dt);
@@ -83,16 +83,10 @@ using Duack.KNI;
 
 var manifest = AudioLibraryManifestJson.Deserialize(manifestJson); // duackcli scan writes audio-manifest.json
 var library = AudioLibrary.FromManifest(manifest);
-var playlists = library.BuildPlayList();    // same auto playlists as desktop
+var playlists = library.BuildPlaylists();    // same auto playlists as desktop
 
 var music = new MusicManager(
     // contentRoot must point at Tracks/ — the backend default (Content/Audio) predates the
-    // two-directory convention and 404s under the standard layout.
-    new MediaPlayerMusicBackend(new KniMediaPlayerHost()), contenrRoot: "Content/Audio/Tracks"),
-    new MusicPlaylistController(playlists),
-    config.Music, masterVolume: config.MasterVolume);
-
-/ contentRoot must point at Tracks/ — the backend default (Content/Audio) predates the
     // two-directory convention and 404s under the standard layout.
     new MediaPlayerMusicBackend(new KniMediaPlayerHost(), contentRoot: "Content/Audio/Tracks"),
     new MusicPlaylistController(playlists),
@@ -122,11 +116,11 @@ Already-converted files are skipped automatically.
 ### Common pitfalls
 - **Missing `audio-manifest.json` on web** - run `duackcli scan` and check it in.
 - **Case sensitivity** - `SFX`/`Tracks` and lowercase extensions required; web hosts 404 on mismatch.
-- **OGG decode (KNI)** - KNI's `SoundEffect.FromStream` parses WAV only. ...
+- **OGG decode (KNI)** - KNI's `SoundEffect.FromStream` parses WAV only. See the NVorbis `TotalSamples` pitfall in `adapters`.
 - **No audio on desktop** - ensure `Content/Audio/` is copied to build output.
-+ - **Silent no-op ducking** - a `duck: true` play against a source missing from
-+   `MusicConfig.DuckSources` does nothing silently. Verify the `SfxManager` duckSource
-+   name (default "sfx") is declared in the config.
+- **Silent no-op ducking** - a `duck: true` play whose duck source is missing from
+  `MusicConfig.DuckSources` does nothing silently. Verify the `SfxManager` duckSource
+  name (default "sfx") is declared in the config.
 
 See `adapters`, `audio-library`, `crossfade`, `playlists` for deeper coverage.
 
@@ -163,8 +157,11 @@ Every namespace → `Duack`.
 
 ### SFX variation
 - `MarbleBag<T>` — draw-without-replacement randomizer (swap-remove, refill on empty, optional avoidImmediateRepeat, injectable Random)
-- Cue variation: resolved internally from config.Music.CueVariation on every track start;
-- sfx.PlayNext() draws the next bag variant. NextCuePitch is private — do not call it.
+- `CueVariation` / `CuePlay` — per-play pitch/volume jitter data and its resolved play
+- `SfxManager` — cue-name one-shot playback with automatic music ducking and per-play cue jitter
+- Music resolves its authored `MusicConfig.CueVariation` internally on every track start; SFX
+  resolves `SfxConfig.CueVariation` per play. `MusicManager.NextCuePitch()` is private;
+  `sfx.PlayNext()` draws a bag-selected SFX variant.
 
 ### Settings
 - `PlayerAudioSettings`, `PlayerSettings` — player volume settings
@@ -236,9 +233,9 @@ var next = bag.Draw();              // draw without replacement
 
 ### SFX variation pattern
 A cue may declare multiple variants plus per-play pitch/volume ranges. Pure data + pure math
-in core; the music and SFX directors resolve the authored `CueVariation` at play time (music via
-`MusicManager.NextCuePitch()`, SFX via its `SfxConfig.CueVariation`). Use `MarbleBag<T>` for variant
-selection.
+in core; both directors resolve the authored `CueVariation` at play time (music via
+`MusicConfig.CueVariation`, SFX via `SfxConfig.CueVariation`). Use `MarbleBag<T>` for variant
+selection; `sfx.PlayNext()` draws one.
 
 ### Player settings
 ```csharp
@@ -253,8 +250,8 @@ bool ok = PlayerSettings.SaveOverrides(effective);              // returns the s
 ```
 - `VolumeCurve.ToAmplitude(slider)` — perceptual (quadratic, −60 dB floor at 0)
 - `VolumeCurve.ToSlider(amplitude)` — exact inverse
-+ - Volume properties are live: assigning `music.MasterVolume`, `sfx.MasterVolume`, or
-+   `sfx.SfxBusVolume` applies on the next frame or play — a settings slider needs no rebuild.
+- Volume properties are live: assigning `music.MasterVolume`, `sfx.MasterVolume`, or
+  `sfx.SfxBusVolume` applies on the next frame or play — a settings slider needs no rebuild.
 
 ### Buses
 Three default buses: **master**, **music**, **SFX**. The master bus scales everything (music and SFX alike) and is the top of the chain; music and SFX are the domain buses. Composition: `master bus × bus volume × context × duck × player settings`, master entering once at the top. Duck sources target the music bus, under the master.
@@ -301,30 +298,33 @@ See the `crossfade` skill for detailed crossfade and scene transition patterns.
 
 Install:
 ```
-dotnet add package Duack
-dotnet add package Duack.MonoGame   # desktop
-# or Duack.KNI for web
+dotnet add package Duack --prerelease
+dotnet add package Duack.MonoGame --prerelease   # desktop
+dotnet add package Duack.KNI --prerelease        # browser/WASM
 ```
 
 Config (code-first):
-`csharp
+```csharp
 var config = new AudioConfigBuilder()
-    .WithMusicMasterVolume(0.9f).WithSfxMasterVolume(0.7f)
+    .WithMusicMasterVolume(0.9f)
+    .WithSfxMasterVolume(0.7f)
     .WithCrossfadeSeconds(1.5f)
     .WithContext("battle", 0.8f)
-    .WithDuckSource("sfx", new DuckSourceConfig { Ratio=0.25f, AttackSeconds=0.06f, ReleaseSeconds=0.35f })
+    .WithDuckSource("sfx", new DuckSourceConfig { Ratio = 0.25f, AttackSeconds = 0.06f, ReleaseSeconds = 0.35f })
     .Build();
-`
+```
 
 Wire (desktop):
-`csharp
-var clips = new SoundEffectClipLibrary(content);
+```csharp
+var library = AudioLibrary.ScanDirectory("Content/Audio");
+var playlists = library.BuildPlaylists();
+var clips = new SoundEffectClipLibrary(library);
 var backend = new SoundEffectMusicBackend(clips);
 var controller = new MusicPlaylistController(playlists);
 var manager = new MusicManager(backend, controller, config.Music);
-`
+```
 
-Per-frame: manager.Update(deltaSeconds); Switch: manager.ReleaseDucks(); manager.Play("battle"); Duck: manager.Pulse("sfx");.
+Per-frame: `manager.Update(deltaSeconds)`; switch: `manager.ReleaseDucks(); manager.Play("battle");`; duck: `manager.Pulse("sfx")`.
 
 See topic skills: ducking, playlists, sfx-variation, player-settings, audio-library, config, adapters, cli, crossfade.
 

@@ -63,7 +63,7 @@ Configure the mix in code (five lines):
 var config = new AudioConfigBuilder()
     .WithMasterVolume(0.9f)
     .WithCrossfadeSeconds(1.5f)
-    .WithDuckSource("notice", new DuckSourceConfig { Ratio = 0.25f })
+    .WithDuckSource("sfx", new DuckSourceConfig { Ratio = 0.25f })
     .Build();
 ```
 
@@ -74,7 +74,7 @@ using Duack;
 using Duack.MonoGame;
 
 var library   = AudioLibrary.ScanDirectory(audioRoot);   // SFX/ + Tracks/ convention, no cue registration
-var playlists = SampleAudio.BuildPlaylists(library);    // your playlist definitions
+var playlists = library.BuildPlaylists();    // one looping playlist per track, plus a bag-shuffled "music" playlist
 var clips     = new SoundEffectClipLibrary(library);
 
 var music = new MusicManager(
@@ -88,8 +88,8 @@ var sfx = new SfxManager(library,
     sfxBusVolume: config.Sfx.MasterVolume,
     sfxConfig: config.Sfx);
 
-music.Play("overworld");
-sfx.Play("notice", duck: true);   // the music dips and recovers automatically
+music.Play("overworld");          // playlist lookup: BuildPlaylists() named this single-track playlist after the track
+sfx.Play("notice", duck: true);   // pulses the "sfx" duck source: the music dips and recovers automatically
 
 // once per frame:
 music.Update(dt);
@@ -99,17 +99,39 @@ The essential interaction is small: create a `MusicManager`, call `Play`, and ca
 when the game changes context. Duack applies the configured transition instead of requiring
 each game state to implement its own fade timers and volume math.
 
-The full loop — contexts, crossfades, duck metering, a scripted story — runs in `samples/Duack.Sample.Desktop` (**Story demo**). The same mix runs on the web in `samples/Duack.Sample.Web` (**Story demo**) with a separate **[Crossfade demo](https://ultimateownsz.github.io/Duack/crossfade-demo/)** (`samples/Duack.Sample.Crossfade`) to isolate crossfade behavior. All build and run from a clean clone.
+On the web (KNI / Blazor WASM), the core stays identical - same config, same managers, same
+playlists. Only the edges change: the library is built from the checked-in manifest instead
+of a directory scan, and playback goes through the KNI adapters.
+
+```csharp
+using Duack;
+using Duack.KNI;
+
+var manifest = AudioLibraryManifestJson.Deserialize(manifestJson); // duackcli scan writes audio-manifest.json
+var library = AudioLibrary.FromManifest(manifest);
+var playlists = library.BuildPlayList();    // same auto playlists as desktop
+
+var music = new MusicManager(
+    new MediaPlayerMusicBackend(new KniMediaPlayerHost()),
+    new MusicPlaylistController(playlists),
+    config.Music, masterVolume: config.MasterVolume);
+
+// plus WebAudioSfxBackend for one-shot cues; music.Update(dt) once per frame as on desktop.
+
+// plus WebAudioSfxBackend for one-shot cues; music.Update(dt) once per frame as on desktop.
+```
+
+The full loop — contexts, crossfades, duck metering, a scripted story — runs in `samples/Duack.Sample.Desktop` (**Game demo**). The same mix runs on the web in `samples/Duack.Sample.Web` (**Game demo**) with a separate **[Crossfade demo](https://ultimateownsz.github.io/Duack/crossfade-demo/)** (`samples/Duack.Sample.Crossfade`) to isolate crossfade behavior. All build and run from a clean clone.
 
 This preview is **code-first**: the mix lives in C#, in your code, where it can be diffed, refactored, and version-controlled.
 
 ## Music contexts
 
-Music contexts work like scenes in OBS: named audio states the game switches between. Each entry in the config is the context of a game state, for example the context of the battle state or the context of the overworld, each with its own volume scale.
+Music contexts work like scenes in OBS: named audio states the game switches between. Each entry in the config is the context of a game state, for example the context of the battle state or the context of an overworld, each with its own volume scale.
 
 ## Buses
 
-Duack ships three default buses: **master**, **music**, and **SFX**. The master bus scales everything (music and SFX alike) and is the top of the chain; music and SFX are the two domain buses. The volume composition is:
+Duack ships three default buses: **master**, **music**, and **SFX**. The master bus scales everything (music and SoundFX alike) and is the top of the chain; music and SFX are the two domain buses. The volume composition is:
 
 ```
 master bus x bus volume x context x duck x player settings

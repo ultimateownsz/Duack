@@ -52,7 +52,6 @@ public sealed class WebAudioSfxBackend : ISfxBackend, IDisposable
             var pitchClamped = Math.Clamp(pitch, -1f, 1f);
             var volumeClamped = Math.Clamp(volume, 0f, 1f);
             _js.PlaySource(url, pitchClamped, volumeClamped);
-            Console.WriteLine($"[WebAudioSfxBackend] Playing '{cueName}' at pitch={pitchClamped}, volume={volumeClamped}");
             return true;
         }
         catch (Exception ex)

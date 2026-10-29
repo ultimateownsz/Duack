@@ -49,7 +49,7 @@
                             {
                                 var presetIndex = i;
                                 <button class="@(presetIndex == game.CrossfadePresetIndex ? "selected" : "")"
-                                        @onclick="() => SelectPreset(presetIndex)">@($"{4 << presetIndex}s")</button>
+                                        @onclick="() => SelectPreset(presetIndex)">@($"{game.CrossfadePresets[presetIndex]:0}s")</button>
                             }
                         </div>
                     </div>

@@ -14,6 +14,9 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 #### 2026-10-29
 - Player-settings diagnostics are now silent by default and opt-in via an injectable `IPlayerSettingsDiagnostics` sink (`PlayerSettings.Diagnostics`); consumers enable them by assigning `ConsolePlayerSettingsDiagnostics` or a custom sink. Web store read/save failure messages route through the sink. Removed the per-play `"[WebAudioSfxBackend] Playing ..."` success log line.
 
+#### 2026-10-29
+- Clarified docs that "configuration-driven" means ducking/crossfades/playlists/volumes are driven by config objects authored in C# via `AudioConfigBuilder`/`PlaylistConfigBuilder`. Updated README and audio-core/crossfade skill docs to remove the apparent "config-driven (code-only)" contradiction.
+
 
 ### Added
 

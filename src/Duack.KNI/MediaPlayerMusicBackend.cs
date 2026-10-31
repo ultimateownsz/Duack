@@ -54,6 +54,15 @@ public sealed class MediaPlayerMusicBackend : IMusicBackend
     public bool IsPaused => _paused;
 
     /// <inheritdoc />
+    public TimeSpan Position => TimeSpan.Zero;
+
+    /// <inheritdoc />
+    public TimeSpan Duration => TimeSpan.Zero;
+
+    /// <inheritdoc />
+    public void Seek(TimeSpan position) { }
+
+    /// <inheritdoc />
     public void PlayTrack(string trackName, float initialVolume, float pitch)
     {
         // Pitch is not addressable on the platform player; the director's composition still applies.

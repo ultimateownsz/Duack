@@ -23,6 +23,7 @@ public sealed class MediaPlayerMusicBackend : IMusicBackend
     private readonly string _extension;
     private readonly MediaEndState _end;
     private float _elapsed;
+    private bool _paused;
 
     /// <summary>Raised when the active track plays to its natural end.</summary>
     public event EventHandler? TrackEnded;
@@ -55,6 +56,7 @@ public sealed class MediaPlayerMusicBackend : IMusicBackend
 
     /// <inheritdoc />
     public float? CurrentTrackDurationSeconds => null;
+    public bool IsPaused => _paused;
 
     /// <inheritdoc />
     public void PlayTrack(string trackName, float initialVolume, float pitch)
@@ -98,6 +100,21 @@ public sealed class MediaPlayerMusicBackend : IMusicBackend
         _end.StoppedByUs();
         _host.Stop();
         _elapsed = 0f;
+        _paused = false;
+    }
+
+    /// <inheritdoc />
+    public void Pause()
+    {
+        _host.Pause();
+        _paused = true;
+    }
+
+    /// <inheritdoc />
+    public void Resume()
+    {
+        _host.Resume();
+        _paused = false;
     }
 
     /// <inheritdoc />

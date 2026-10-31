@@ -1,3 +1,5 @@
+using System;
+
 namespace Duack;
 
 /// <summary>
@@ -34,6 +36,24 @@ public interface IMusicBackend
 
     /// <summary>Stops all music playback.</summary>
     void Stop();
+
+    /// <summary>Pauses playback without tearing down the active track (best-effort resume).</summary>
+    void Pause();
+
+    /// <summary>Resumes a paused track.</summary>
+    void Resume();
+
+    /// <summary>Current playback position of the active track (best-effort; zero if unsupported).</summary>
+    TimeSpan Position { get; }
+
+    /// <summary>Total duration of the active track (best-effort; zero if unsupported).</summary>
+    TimeSpan Duration { get; }
+
+    /// <summary>Seeks the active track to <paramref name="position"/> (best-effort).</summary>
+    void Seek(TimeSpan position);
+
+    /// <summary>True if playback is currently paused.</summary>
+    bool IsPaused { get; }
 
     /// <summary>True if any track is currently playing (active or, if overlapping, outgoing).</summary>
     bool IsTrackPlaying { get; }

@@ -30,4 +30,10 @@ public interface IMediaPlayerHost
 
     /// <summary>Stops the current track immediately.</summary>
     void Stop();
+
+    /// <summary>Pauses the current track, preserving position.</summary>
+    void Pause();
+
+    /// <summary>Resumes a paused track.</summary>
+    void Resume();
 }

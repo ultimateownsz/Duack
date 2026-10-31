@@ -26,6 +26,9 @@ public interface IAudioInstance : IDisposable
 
     /// <summary>Stops playback immediately.</summary>
     void Stop();
+
+    /// <summary>Pauses playback, preserving position.</summary>
+    void Pause();
 }
 
 /// <summary>

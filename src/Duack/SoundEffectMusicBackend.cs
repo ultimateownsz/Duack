@@ -32,8 +32,17 @@ public sealed class SoundEffectMusicBackend : IMusicBackend
     /// <inheritdoc />
     public bool SupportsOverlap => true;
 
+    private bool _paused;
+
     /// <inheritdoc />
     public bool IsTrackPlaying => _active is { IsPlaying: true };
+
+    public TimeSpan Position => TimeSpan.Zero;
+    public TimeSpan Duration => TimeSpan.Zero;
+    public void Seek(TimeSpan position) { }
+
+    /// <inheritdoc />
+    public bool IsPaused => _paused;
 
     /// <inheritdoc />
     public void PlayTrack(string trackName, float initialVolume, float pitch)
@@ -88,13 +97,34 @@ public sealed class SoundEffectMusicBackend : IMusicBackend
         _active?.Dispose();
         _active = null;
         _activeStarted = false;
+        _paused = false;
         StopOutgoing();
+    }
+
+    /// <inheritdoc />
+    public void Pause()
+    {
+        if (_active is { IsPlaying: true })
+        {
+            _active.Pause();
+            _paused = true;
+        }
+    }
+
+    /// <inheritdoc />
+    public void Resume()
+    {
+        if (_paused && _active != null)
+        {
+            _active.Play();
+            _paused = false;
+        }
     }
 
     /// <inheritdoc />
     public void Update(float deltaSeconds)
     {
-        if (_activeStarted && _active is { IsPlaying: false })
+        if (!_paused && _activeStarted && _active is { IsPlaying: false })
         {
             // The instance stopped on its own (reached the end); report completion exactly once.
             _activeStarted = false;

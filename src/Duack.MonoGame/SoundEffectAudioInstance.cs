@@ -37,6 +37,8 @@ internal sealed class SoundEffectAudioInstance : IAudioInstance
 
     public void Stop() => _instance.Stop();
 
+    public void Pause() => _instance.Pause();
+
     public void Dispose()
     {
         if (_disposed) return;

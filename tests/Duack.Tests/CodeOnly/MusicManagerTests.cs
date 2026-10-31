@@ -34,6 +34,12 @@ public class MusicManagerTests
         public void SetOutgoingVolume(float volume) => OutgoingVolumes.Add(volume);
         public void StopOutgoing() => StopOutgoingCalls++;
         public void Stop() { StopCalls++; IsTrackPlaying = false; }
+    public void Pause() { }
+    public void Resume() { }
+    public bool IsPaused => false;
+    public TimeSpan Position => TimeSpan.Zero;
+    public TimeSpan Duration => TimeSpan.Zero;
+    public void Seek(TimeSpan position) { }
         public void Update(float deltaSeconds) { }
 
         /// <summary>Simulates the active track reaching its end (completion detection).</summary>

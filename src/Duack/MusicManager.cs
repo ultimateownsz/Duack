@@ -206,6 +206,10 @@ public class MusicManager
 
     /// <summary>Stops playback and clears all transition state.</summary>
     /// <param name="fadeOutSeconds">Optional fade out duration in seconds.</param>
+    public void Pause() => _backend.Pause();
+    public void Resume() => _backend.Resume();
+    public bool IsPaused => _backend.IsPaused;
+
     public void Stop(float? fadeOutSeconds = null)
     {
         var duration = fadeOutSeconds 

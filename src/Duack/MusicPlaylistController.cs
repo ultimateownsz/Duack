@@ -58,7 +58,14 @@ public sealed class MusicPlaylistController
     /// Starts <paramref name="playlistName"/> from the top. An unknown or empty playlist is ignored
     /// (the controller stops and stays idle rather than throwing), so a stray name cannot crash a game.
     /// </summary>
-    public void Play(string playlistName)
+    public void Play(string playlistName) => Play(playlistName, 0);
+
+    /// <summary>
+    /// Starts <paramref name="playlistName"/> at <paramref name="startIndex"/> (clamped to a valid
+    /// track), enabling resume from a previously captured position. An unknown/empty playlist is
+    /// ignored. Shuffle bags are rebuilt and a random draw is used when shuffle is enabled.
+    /// </summary>
+    public void Play(string playlistName, int startIndex)
     {
         if (playlistName == null)
             throw new ArgumentNullException(nameof(playlistName));
@@ -85,7 +92,7 @@ public sealed class MusicPlaylistController
         }
         else
         {
-            _index = 0;
+            _index = Math.Clamp(startIndex, 0, _tracks.Count - 1);
         }
 
         _current = _tracks[_index];

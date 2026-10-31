@@ -27,6 +27,9 @@ internal sealed class FakeAudioInstance : IAudioInstance
         IsPlaying = false;
     }
 
+    public void Pause() { }
+    public void Resume() { }
+
     public void Dispose() => Disposed = true;
 
     /// <summary>Simulates the instance reaching the end of its (non-looped) playback.</summary>

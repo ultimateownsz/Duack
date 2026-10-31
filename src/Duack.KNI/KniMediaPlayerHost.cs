@@ -45,4 +45,16 @@ public sealed class KniMediaPlayerHost : IMediaPlayerHost
         try { FrameworkDispatcher.Update(); MediaPlayer.Stop(); }
         catch { }
     }
+
+    public void Pause()
+    {
+        try { FrameworkDispatcher.Update(); MediaPlayer.Pause(); }
+        catch { }
+    }
+
+    public void Resume()
+    {
+        try { FrameworkDispatcher.Update(); MediaPlayer.Resume(); }
+        catch { }
+    }
 }

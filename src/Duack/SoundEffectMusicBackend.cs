@@ -22,6 +22,7 @@ public sealed class SoundEffectMusicBackend : IMusicBackend
     private IAudioInstance? _active;
     private IAudioInstance? _outgoing;
     private bool _activeStarted;
+    private float _elapsed;
 
     /// <summary>Raised when the active track plays to its natural end.</summary>
     public event EventHandler? TrackEnded;
@@ -34,6 +35,9 @@ public sealed class SoundEffectMusicBackend : IMusicBackend
 
     /// <inheritdoc />
     public bool IsTrackPlaying => _active is { IsPlaying: true };
+
+    /// <inheritdoc />
+    public float CurrentTrackElapsedSeconds => _active is null ? 0f : _elapsed;
 
     /// <inheritdoc />
     public void PlayTrack(string trackName, float initialVolume, float pitch)
@@ -57,6 +61,7 @@ public sealed class SoundEffectMusicBackend : IMusicBackend
         _active.Pitch = pitch;
         _active.Play();
         _activeStarted = true;
+        _elapsed = 0f;
     }
 
     /// <inheritdoc />
@@ -88,12 +93,15 @@ public sealed class SoundEffectMusicBackend : IMusicBackend
         _active?.Dispose();
         _active = null;
         _activeStarted = false;
+        _elapsed = 0f;
         StopOutgoing();
     }
 
     /// <inheritdoc />
     public void Update(float deltaSeconds)
     {
+        if (_active is not null)
+            _elapsed += deltaSeconds;
         if (_activeStarted && _active is { IsPlaying: false })
         {
             // The instance stopped on its own (reached the end); report completion exactly once.

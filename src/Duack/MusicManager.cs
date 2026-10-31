@@ -129,6 +129,9 @@ public class MusicManager
     /// <summary>The track the playlist currently names (what the backend should be playing).</summary>
     public PlaylistTrack? CurrentTrack => _playlist.CurrentTrack;
 
+    /// <summary>Seconds since the current track started (0 when nothing is playing).</summary>
+    public float CurrentTrackElapsedSeconds => _backend.IsTrackPlaying ? _backend.CurrentTrackElapsedSeconds : 0f;
+
     /// <summary>Starts <paramref name="playlistName"/> from the top.</summary>
     /// <param name="playlistName">Name of the playlist to play.</param>
     /// <param name="fadeInSeconds">Fade in duration in seconds. If null or omitted, uses

@@ -39,6 +39,12 @@ public interface IMusicBackend
     bool IsTrackPlaying { get; }
 
     /// <summary>
+    /// Seconds since the currently active track started playing (0 when nothing is playing).
+    /// Resets on <see cref="PlayTrack"/> and on <see cref="Stop"/>.
+    /// </summary>
+    float CurrentTrackElapsedSeconds { get; }
+
+    /// <summary>
     /// Fired when the currently active track completes playback (reaches end). The core
     /// <see cref="MusicManager"/> uses this to advance playlists via
     /// <see cref="MusicPlaylistController.NotifyTrackCompleted"/>.

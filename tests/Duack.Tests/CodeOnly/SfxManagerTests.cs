@@ -31,6 +31,7 @@ public class SfxManagerTests
     {
         public bool SupportsOverlap => true;
         public bool IsTrackPlaying { get; private set; }
+        public float CurrentTrackElapsedSeconds { get; set; }
 
         public event EventHandler? TrackEnded
         {

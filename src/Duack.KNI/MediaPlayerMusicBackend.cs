@@ -54,6 +54,9 @@ public sealed class MediaPlayerMusicBackend : IMusicBackend
     public float CurrentTrackElapsedSeconds => IsTrackPlaying ? _elapsed : 0f;
 
     /// <inheritdoc />
+    public float? CurrentTrackDurationSeconds => null;
+
+    /// <inheritdoc />
     public void PlayTrack(string trackName, float initialVolume, float pitch)
     {
         // Pitch is not addressable on the platform player; the director's composition still applies.

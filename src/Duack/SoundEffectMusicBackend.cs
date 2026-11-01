@@ -40,6 +40,9 @@ public sealed class SoundEffectMusicBackend : IMusicBackend
     public float CurrentTrackElapsedSeconds => _active is null ? 0f : _elapsed;
 
     /// <inheritdoc />
+    public float? CurrentTrackDurationSeconds => null;
+
+    /// <inheritdoc />
     public void PlayTrack(string trackName, float initialVolume, float pitch)
     {
         var clip = _clips.Get(trackName);

@@ -22,6 +22,7 @@ public sealed class MediaPlayerMusicBackend : IMusicBackend
     private readonly string _contentRoot;
     private readonly string _extension;
     private readonly MediaEndState _end;
+    private float _elapsed;
 
     /// <summary>Raised when the active track plays to its natural end.</summary>
     public event EventHandler? TrackEnded;
@@ -50,6 +51,12 @@ public sealed class MediaPlayerMusicBackend : IMusicBackend
     public bool IsTrackPlaying => _end.IsRunning && _host.IsPlaying;
 
     /// <inheritdoc />
+    public float CurrentTrackElapsedSeconds => IsTrackPlaying ? _elapsed : 0f;
+
+    /// <inheritdoc />
+    public float? CurrentTrackDurationSeconds => null;
+
+    /// <inheritdoc />
     public void PlayTrack(string trackName, float initialVolume, float pitch)
     {
         // Pitch is not addressable on the platform player; the director's composition still applies.
@@ -59,6 +66,7 @@ public sealed class MediaPlayerMusicBackend : IMusicBackend
             _host.Volume = initialVolume;
             _host.Play($"{_contentRoot}/{trackName}{_extension}");
             _end.Started();
+            _elapsed = 0f;
         }
         catch (Exception ex)
         {
@@ -89,11 +97,14 @@ public sealed class MediaPlayerMusicBackend : IMusicBackend
     {
         _end.StoppedByUs();
         _host.Stop();
+        _elapsed = 0f;
     }
 
     /// <inheritdoc />
     public void Update(float deltaSeconds)
     {
+        if (IsTrackPlaying)
+            _elapsed += deltaSeconds;
         _end.Advance(deltaSeconds);
 
         // Safety net: if the platform never raised the state-change event, poll. The MediaEndState

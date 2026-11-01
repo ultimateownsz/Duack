@@ -20,6 +20,9 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 
 ### Added
 
+#### 2026-10-31
+- `MusicManager.CurrentTrackElapsedSeconds` reports elapsed playback time for the current track on both backends; `CurrentTrackDurationSeconds` is nullable for consumer-provided resolvers.
+
 #### 2026-10-28
 
 - **GitHub Pages workflow for the web sample.** New `.github/workflows/pages.yml` builds and

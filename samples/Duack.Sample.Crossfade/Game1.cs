@@ -38,6 +38,8 @@ public class Game1 : Game, IDisposable
     public int CrossfadePresetIndex => _crossfadePresetIndex;
     public IReadOnlyList<float> CrossfadePresets => _crossfadePresets;
     public bool IsPlaying => _manager.IsPlaying;
+    public float CurrentTrackElapsedSeconds => _manager.CurrentTrackElapsedSeconds;
+    public float? CurrentTrackDurationSeconds => _manager.CurrentTrackDurationSeconds;
     public string CurrentTrackName => _tracks.Length == 0 ? "No tracks found" : _tracks[_current];
     public bool IsTransitioning => _manager.IsTransitioning;
     public float TransitionProgress => _manager.TransitionDurationSeconds <= 0f

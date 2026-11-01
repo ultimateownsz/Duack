@@ -60,7 +60,7 @@
                         }
                         else
                         {
-                            @(game.IsPlaying ? $"Now playing: {game.CurrentTrackName}" : $"Ready to play: {game.CurrentTrackName}")
+                            @(game.IsPlaying ? $"Now playing: {game.CurrentTrackName} ({TimeSpan.FromSeconds(game.CurrentTrackElapsedSeconds):mm\\:ss})" : $"Ready to play: {game.CurrentTrackName}")
                         }
                     </p>
                     <div class="crossfade-legend">

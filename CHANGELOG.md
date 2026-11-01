@@ -11,6 +11,9 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 
 ### Changed
 
+#### 2026-11-01
+- Added a separate `.github/workflows/release-cli.yml` that publishes `DuackCli` as its own optional NuGet .NET tool (triggered by `cli-v*` tags), plus a README install note and CLI skill install instructions. (#11)
+
 #### 2026-10-29
 - Player-settings diagnostics are now silent by default and opt-in via an injectable `IPlayerSettingsDiagnostics` sink (`PlayerSettings.Diagnostics`); consumers enable them by assigning `ConsolePlayerSettingsDiagnostics` or a custom sink. Web store read/save failure messages route through the sink. Removed the per-play `"[WebAudioSfxBackend] Playing ..."` success log line.
 

@@ -40,6 +40,7 @@ public class MusicManagerPlayResetTests
         public List<string> Played { get; } = new();
         public bool IsTrackPlaying { get; set; } = true;
         public float CurrentTrackElapsedSeconds { get; set; }
+        public float? CurrentTrackDurationSeconds { get; set; }
 #pragma warning disable CS0067
         public event EventHandler? TrackEnded;
 #pragma warning restore CS0067

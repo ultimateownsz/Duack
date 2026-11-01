@@ -1,6 +1,6 @@
 # Contributing to Duack
 
-Duack is a config-driven audio mixing library for XNA-family engines (MonoGame, KNI,
+Duack is a code-first audio mixing library for XNA-family engines (MonoGame, KNI,
 FlatRedBall2), extracted from a production game. It ships as preview (`0.x`): the API may
 change between releases.
 
@@ -42,21 +42,21 @@ disagree).
 1. Make your code changes (TDD: red -> green -> refactor).
 2. Update `CHANGELOG.md` under `## [Unreleased]` (Keep a Changelog format). Detailed
    notes go in `.opencode/audit-log.md`.
-3. Bump `<Version>` in `Directory.Build.props` to the new version (e.g. `0.1.0-preview.4`).
+3. Bump `<Version>` in `Directory.Build.props` to the new version (e.g. `0.1.0-preview.5`).
 4. Run the full suite: `dotnet test Duack.slnx`
 5. Commit, tag, and push:
    ```powershell
    git add -A
    git commit -m "feat: description"
-   git tag v0.1.0-preview.4
+   git tag v0.1.0-preview.5
    git push origin master
    git push origin v0.1.0-preview.4
    ```
 6. Monitor the workflow: `gh run list --limit 3`
 7. Verify on NuGet: https://www.nuget.org/packages/Duack
 
-Or use the helper script: `.\tools\release.ps1 -Version 0.1.0-preview.4`
-(Dry run: `.\tools\release.ps1 -Version 0.1.0-preview.4 -DryRun`)
+Or use the helper script: `.\tools\release.ps1 -Version 0.1.0-preview.5`
+(Dry run: `.\tools\release.ps1 -Version 0.1.0-preview.5 -DryRun`)
 
 ### Versioning
 - Preview releases use `0.x.0-preview.N` (e.g. `0.1.0-preview.4`).

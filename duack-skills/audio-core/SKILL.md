@@ -10,7 +10,7 @@ web. It adds what engine audio APIs don't ship: sidechain ducking, per-context m
 crossfades, playlists, player-facing volume settings with persistence, and per-cue SFX
 variation. Duack owns the mix and produces numbers; the user's engine owns playback.
 
-**Status**: preview. Verified against 0.1.0-preview.4 (see CHANGELOG for the current
+**Status**: preview. Verified against 0.1.0-preview.5 (see CHANGELOG for the current
 version). API may change between preview versions; check CHANGELOG's migration notes
 before applying skill snippets to a newer package.
 

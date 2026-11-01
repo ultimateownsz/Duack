@@ -19,6 +19,8 @@ public class MusicManagerFadeTests
         public int StopOutgoingCalls { get; private set; }
         public int StopCalls { get; private set; }
         public bool IsTrackPlaying { get; private set; }
+        public float CurrentTrackElapsedSeconds { get; set; }
+        public float? CurrentTrackDurationSeconds { get; set; }
         public event EventHandler? TrackEnded;
 
         public void PlayTrack(string trackName, float initialVolume = 1f, float pitch = 0f)

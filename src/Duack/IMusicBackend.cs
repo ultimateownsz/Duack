@@ -44,6 +44,9 @@ public interface IMusicBackend
     /// </summary>
     float CurrentTrackElapsedSeconds { get; }
 
+    /// <summary>Total length of the current track in seconds, or null when the backend cannot report it.</summary>
+    float? CurrentTrackDurationSeconds { get; }
+
     /// <summary>
     /// Fired when the currently active track completes playback (reaches end). The core
     /// <see cref="MusicManager"/> uses this to advance playlists via

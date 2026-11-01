@@ -8,7 +8,8 @@ settings) extracted from a production game and published as preview NuGet packag
 Every code change is recorded in `CHANGELOG.md` under `## Unreleased`, in the appropriate
 `### Added` / `### Changed` / `### Fixed` / `### Known Limitations` category and a dated
 `#### YYYY-MM-DD` subsection before it lands. For fixes, record the symptom plus enough
-reproduction detail to re-verify or revert. Do not edit code without reflecting it there.
+reproduction detail to re-verify or revert. Reference the related PR/issue (e.g. `(#123)`)
+so it surfaces in the auto-generated release notes. Do not edit code without reflecting it there.
 
 ## Test-Driven Development (non-negotiable)
 

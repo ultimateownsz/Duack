@@ -71,8 +71,53 @@ jobs:
           dotnet nuget push "artifacts/*.nupkg" --source https://api.nuget.org/v3/index.json --api-key ${{ steps.nuget.outputs.NUGET_API_KEY }} --skip-duplicate
           dotnet nuget push "artifacts/*.snupkg" --source https://api.nuget.org/v3/index.json --api-key ${{ steps.nuget.outputs.NUGET_API_KEY }} --skip-duplicate
 
+      - name: Promote Unreleased changelog into a versioned section
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          DATE="$(date -u +%Y-%m-%d)"
+          python3 - "$VERSION" "$DATE" <<'PY'
+          import re, sys
+          version, date = sys.argv[1], sys.argv[2]
+          path = "CHANGELOG.md"
+          text = open(path).read()
+          # Find the Unreleased section body.
+          m = re.search(r"^## \[Unreleased\]\s*\n(.*?)(?=^## \[|\Z)", text, re.M | re.S)
+          if not m:
+              print("No ## [Unreleased] section found; leaving changelog untouched.")
+              sys.exit(0)
+          body = m.group(1).strip("\n")
+          # Replace Unreleased header with empty Unreleased + new versioned section.
+          new_header = "## [Unreleased]\n\n## [" + version + "] - " + date + "\n"
+          text = text[:m.start()] + new_header + ("\n" + body + "\n" if body else "\n") + text[m.end():]
+          open(path, "w").write(text)
+          print("Promoted Unreleased ->", version)
+          PY
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add CHANGELOG.md
+          git commit -m "chore: promote Unreleased changelog to $VERSION" || echo "nothing to commit"
+          git push origin HEAD:master || true
+
+      - name: Prepare release notes from CHANGELOG.md
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          # Extract the section for this version from CHANGELOG.md (Keep a Changelog format).
+          awk -v ver="$VERSION" '
+            $0 ~ "^## \\[" ver "\\]" { insec=1; next }
+            insec && /^## \[/ { insec=0 }
+            insec { print }
+          ' CHANGELOG.md > release-notes.md
+          # Trim leading/trailing blank lines.
+          sed -i -e '/./,$!d' -e :a -e '/^$/{$d;N;ba' -e '}' release-notes.md
+          echo "----- release-notes.md -----"
+          cat release-notes.md
+
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
+          body_path: release-notes.md
+          generate_release_notes: true
           files: artifacts/*

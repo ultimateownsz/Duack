@@ -60,7 +60,7 @@
                         }
                         else
                         {
-                            @(game.IsPlaying ? $"Now playing: {game.CurrentTrackName}" : $"Ready to play: {game.CurrentTrackName}")
+                            @(game.IsPlaying ? $"Now playing: {game.CurrentTrackName} ({TimeSpan.FromSeconds(game.CurrentTrackElapsedSeconds):mm\\:ss})" : $"Ready to play: {game.CurrentTrackName}")
                         }
                     </p>
                     <div class="crossfade-legend">
@@ -85,7 +85,9 @@
             <details class="crossfade-details">
                 <summary>How Duack handles this transition</summary>
                 <p>The selected duration is applied by Duack's <code>MusicManager</code>. Desktop can overlap tracks for an equal-power crossfade; the web backend uses fade-out, track swap, and fade-in because it has one active media player.</p>
+                <p>Each track is wrapped in its own single-track playlist with <code>Repeat = Track</code>, so the current track keeps looping instead of stopping abruptly. Tracks only advance when you pick one (keys 1/2/3 or Space) — this keeps the transition meter focused on one crossfade at a time. For auto-advancing playlists, build one multi-track playlist with <code>Repeat = Playlist</code>.</p>
                 <p>The sample UI only displays state and sends commands to C#. It does not create audio elements or implement fade timing in JavaScript.</p>
+                <p>Further reading: <code>`duack-skills/crossfade`</code> and <code>`duack-skills/playlists`</code> document the full API and sequencing modes.</p>
             </details>
         </div>
     </div>

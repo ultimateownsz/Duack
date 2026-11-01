@@ -38,6 +38,8 @@ public class Game1 : Game, IDisposable
     public int CrossfadePresetIndex => _crossfadePresetIndex;
     public IReadOnlyList<float> CrossfadePresets => _crossfadePresets;
     public bool IsPlaying => _manager.IsPlaying;
+    public float CurrentTrackElapsedSeconds => _manager.CurrentTrackElapsedSeconds;
+    public float? CurrentTrackDurationSeconds => _manager.CurrentTrackDurationSeconds;
     public string CurrentTrackName => _tracks.Length == 0 ? "No tracks found" : _tracks[_current];
     public bool IsTransitioning => _manager.IsTransitioning;
     public float TransitionProgress => _manager.TransitionDurationSeconds <= 0f
@@ -79,14 +81,14 @@ public class Game1 : Game, IDisposable
         _library = AudioLibrary.FromManifest(manifest);
         _tracks = _library.Tracks.ToArray();
 
-        var playlists = new PlaylistConfig();
-        // one single-track playlist per discovered track
-        foreach (var t in _tracks)
-        {
-            var def = new PlaylistDefinition();
-            def.Tracks.Add(new PlaylistTrack { Name = t, Context = t });
-            playlists.Playlists[t] = def;
-        }
+        // One single-track playlist per discovered track. Repeat=Track keeps the current
+        // track looping so it does NOT stop abruptly between manual switches; the sample
+        // is a manual crossfade showcase, so tracks only advance when keys 1/2/3 or
+        // Space trigger a Play() (which crossfades into the chosen track).
+        var builder = new PlaylistConfigBuilder();
+        foreach (var currentTrackPlaying in _tracks)
+            builder = builder.WithPlaylist(currentTrackPlaying, p => p.Track(currentTrackPlaying, currentTrackPlaying).Repeat(PlaylistRepeatMode.Track));
+        var playlists = builder.Build();
 
         _config = new AudioConfigBuilder()
             .WithMasterVolume(1f)

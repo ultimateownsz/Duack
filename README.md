@@ -169,7 +169,12 @@ Nothing in Duack requires the CLI. The library is fully usable from code alone. 
 | `scan` | `duackcli scan <audioRoot> [--out <file>]` |
 | `normalize` | `duackcli normalize <dir> [<outDir>] [--out <dir>]` |
 
-In this preview, run it from the repository: 
+Install it as a global tool:
 ```sh
-dotnet run --project tools/DuackCli -- <command>`.
+dotnet tool install --global DuackCli
+duackcli <command>
+```
+Or run from a clone of the repo during development:
+```sh
+dotnet run --project tools/DuackCli -- <command>
 ```

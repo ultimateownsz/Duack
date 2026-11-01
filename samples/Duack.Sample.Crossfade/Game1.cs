@@ -80,12 +80,13 @@ public class Game1 : Game, IDisposable
         _tracks = _library.Tracks.ToArray();
 
         var playlists = new PlaylistConfig();
-        // one single-track playlist per discovered track
-        foreach (var t in _tracks)
+        // one single-track playlist per discovered track, looping so a track doesn't
+        // stop abruptly; keys 1/2/3 (and Space) crossfade to another track on demand.
+        foreach (var currentTrackPlaying in _tracks)
         {
-            var def = new PlaylistDefinition();
-            def.Tracks.Add(new PlaylistTrack { Name = t, Context = t });
-            playlists.Playlists[t] = def;
+            var def = new PlaylistDefinition { Repeat = PlaylistRepeatMode.Track };
+            def.Tracks.Add(new PlaylistTrack { Name = currentTrackPlaying, Context = currentTrackPlaying });
+            playlists.Playlists[currentTrackPlaying] = def;
         }
 
         _config = new AudioConfigBuilder()

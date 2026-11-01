@@ -37,6 +37,21 @@ Measures each WAV track's RMS/peak loudness, reports the loudest track, and (whe
 directory is given) writes gain-normalized WAV copies so every track matches the loudest
 track's RMS level. Aliases: `loudness`, `analyze`, `analyse`, `measure`, `loudnorm`.
 
+## Installation
+
+Run from the repository (dev/preview):
+
+```
+dotnet run --project tools/DuackCli -- <command>
+```
+
+Or install the published tool (no clone needed):
+
+```
+dotnet tool install --global DuackCli
+duackcli <command>
+```
+
 ## Tooling rules
 
 - Tools target desktop .NET only.

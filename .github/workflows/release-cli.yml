@@ -1,0 +1,52 @@
+name: Release CLI
+
+on:
+  push:
+    tags: ['cli-v*']
+  workflow_dispatch:
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  release-cli:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore & build tool
+        run: dotnet build tools/DuackCli/DuackCli.csproj -c Release
+
+      - name: Test
+        run: dotnet test tests/Duack.Tools.Tests/Duack.Tools.Tests.csproj -c Release
+
+      - name: Pack
+        run: dotnet pack tools/DuackCli/DuackCli.csproj -c Release -o artifacts
+
+      - name: NuGet login (OIDC)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: NuGet/login@v1
+        id: nuget
+        with:
+          user: ultimateownsz
+
+      - name: Push to NuGet
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          dotnet nuget push "artifacts/*.nupkg" --source https://api.nuget.org/v3/index.json --api-key ${{ steps.nuget.outputs.NUGET_API_KEY }} --skip-duplicate
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*

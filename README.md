@@ -29,6 +29,15 @@ If the built-in path were enough, you would not be reading this. Duack is for th
 **What it's not**: middleware. No editor, no mixer graph, no content pipeline beyond your audio files and none are planned. The engine APIs play sounds; Duack owns the mix.
 Duack replaces the ad-hoc audio code indie teams write themselves when middleware is too heavy.
 
+### Build tooling (optional, web/KNI)
+
+For web builds, install the `duackcli` .NET tool to scan your audio directory into `audio-manifest.json`
+and convert WAV masters to OGG:
+
+```bash
+dotnet tool install --global DuackCli
+duackcli scan <audioRoot>
+```
 ### Samples
 
 Each sample is a complete runnable game/tool built on the library — open the source to see real usage patterns.

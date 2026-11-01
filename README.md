@@ -1,33 +1,37 @@
 # Duack
 
-Duack is a configuration-driven audio mixer (config authored in C#) for XNA-related engines and libraries (MonoGame, KNI, and FlatRedBall2) on desktop and in the browser. It adds what the engine audio APIs don't ship: sidechain ducking, per-context music volumes, crossfades, playlists, and player-facing volume settings that actually persist.
-
 Not duck, not quack. Duack.
 
-Duack ships as a **preview** release: the API may change between versions.
+An audio library that supports crossfades, ducking and playlists for MonoGame, KNI, and FlatRedBall 2 games — configured in code.
 
-## Why Duack exists
+> Duack ships as a **preview** release: the API may change between versions.
 
-In MonoGame and similar libraries, crossfading two songs is architecturally
-impossible (`MediaPlayer` is a static, single-song API; requested since 2017:
-[#5472](https://github.com/MonoGame/MonoGame/issues/5472),
-[#6153](https://github.com/MonoGame/MonoGame/issues/6153)), song volume is
-unreliable after the first track, the built-in queue can't be modified at
-runtime, and nothing provides ducking. The Song streaming path is still
-shipping structural bugs nine years into those requests — shared
-end-of-stream state that stops tracks early and breaks replacement and replay
-([#9562](https://github.com/MonoGame/MonoGame/issues/9562), filed 2026).
-XACT, the old Microsoft tool that handled variation and categories, is dead.
-Duack is the modern, fully managed successor: no dead GUIs, no native runtimes,
-no ffmpeg.
+## What is Duack
 
-Duack does not try to replace FMOD or Wwise: those platforms ship authoring
-editors, DSP, and profiling that Duack does not attempt. Duack replaces the
-ad-hoc audio code indie teams write themselves when middleware is too heavy.
+Duack is a simple audio library for MonoGame, KNI and FlatRedBall2 games, on desktop and in the browser. It handles the audio work every game eventually needs so you don't need to hand-roll it:
+
+
+If the built-in path were enough, you would not be reading this. Duack is for the cases where you need:
+
+| Features                   | Description                                                                                                                                                                                                    |
+|----------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Crossfading                | Overlap two songs on desktop; on web, sequence fade-out → swap → fade-in. Also support standalone fade-in and fade-out.                                                                                        |
+| Runtime playlist control   | Provide a `MusicPlaylistController` with `Play`, `Next`, and `Stop`, repeat modes, and bag-style shuffle so tracks don’t repeat until the bag empties.                                                         |
+| Centralized volume chain   | Compose volume deterministically from Master → music/SFX buses, per-context scales, and player settings.                                                                                                       |
+| Music [ducking](https://en.wikipedia.org/wiki/Ducking)              | Duck music under sound effects. Declare duck sources with ratio, attack, hold, and release; trigger them by cue, meter live gain, and support hot updates with `ReloadDuckSources()` if available.             |
+| Cue variation              | Offer [XACT](https://en.wikipedia.org/wiki/Cross-platform_Audio_Creation_Tool)-style via the `MarbleBag` class for variant selection and authored per-play jitter: pitch for music, and pitch plus volume for SFX. |
+| Persistent player settings | Support file, `localStorage`, and in-memory stores; sanitize settings and layer them over the authored mix.                                                                                                    |
+| Shared desktop and web mix | Use one core over `IMusicBackend` and `ISfxBackend`; MonoGame and KNI adapters share configuration, playlists, and ducking.                                                                                    |
+| Code-first authoring       | Provide an `AudioConfigBuilder`; use the `SFX/` and `Tracks/` directory convention to avoid cue registration.                                                                                                  |
+| Self-sequencing playlists  | Let playlists sequence and shuffle tracks while preventing the same track from playing twice in a row.                                                                                                         |
+| Lightweight dependencies   | Keep the core pure BCL, with heavyweight codec tooling outside the game.                                                                                                                                       |
+
+**What it's not**: middleware. No editor, no mixer graph, no content pipeline beyond your audio files and none are planned. The engine APIs play sounds; Duack owns the mix.
+Duack replaces the ad-hoc audio code indie teams write themselves when middleware is too heavy.
 
 ### Samples
 
-Each sample is a complete runnable game built on the library — open the source to see real usage patterns.
+Each sample is a complete runnable game/tool built on the library — open the source to see real usage patterns.
 
 | Sample | Description | Play                                                                          |
 |--------|-------------|-------------------------------------------------------------------------------|
@@ -37,29 +41,30 @@ Each sample is a complete runnable game built on the library — open the source
 
 > The web demos need a click before sound plays — browsers suspend audio until a real user gesture ("Start").
 
-## Duack vs the built-in audio path
+## Documentation
+One self-contained Markdown guide per topic in duack-skills/ — read them yourself, or copy the folder into .claude/skills/ so your AI coding assistant works with Duack's real API instead of guessing.
+Each topic is one self-contained Markdown guide in duack-skills/. Read them yourself, or copy the folder into .claude/skills/ so your AI coding assistant works with Duack's real API instead of guessing.
 
-If you have ever written `MediaPlayer.Play` and then patched around it, this table is the pitch:
+## Getting started
 
-| You want | Built-in path | With Duack |
-|----------|---------------|------------|
-| Two songs crossfading | Not possible — `MediaPlayer` plays one song at a time | Crossfade on every track change: overlapped on desktop, sequenced fade → swap → fade on web, plus standalone fade-in/fade-out |
-| A queue you can steer at runtime | The built-in queue is fixed once set; no track-completed contract | `MusicPlaylistController` with `Play`, `Next`, `Stop`, repeat modes, and bag-style shuffle — tracks don't repeat until the bag empties |
-| One place for volume math | Per-song volume is unreliable after the first track | Master → music/SFX buses, per-context scales, and player settings composed in one deterministic chain |
-| Music that ducks under sound effects | Not provided; every game hand-rolls it | Declare duck sources (ratio, attack, hold, release) and fire them by cue; live gain metering and `ReloadDuckSources()` for hot updates |
-| XACT-style cue variation | XACT did not survive to modern XNA | Marble-bag variant selection plus authored per-play jitter (pitch for music; pitch and volume for SFX) |
-| Player settings that persist | Your own file/localStorage code | File, localStorage, and in-memory stores, sanitized and layered over the authored mix |
-| The same mix on desktop and web | Desktop and WASM audio paths diverge | One core over `IMusicBackend`/`ISfxBackend`; the MonoGame and KNI adapters share config, playlists, and ducking |
-| A mix you author in code | Scattered constants and hand-registered cue names | Code-first `AudioConfigBuilder`; the two-directory convention (`SFX/`, `Tracks/`) removes cue registration |
-| A dependency-light package | Wrappers can drag native codecs into the game | Core is pure BCL; the heavy codec tooling lives outside the game entirely |
+You need the [.NET 10 SDK.](https://dotnet.microsoft.com/download)
 
-If the built-in path were enough, you would not be reading this — the crossfade issues above are a decade old and structural.
+```sh
+dotnet add package Duack --prerelease
+dotnet add package Duack.MonoGame --prerelease   # desktop (Duack.KNI for browser/WASM)
+```
 
-## Quickstart
+Put your audio files in two folders; that's the whole setup. No cue registration, no content pipeline step (case-senstive: `SFX`/`Tracks`, lowercase extensions):
+```
+Content/Audio/
+  SFX/       # one-shots (wav preferred)
+  Tracks/    # loops and songs (ogg preferred)
+```
 
-Configure the mix in code (five lines):
+Configure the mix in code:
 
 ```csharp
+using Duack;
 var config = new AudioConfigBuilder()
     .WithMasterVolume(0.9f)
     .WithCrossfadeSeconds(1.5f)
@@ -67,8 +72,7 @@ var config = new AudioConfigBuilder()
     .Build();
 ```
 
-Wire it to your engine and play (desktop, MonoGame):
-
+Wire it in your library/engine (desktop, MonoGame):
 ```csharp
 using Duack;
 using Duack.MonoGame;
@@ -95,49 +99,50 @@ sfx.Play("notice", duck: true);   // pulses the "sfx" duck source: the music dip
 music.Update(dt);
 ```
 
-The essential interaction is small: create a `MusicManager`, call `Play` for the playlist that
-matches the new scene, and call `Next` to skip within the current playlist. Duack applies the
-configured transition instead of requiring each game state to implement its own fade timers and
-volume math.
+Playlists for automatic sequencing (track intro --> loop, for example):
+```csharp
+using Duack;
 
-On the web (KNI / Blazor WASM), the core stays identical - same config, same managers, same
-playlists. Only the edges change: the library is built from the checked-in manifest instead
-of a directory scan, and playback goes through the KNI adapters.
+var playlists = new PlaylistConfigBuilder()
+    .WithPlaylist("battle-sequence", p => p
+        .Track("battle-intro", "Battle")
+        .Track("battle-loop",  "Battle")
+        .Repeat(PlaylistRepeatMode.Track))
+    .Build();
+```
+
+The same on the web (KNI / WASM); the browser can't list your files, so generate a manifest once and check it in:
+```sh
+# from a clone of this repository (the CLI ships with the repo in this preview, not as a package)
+dotnet run --project tools/DuackCli -- scan Content/Audio        # writes audio-manifest.json
+```
 
 ```csharp
 using Duack;
 using Duack.KNI;
-
-var manifest = AudioLibraryManifestJson.Deserialize(manifestJson); // duackcli scan writes audio-manifest.json
-var library = AudioLibrary.FromManifest(manifest);
+var manifest  = AudioLibraryManifestJson.Deserialize(manifestJson);
+var library   = AudioLibrary.FromManifest(manifest);
 var playlists = library.BuildPlaylists();    // same auto playlists as desktop
 
 var music = new MusicManager(
+    // contentRoot must point at Tracks/ — the backend default predates the two-directory convention and 404s under the standard layout
     new MediaPlayerMusicBackend(new KniMediaPlayerHost(), contentRoot: "Content/Audio/Tracks"),
-    new MusicPlaylistController(playlists),
-    config.Music, masterVolume: config.MasterVolume);
+    new MusicPlaylistController(playlists), config.Music, config.MasterVolume);
 
-// plus WebAudioSfxBackend for one-shot cues; music.Update(dt) once per frame as on desktop.
+// One-shot cues: WebAudio, URLs relative to the app root
+var sfxUrls = library.Sfx.Select(cue => new KeyValuePair<string, string>(cue, $"Content/Audio/SFX/{cue}.wav"));
+var sfx = new SfxManager(library, new WebAudioSfxBackend(new WebAudioNative(), sfxUrls), music,
+    masterVolume: config.MasterVolume,
+    sfxBusVolume: config.Sfx.MasterVolume,
+    sfxConfig: config.Sfx);
+music.Update(dt);                 // same update code as desktop
 ```
 
-The full loop — contexts, crossfades, duck metering, a scripted story — runs in `samples/Duack.Sample.Desktop` (**Game demo**). The same mix runs on the web in `samples/Duack.Sample.Web` (**Game demo**) with a separate **[Crossfade demo](https://ultimateownsz.github.io/Duack/crossfade-demo/)** (`samples/Duack.Sample.Crossfade`) to isolate crossfade behavior. All build and run from a clean clone.
+#### Optional: the duackcli helper
 
-This preview is **code-first**: the mix lives in C#, in your code, where it can be diffed, refactored, and version-controlled. Ducking, crossfades, playlists, and per-context volumes are all **configuration-driven** — but the configuration is authored in code (via `AudioConfigBuilder` / `PlaylistConfigBuilder`).
-## Music contexts
-
-Music contexts work like scenes in OBS: named audio states the game switches between. Each entry in the config is the context of a game state, for example the context of the battle state or the context of an overworld, each with its own volume scale.
-
-## Buses
-
-Duack ships three default buses: **master**, **music**, and **SFX**. The master bus scales everything (music and SoundFX alike) and is the top of the chain; music and SFX are the two domain buses. The volume composition is:
-
-```
-master bus x bus volume x context x duck x player settings
-```
-
-with the master entering once at the top. Duck sources target the music bus, under the master.
-
-## Optional: the duackcli helper
+> **Desktop-only tooling, not a runtime dependency.** The CLI runs on your dev machine at build
+> time (encoding, scanning, normalizing). It never ships to the browser and is not required at
+> runtime — the web head only reads the checked-in `audio-manifest.json` it produced.
 
 Nothing in Duack requires the CLI. The library is fully usable from code alone. It exists for the moments automation is faster than typing:
 
@@ -155,26 +160,7 @@ Nothing in Duack requires the CLI. The library is fully usable from code alone. 
 | `scan` | `duackcli scan <audioRoot> [--out <file>]` |
 | `normalize` | `duackcli normalize <dir> [<outDir>] [--out <dir>]` |
 
-In this preview, run it from the repository: `dotnet run --project tools/DuackCli -- <command>`.
-
-> **Desktop-only tooling, not a runtime dependency.** The CLI runs on your dev machine at build
-> time (encoding, scanning, normalizing). It never ships to the browser and is not required at
-> runtime — the web head only reads the checked-in `audio-manifest.json` it produced.
-
-The same preview also ships markdown agent skills under `duack-skills/` (copy the directory into your agent folder, e.g. `.claude/skills/`; the CLI does not install them yet).
-
-## Scope
-
-Duack owns the mix and produces the numbers; your engine plays the sound. Desktop (MonoGame DesktopGL) and web (KNI) are first-class. Mobile is not supported yet.
-
-**No UI, ever.** Duack ships no editor or GUI of any kind — a deliberate boundary, not a limitation.
-
-## Install
-
+In this preview, run it from the repository: 
+```sh
+dotnet run --project tools/DuackCli -- <command>`.
 ```
-dotnet add package Duack --prerelease
-dotnet add package Duack.MonoGame --prerelease   # desktop
-dotnet add package Duack.KNI --prerelease        # browser/WASM
-```
-
-Targets .NET 10.

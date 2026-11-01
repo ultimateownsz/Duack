@@ -135,6 +135,7 @@ Every namespace → `Duack`.
 - `MusicVolumeMath` — effective volume math (master × context × duck × fade)
 - `CrossfadeMath` — equal-power crossfade curve
 - `MusicManager` — owns playlist sequencing, crossfade realization, ducking, context scales
+  - `CurrentTrackElapsedSeconds` (float, 0 when stopped) and `CurrentTrackDurationSeconds` (float?, backend-dependent) expose current-track playback position.
 - `MusicTransitionSequencer` — deferred fade-out → swap → fade-in for single-track players (web)
 
 ### Config

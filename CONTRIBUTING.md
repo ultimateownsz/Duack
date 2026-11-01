@@ -63,6 +63,14 @@ Or use the helper script: `.\tools\release.ps1 -Version 0.1.0-preview.5`
 - The version in `Directory.Build.props` is the single source of truth for `dotnet pack`.
 - The git tag must be `v{version}` (e.g. `v0.1.0-preview.4`).
 
+## How to contribute
+
+1. Fork the repository and create a branch from `master` (`feature/...`, `fix/...`).
+2. Make your changes following the TDD workflow above.
+3. Add a changelog entry under `## [Unreleased]`.
+4. Run the full test suite: `dotnet test Duack.slnx`.
+5. Open a pull request against `master` with a clear description and linked issue.
+
 ## Build and test
 
 ```

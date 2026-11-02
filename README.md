@@ -51,7 +51,6 @@ Each sample is a complete runnable game/tool built on the library — open the s
 > The web demos need a click before sound plays — browsers suspend audio until a real user gesture ("Start").
 
 ## Documentation
-One self-contained Markdown guide per topic in duack-skills/ — read them yourself, or copy the folder into .claude/skills/ so your AI coding assistant works with Duack's real API instead of guessing.
 Each topic is one self-contained Markdown guide in duack-skills/. Read them yourself, or copy the folder into .claude/skills/ so your AI coding assistant works with Duack's real API instead of guessing.
 
 ## Getting started

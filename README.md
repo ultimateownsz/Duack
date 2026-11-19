@@ -1,4 +1,7 @@
 [![Discord](https://img.shields.io/discord/586997072373481494?logo=discord&style=social)](https://discord.gg/M2TvCx9zXa)
+[![NuGet Duack](https://img.shields.io/nuget/vpre/Duack?style=social&logo=nuget)](https://www.nuget.org/packages/Duack)
+[![NuGet Duack.MonoGame](https://img.shields.io/nuget/vpre/Duack.MonoGame?style=social&logo=nuget)](https://www.nuget.org/packages/Duack.MonoGame)
+[![NuGet Duack.KNI](https://img.shields.io/nuget/vpre/Duack.KNI?style=social&logo=nuget)](https://www.nuget.org/packages/Duack.KNI)
 
 # Duack
 

@@ -85,6 +85,38 @@ matters is evidence, not a fixed promise: refused ideas still get
 their reopening condition in `design/deferred.md`, and ideas that turn
 out to be needed become the roadmap.
 
+## Build and test
+
+```
+dotnet build Duack.slnx
+dotnet test Duack.slnx
+```
+
+To prove the core stays BCL-only, restore into an empty package cache:
+
+```
+$env:NUGET_PACKAGES = "$env:TEMP\duack-empty-cache"
+dotnet test tests/Duack.Tests
+```
+
+## Scope boundaries
+
+- **Do not fold an audio mixer UI into Duack.** Editor-adjacent tooling stays in the host
+  game; only `tools/duackcli` (as `duackcli convert`/`scan`/`normalize`) lives here.
+- **Do not delegate playlist state to `MediaQueue` or `MediaPlayer`.** Duack's own
+  `MusicPlaylistController` is the single sequencing path for both backends.
+- **Mobile is out of scope** until further notice. Desktop (MonoGame DesktopGL) and web
+  (KNI/WASM) are first-class.
+- The core (`src/Duack`) is pure BCL (`System.Text.Json` only). Never add a package or
+  project reference to it; backend glue lives in adapter packages.
+
+## Naming
+
+- Core package ID: `Duack`. Adapters: `Duack.MonoGame`, `Duack.KNI`. Tool: `DuackCli`.
+- Root namespace: `Duack` (core), `Duack.MonoGame` / `Duack.KNI` (adapters).
+- The API term is **context** (OBS-style "scene" framing in docs only). Do not rename it
+  to "Scene" in code.
+
 ## License
 
 MIT. By contributing you license your work under the same terms.

@@ -47,6 +47,20 @@ the finish line gets close.
 5. Touches the public API? Say so in the description. Preview churn
    is expected and gets announced in release notes.
 
+## Test-driven development
+
+Any refactor of existing behavior and any creation of new behavior is
+written test-first:
+
+1. **Red** — write a failing test that pins the expected behavior. Run it
+   and confirm it fails for the reason you expect.
+2. **Green** — implement the minimum production change to make it pass.
+3. **Refactor** — clean up, then re-run the whole suite, not just the
+   new test.
+
+A change that ships with no test needs a written reason in the changelog
+entry.
+
 ## AI-assisted work
 
 Use whatever tools help you. You own all of it: understand the code,

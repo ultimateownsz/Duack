@@ -1,6 +1,6 @@
 # ICM Rule: Multi-Phase Planning Workspaces
 
-Rule for structuring planning and long-running implementation work as ICM workspaces, combining ICM's "folder structure as agent architecture, plain files as state" with the plan-index mechanics proven in FlatRedBall2's `plan/` folder.
+Rule for structuring planning and long-running implementation work as ICM workspaces, combining ICM's "folder structure as agent architecture, plain files as state" with the plan-index mechanics proven in practice.
 
 ## Principle
 

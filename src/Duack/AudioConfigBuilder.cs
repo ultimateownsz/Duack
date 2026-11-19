@@ -65,6 +65,30 @@ public sealed class AudioConfigBuilder
         return this;
     }
 
+    /// <summary>
+    /// Caps simultaneous SFX voices globally. 0 (the default) means unlimited;
+    /// <paramref name="defaultVoiceSeconds"/> is the assumed lifetime of a one-shot.
+    /// </summary>
+    public AudioConfigBuilder WithVoiceLimit(
+        int globalMaxVoices,
+        float defaultVoiceSeconds = 0.5f,
+        VoiceStealingPolicy defaultStealingPolicy = VoiceStealingPolicy.Oldest)
+    {
+        _config.Sfx.VoiceLimits ??= new VoiceLimitConfig();
+        _config.Sfx.VoiceLimits.GlobalMaxVoices = globalMaxVoices;
+        _config.Sfx.VoiceLimits.DefaultVoiceSeconds = defaultVoiceSeconds;
+        _config.Sfx.VoiceLimits.DefaultStealingPolicy = defaultStealingPolicy;
+        return this;
+    }
+
+    /// <summary>Overrides the global voice cap, priority, or lifetime for one cue.</summary>
+    public AudioConfigBuilder WithCueVoiceLimit(string cueName, CueVoiceLimit limit)
+    {
+        _config.Sfx.VoiceLimits ??= new VoiceLimitConfig();
+        _config.Sfx.VoiceLimits.CueLimits[cueName] = limit;
+        return this;
+    }
+
     /// <summary>Returns the assembled config, clamped by <see cref="AudioConfig.Sanitize"/>.</summary>
     public AudioConfig Build()
     {

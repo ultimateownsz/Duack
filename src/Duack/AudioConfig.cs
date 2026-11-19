@@ -59,6 +59,10 @@ public class SfxConfig
     /// </summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public CueVariation? CueVariation { get; set; }
+
+    /// <summary>Optional limits on simultaneous SFX voices. Null means unlimited.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public VoiceLimitConfig? VoiceLimits { get; set; }
 }
 
 /// <summary>
@@ -103,5 +107,6 @@ public class AudioConfig
             Music.CueVariation = new CueVariation(musicVariation.PitchRange, musicVariation.VolumeRange);
         if (Sfx.CueVariation is { } sfxVariation)
             Sfx.CueVariation = new CueVariation(sfxVariation.PitchRange, sfxVariation.VolumeRange);
+        Sfx.VoiceLimits?.Sanitize();
     }
 }

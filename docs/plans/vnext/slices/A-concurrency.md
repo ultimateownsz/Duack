@@ -27,6 +27,21 @@ Non-goals: no backend changes, no platform voice limits, no async loading change
 - `SfxManager.Play` keeps its `bool` return for source compatibility; the detailed outcome
   (including the stolen voice's sequence) is additive via a result-returning API.
 
+## Cross-platform follow-up (2026-11-20, recorded in PLAN.md §4 addendum)
+
+The limiter is core and already works on both heads; the outstanding work is web-specific wiring
+and making "stealing" audible rather than bookkeeping-only:
+
+- [ ] Web sample: author the limits and call `SfxManager.Update(unscaledDt)` every frame — the web
+      head currently never ages voices, so a burst would saturate the cap permanently.
+- [ ] Add an optional, additive voice-control seam (handle → stop/fade) so a stolen voice is
+      actually silenced: desktop maps to `IAudioInstance`; KNI needs a JS bridge method beyond
+      `StopAll()`. `ISfxBackend.Play` stays unchanged; fall back to slot-only stealing when absent.
+- [ ] Optional, later: report real source end (`onended`) through the bridge to release slots at
+      the true lifetime instead of the authored one; `[Experimental]` per §13.
+- [ ] Wire the limits into the existing `Duack.Sample.Web` head and browser-listen there with a
+      user-gesture start (worst-moment standard). No additional web sample project.
+
 ## Work list (non-exhaustive)
 
 - [x] Pure core `VoiceLimiter` + config (red test written 2026-11-19; green confirmed).

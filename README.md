@@ -8,10 +8,6 @@ An audio library that supports crossfades, ducking and playlists for MonoGame, K
 
 > Duack ships as a **preview** release: the API may change between versions.
 
-## Need help?
-
-- **Discord** (fastest): https://discord.gg/uQSam6w36d
-- **Issues**: https://github.com/ultimateownsz/Duack/issues
 ## What is Duack
 
 Duack is a simple audio library for MonoGame, KNI and FlatRedBall2 games, on desktop and in the browser. It handles the audio work every game eventually needs so you don't need to hand-roll it:
@@ -44,6 +40,12 @@ and convert WAV masters to OGG:
 dotnet tool install --global DuackCli
 duackcli scan <audioRoot>
 ```
+
+## Need help?
+
+- **Discord** (fastest): https://discord.gg/uQSam6w36d
+- **Issues**: https://github.com/ultimateownsz/Duack/issues
+
 ### Samples
 
 Each sample is a complete runnable game/tool built on the library — open the source to see real usage patterns.

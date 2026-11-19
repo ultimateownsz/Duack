@@ -9,6 +9,7 @@
   <Project Path="tests/Duack.Tools.Tests/Duack.Tools.Tests.csproj" />
   <Project Path="tests/Duack.Sample.Tests/Duack.Sample.Tests.csproj" />
   <Project Path="samples/Duack.Sample.Desktop/Duack.Sample.Desktop.csproj" />
+  <Project Path="samples/Duack.Sample.Concurrency/Duack.Sample.Concurrency.csproj" />
   <Project Path="samples/Duack.Sample.Core/Duack.Sample.Core.csproj" />
 </Solution>
 

@@ -1,9 +1,20 @@
+[![Discord](https://img.shields.io/discord/586997072373481494?logo=discord&style=social)](https://discord.gg/M2TvCx9zXa)
+
 # Duack
 
 Not duck, not quack. Duack.
 
 An audio library that supports crossfades, ducking and playlists for MonoGame, KNI, and FlatRedBall 2 games — configured in code.
 
+---
+
+[![NuGet](https://img.shields.io/nuget/vpre/Duack?style=social&logo=nuget&label=Duack)](https://www.nuget.org/packages/Duack)
+
+[![NuGet](https://img.shields.io/nuget/vpre/Duack.MonoGame?style=social&logo=nuget&label=Duack.MonoGame)](https://www.nuget.org/packages/Duack.MonoGame)
+
+[![NuGet](https://img.shields.io/nuget/vpre/Duack.KNI?style=social&logo=nuget&label=Duack.KNI)](https://www.nuget.org/packages/Duack.KNI)
+
+> [!IMPORTANT]
 > Duack ships as a **preview** release: the API may change between versions.
 
 ## What is Duack
@@ -26,8 +37,10 @@ If the built-in path were enough, you would not be reading this. Duack is for th
 | Self-sequencing playlists  | Let playlists sequence and shuffle tracks while preventing the same track from playing twice in a row.                                                                                                         |
 | Lightweight dependencies   | Keep the core pure BCL, with heavyweight codec tooling outside the game.                                                                                                                                       |
 
-**What it's not**: middleware. No editor, no mixer graph, no content pipeline beyond your audio files and none are planned. The engine APIs play sounds; Duack owns the mix.
+**What it's not**: middleware.
+- No editor, no mixer graph, no content pipeline beyond your audio files and none are planned. The engine APIs play sounds; Duack owns the mix.
 Duack replaces the ad-hoc audio code indie teams write themselves when middleware is too heavy.
+- No UI tooling. For game UI, check out [Gum UI](https://github.com/vchelaru/Gum). Duack stays code-only, but transition state (crossfade progress, duck meter) is already queryable, and more can be exposed on request.
 
 ### Build tooling (optional, web/KNI)
 
@@ -38,6 +51,7 @@ and convert WAV masters to OGG:
 dotnet tool install --global DuackCli
 duackcli scan <audioRoot>
 ```
+
 ### Samples
 
 Each sample is a complete runnable game/tool built on the library — open the source to see real usage patterns.
@@ -48,7 +62,8 @@ Each sample is a complete runnable game/tool built on the library — open the s
 | [Duack.Sample.Web](samples/Duack.Sample.Web) | **Story demo** (Blazor WASM / KNI): scripted storyline with SFX, ducking, and crossfades. Manifest-driven discovery, WebAudio one-shots. | [▶ Play in browser](https://ultimateownsz.github.io/Duack/)                   |
 | [Duack.Sample.Crossfade](samples/Duack.Sample.Crossfade) | **Crossfade demo** (Blazor WASM / KNI): minimal showcase to A/B crossfade durations (4s/8s/12s/16s), toggle crossfade on/off, and hear hard cut vs equal-power ramp. | [▶ Play crossfade demo](https://ultimateownsz.github.io/Duack/crossfade-demo/) |
 
-> The web demos need a click before sound plays — browsers suspend audio until a real user gesture ("Start").
+> [!IMPORTANT]
+> The web demos need a click before sound plays — browsers suspend audio until a real user gesture on the screen.
 
 ## Documentation
 Each topic is one self-contained Markdown guide in duack-skills/. Read them yourself, or copy the folder into .claude/skills/ so your AI coding assistant works with Duack's real API instead of guessing.
@@ -146,9 +161,16 @@ var sfx = new SfxManager(library, new WebAudioSfxBackend(new WebAudioNative(), s
 music.Update(dt);                 // same update code as desktop
 ```
 
+## Need help?
+
+- **Discord** (fastest): https://discord.gg/M2TvCx9zXa
+- **Issues**: https://github.com/ultimateownsz/Duack/issues
+
 #### Optional: the duackcli helper
 
-> **Desktop-only tooling, not a runtime dependency.** The CLI runs on your dev machine at build
+> [!TIP]
+> **Desktop-only tooling, not a runtime dependency.**
+> The CLI runs on your dev machine at build
 > time (encoding, scanning, normalizing). It never ships to the browser and is not required at
 > runtime — the web head only reads the checked-in `audio-manifest.json` it produced.
 

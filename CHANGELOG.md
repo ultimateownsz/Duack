@@ -23,6 +23,17 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 
 ### Added
 
+#### 2026-11-19
+- Slice A of the vNext plan: SFX voice concurrency. `AudioConfigBuilder.WithVoiceLimit(...)` and
+  `WithCueVoiceLimit(...)` author global/per-cue caps, stealing policies (oldest, quietest, priority),
+  and assumed voice lifetimes. `SfxManager.PlayDetailed(...)` and `LastPlayResult` report why a cue
+  was refused (unknown cue, priority rejection, backend refusal); `Play(...)` keeps its `bool`
+  contract. `SfxManager.Update(unscaledDt)` ages reserved voices; a backend refusal releases its slot.
+  A dedicated `Duack.Sample.Concurrency` example fires 50 overlapping cues at cap 8 (T key) with
+  an on-screen active-voice counter; the existing storyline samples are untouched. Backends are unchanged: lifetimes are authored, not observed (documented in
+  `docs/plans/vnext/slices/A-concurrency.md`). Tests pin cap boundaries, victim selection, policy
+  overrides, refusal results, and lifetime release. (#vNext-A)
+
 #### 2026-10-31
 - `MusicManager.CurrentTrackElapsedSeconds` reports elapsed playback time for the current track on both backends; `CurrentTrackDurationSeconds` is nullable for consumer-provided resolvers.
 

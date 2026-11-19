@@ -1,7 +1,7 @@
 # Deferred ideas
 
 Every idea considered but not built, with the condition under which it
-reopens. A "no" is not forever — but the reopen trigger is a real issue,
+reopens. A "no" is not forever, but the reopen trigger is a real issue,
 never a hypothetical. Do not re-propose an entry here without either
 matching its reopening condition or bringing a real issue.
 
@@ -12,7 +12,7 @@ Format:
     - Why not built: <one line>
     - Reopens when: <concrete issue/repro/user report> | "never" (say why)
 
-Entries below are examples of the register's tone — replace with the real
+Entries below are examples of the register's tone; replace with the real
 backlog.
 
 ### Native audio backends (desktop)

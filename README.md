@@ -52,11 +52,6 @@ dotnet tool install --global DuackCli
 duackcli scan <audioRoot>
 ```
 
-## Need help?
-
-- **Discord** (fastest): https://discord.gg/M2TvCx9zXa
-- **Issues**: https://github.com/ultimateownsz/Duack/issues
-
 ### Samples
 
 Each sample is a complete runnable game/tool built on the library — open the source to see real usage patterns.
@@ -67,7 +62,8 @@ Each sample is a complete runnable game/tool built on the library — open the s
 | [Duack.Sample.Web](samples/Duack.Sample.Web) | **Story demo** (Blazor WASM / KNI): scripted storyline with SFX, ducking, and crossfades. Manifest-driven discovery, WebAudio one-shots. | [▶ Play in browser](https://ultimateownsz.github.io/Duack/)                   |
 | [Duack.Sample.Crossfade](samples/Duack.Sample.Crossfade) | **Crossfade demo** (Blazor WASM / KNI): minimal showcase to A/B crossfade durations (4s/8s/12s/16s), toggle crossfade on/off, and hear hard cut vs equal-power ramp. | [▶ Play crossfade demo](https://ultimateownsz.github.io/Duack/crossfade-demo/) |
 
-> The web demos need a click before sound plays — browsers suspend audio until a real user gesture ("Start").
+> [!IMPORTANT]
+> The web demos need a click before sound plays — browsers suspend audio until a real user gesture on the screen.
 
 ## Documentation
 Each topic is one self-contained Markdown guide in duack-skills/. Read them yourself, or copy the folder into .claude/skills/ so your AI coding assistant works with Duack's real API instead of guessing.
@@ -165,9 +161,16 @@ var sfx = new SfxManager(library, new WebAudioSfxBackend(new WebAudioNative(), s
 music.Update(dt);                 // same update code as desktop
 ```
 
+## Need help?
+
+- **Discord** (fastest): https://discord.gg/M2TvCx9zXa
+- **Issues**: https://github.com/ultimateownsz/Duack/issues
+
 #### Optional: the duackcli helper
 
-> **Desktop-only tooling, not a runtime dependency.** The CLI runs on your dev machine at build
+> [!TIP]
+> **Desktop-only tooling, not a runtime dependency.**
+> The CLI runs on your dev machine at build
 > time (encoding, scanning, normalizing). It never ships to the browser and is not required at
 > runtime — the web head only reads the checked-in `audio-manifest.json` it produced.
 

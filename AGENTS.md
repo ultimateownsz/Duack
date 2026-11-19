@@ -81,17 +81,22 @@ last candidates in `AudioLibrary.CandidatePaths` order, and the exact probe orde
 content keeps loading unchanged.
 ## Planning workspace
 
+This workspace follows [Interpretable Context Methodology](https://github.com/RinDig/icm-architect)
+(ICM): folder structure as agent architecture, plain markdown as state,
+AGENTS.md as the entry file. Preserve its invariants: catalogs point down,
+state rides in files, and orienting must never require conversation history.
+
 Durable state lives in files, never in agent memory. A fresh session orients
 from these files alone:
 
-- `plan/plan.md` — index of active initiatives and their phase status. Read
+- `plan/plan.md`: index of active initiatives and their phase status. Read
   this first.
-- `plan/<initiative>/phase-NN-<slug>.md` — one self-contained doc per phase.
+- `plan/<initiative>/phase-NN-<slug>.md`: one self-contained doc per phase.
   Read only the phase you are working on.
-- `design/deferred.md` — parked ideas with reopening conditions. Read this
+- `design/deferred.md`: parked ideas with reopening conditions. Read this
   before proposing any feature.
-- `design/experiments/` — feasibility experiments and their recorded outcomes.
-- `CHANGELOG.md` — shipped history only. Read only when asked about releases.
+- `design/experiments/`: feasibility experiments and their recorded outcomes.
+- `CHANGELOG.md`: shipped history only. Read only when asked about releases.
 
 Rules of engagement:
 
@@ -101,7 +106,7 @@ Rules of engagement:
 - Features require a real issue. If `design/deferred.md` already contains the
   idea, check its reopening condition before re-proposing it.
 - Experiments answer "would this work", not "should we build this". They
-  live on `exp/` branches, are never merged as-is, and end Adopted, Parked,
+  live on `exp/` branches, are never merged as-is, and end Adopted, <Adopted|Parked|Rejected> (evidence in one paragraph),
   or Rejected with evidence in their doc.
 - Mark checkboxes and index statuses in the same commit as the work they
   describe. If a state changed but no file changed, it did not happen.
@@ -114,9 +119,9 @@ GitHub issues are an inbox, not state. An initiative records its tracking
 issue number in the plan index heading; status and progress never live in
 issue comments. A feature request filed as an issue is recorded in
 design/deferred.md with its reopening condition and closed with a pointer
-to the entry — do not leave wishlist issues open.
+to the entry; do not leave wishlist issues open.
 
-Walk test you must pass: given only this repo, answer — what initiatives are
+Walk test you must pass: given only this repo, answer: what initiatives are
 active, which phase is next, what is blocked and why, and which checkboxes in
 that phase are still open. If you needed conversation history, you failed.
 

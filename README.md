@@ -43,7 +43,7 @@ duackcli scan <audioRoot>
 
 ## Need help?
 
-- **Discord** (fastest): https://discord.gg/uQSam6w36d
+- **Discord** (fastest): https://discord.gg/M2TvCx9zXa
 - **Issues**: https://github.com/ultimateownsz/Duack/issues
 
 ### Samples

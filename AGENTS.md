@@ -81,49 +81,62 @@ last candidates in `AudioLibrary.CandidatePaths` order, and the exact probe orde
 content keeps loading unchanged.
 ## Planning workspace
 
-This workspace follows [Interpretable Context Methodology](https://github.com/RinDig/icm-architect)
-(ICM): folder structure as agent architecture, plain markdown as state,
-AGENTS.md as the entry file. Preserve its invariants: catalogs point down,
-state rides in files, and orienting must never require conversation history.
+Durable state lives in files, never in agent memory. A fresh session
+orients from these files alone:
 
-Durable state lives in files, never in agent memory. A fresh session orients
-from these files alone:
-
-- `plan/plan.md`: index of active initiatives and their phase status. Read
-  this first.
-- `plan/<initiative>/phase-NN-<slug>.md`: one self-contained doc per phase.
-  Read only the phase you are working on.
-- `design/deferred.md`: parked ideas with reopening conditions. Read this
+- `plan/plan.md`: index of initiatives and phase status. Read this first.
+- `plan/<NN-initiative>/overview.md`: the initiative's problem, pinned
+  metric, decision/gotcha ID ranges, and cross-cutting caveats.
+- `plan/<NN-initiative>/phase-NN-<slug>.md`: the current phase only.
+- `design/deferred.md`: parked ideas with reopening conditions. Read
   before proposing any feature.
-- `design/experiments/`: feasibility experiments and their recorded outcomes.
-- `CHANGELOG.md`: shipped history only. Read only when asked about releases.
+- `design/experiments/README.md`: the experiment protocol; outcomes live
+  beside it, one doc per experiment.
+- `design/TODOS.md`: small one-off items that are not being done this
+  minute.
+- `design/<subsystem>.md`: subsystem design write-ups. Load on demand.
+- `CHANGELOG.md`: shipped history only. Read only when asked about
+  releases.
 
 Rules of engagement:
 
-- If a phase doc does not exist for the work you are doing, the work is
-  either a one-off (just do it) or it needs one (create it under the
-  initiative folder; never inline it in plan.md).
-- Features require a real issue. If `design/deferred.md` already contains the
-  idea, check its reopening condition before re-proposing it.
-- Experiments answer "would this work", not "should we build this". They
-  live on `exp/` branches, are never merged as-is, and end Adopted, <Adopted|Parked|Rejected> (evidence in one paragraph),
-  or Rejected with evidence in their doc.
+- Work that needs sequencing across independently shippable chunks gets
+  a plan initiative; `plan/plan.md` states how the plan lane works.
+  Anything else is a one-off: do it now, or put it in `design/TODOS.md`.
+  Never inline phase content in `plan.md`.
+- Features require a real issue. If `design/deferred.md` already contains
+  the idea, check its reopening condition before re-proposing it.
+- Experiments answer "would this work", not "should we build this". Docs
+  live in `design/experiments/<NN>-<slug>.md`, code lives on
+  `exp/<slug>` branches and is never merged as-is, and every experiment
+  ends Adopted, Parked, or Rejected with evidence in its doc.
 - Mark checkboxes and index statuses in the same commit as the work they
   describe. If a state changed but no file changed, it did not happen.
-
-Commits follow Conventional Commits (`feat:`, `fix:`, `refactor:`, `docs:`,
-`test:`, `chore:`). The changelog is generated from them. Branches follow
-`<type>/<slug>` per phase; type-per-branch without a phase is not a thing.
+  Unplanned work becomes a new box or a new phase, never quiet widening
+  of the ones that exist.
+- Commits and branches follow CONTRIBUTING.md: Conventional Commits,
+  one branch per phase, named after what it implements.
 
 GitHub issues are an inbox, not state. An initiative records its tracking
-issue number in the plan index heading; status and progress never live in
-issue comments. A feature request filed as an issue is recorded in
-design/deferred.md with its reopening condition and closed with a pointer
-to the entry; do not leave wishlist issues open.
+issue number in the index row; status and progress never live in issue
+comments. A feature request filed as an issue is recorded in
+`design/deferred.md` with its reopening condition and closed with a
+pointer to that entry. Do not leave wishlist issues open.
 
-Walk test you must pass: given only this repo, answer: what initiatives are
-active, which phase is next, what is blocked and why, and which checkboxes in
-that phase are still open. If you needed conversation history, you failed.
+Provenance: this workspace is built on the primitives of Interpretable
+Context Methodology (ICM: sequence, shelf, catalog; folder structure as
+agent architecture, plain files as state). It is not a stock ICM form:
+the plan conventions follow FlatRedBall2's public plan workspace, and
+the deferred register and experiment protocol are Duack's own. In this
+workspace the phase doc serves as the stage contract and its checkbox
+tick as the check; every other ICM invariant holds as written.
+
+Walk test you must pass: given only this repo, answer, without any
+conversation history: what initiatives are active, which phase is next,
+what is blocked and why, and which checkboxes in that phase are still
+open. If any answer needed memory, you failed. The scripted portion:
+`python tools/plan_check.py` (or `py tools/plan_check.py` where that is
+the name) must print `pass`.
 
 Maintainer release notes: `git-cliff --tag <version>` (conventional commits).
 Release authority is enforced by repository permissions (write access + tag

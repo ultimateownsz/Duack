@@ -1,4 +1,4 @@
-[![Discord](https://img.shields.io/discord/586997072373481494?style=for-the-badge&link=https%3A%2F%2Fdiscord.gg%2FM2TvCx9zXa)](https://discord.gg/uQSam6w36d)
+[![Discord](https://img.shields.io/discord/586997072373481494?logo=discord&style=social)](https://discord.gg/M2TvCx9zXa)
 
 # Duack
 

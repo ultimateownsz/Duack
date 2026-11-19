@@ -1,7 +1,4 @@
 [![Discord](https://img.shields.io/discord/586997072373481494?logo=discord&style=social)](https://discord.gg/M2TvCx9zXa)
-**Duack**: [![NuGet](https://img.shields.io/nuget/vpre/Duack?style=social&logo=nuget&label=Duack)](https://www.nuget.org/packages/Duack)
-**Duack.MonoGame**: [![NuGet](https://img.shields.io/nuget/vpre/Duack.MonoGame?style=social&logo=nuget&label=Duack.MonoGame)](https://www.nuget.org/packages/Duack.MonoGame)
-**Duack.KNI**: [![NuGet](https://img.shields.io/nuget/vpre/Duack.KNI?style=social&logo=nuget&label=Duack.KNI)](https://www.nuget.org/packages/Duack.KNI)
 
 # Duack
 
@@ -9,6 +6,15 @@ Not duck, not quack. Duack.
 
 An audio library that supports crossfades, ducking and playlists for MonoGame, KNI, and FlatRedBall 2 games — configured in code.
 
+---
+
+[![NuGet](https://img.shields.io/nuget/vpre/Duack?style=social&logo=nuget&label=Duack)](https://www.nuget.org/packages/Duack)
+
+[![NuGet](https://img.shields.io/nuget/vpre/Duack.MonoGame?style=social&logo=nuget&label=Duack.MonoGame)](https://www.nuget.org/packages/Duack.MonoGame)
+
+[![NuGet](https://img.shields.io/nuget/vpre/Duack.KNI?style=social&logo=nuget&label=Duack.KNI)](https://www.nuget.org/packages/Duack.KNI)
+
+> [!IMPORTANT]
 > Duack ships as a **preview** release: the API may change between versions.
 
 ## What is Duack
@@ -31,8 +37,10 @@ If the built-in path were enough, you would not be reading this. Duack is for th
 | Self-sequencing playlists  | Let playlists sequence and shuffle tracks while preventing the same track from playing twice in a row.                                                                                                         |
 | Lightweight dependencies   | Keep the core pure BCL, with heavyweight codec tooling outside the game.                                                                                                                                       |
 
-**What it's not**: middleware. No editor, no mixer graph, no content pipeline beyond your audio files and none are planned. The engine APIs play sounds; Duack owns the mix.
+**What it's not**: middleware.
+- No editor, no mixer graph, no content pipeline beyond your audio files and none are planned. The engine APIs play sounds; Duack owns the mix.
 Duack replaces the ad-hoc audio code indie teams write themselves when middleware is too heavy.
+- No UI tooling. For game UI, check out [Gum UI](https://github.com/vchelaru/Gum). Duack stays code-only, but transition state (crossfade progress, duck meter) is already queryable, and more can be exposed on request.
 
 ### Build tooling (optional, web/KNI)
 

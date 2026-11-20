@@ -7,6 +7,10 @@ obj/
 .idea/
 *.DotSettings.user
 
+## Python (plan tooling)
+__pycache__/
+*.pyc
+
 ## Test results
 [Tt]est[Rr]esult*/
 *.trx

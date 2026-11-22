@@ -21,7 +21,7 @@ against its rules rather than restating them.
   matching test is a finding, unless the changelog entry states a
   written reason for shipping untested.
 - Changelog coverage: every change appears in CHANGELOG.md under
-  ## Unreleased, in the right category and dated subsection.
+  `## Unreleased`, in the right category and dated subsection.
 - Architecture: src/Duack must stay pure BCL (System.Text.Json only).
   Any added package or project reference there is blocking. Engine,
   XNA and browser glue belongs in src/Duack.MonoGame or

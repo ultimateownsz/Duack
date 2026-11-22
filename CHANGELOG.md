@@ -35,6 +35,9 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
   AGENTS.md documents when each is used. Ships untested on purpose:
   agent prompts and documentation only, no production code touched.
 
+#### 2026-11-22
+- **Plan splitter, per-slice vNext workspace, and PR-review loop.** `tools/plan_split.py` turns a monolithic markdown plan into `README.md`, `SHARED.md` and one `<slug>/PLAN.md` per slice, with 12 stdlib tests under `tools/tests/`. `docs/plans/vnext/` is now in that shape. `AGENTS.md` documents the splitter and the new `/pr-review <number>` OpenCode command, which launches the `qa` agent, verifies blocking findings and records a dated verdict in `docs/plans/vnext/REVIEWS.md` — the first entry covers this PR. Python bytecode is gitignored. (#22)
+
 #### 2026-10-31
 - `MusicManager.CurrentTrackElapsedSeconds` reports elapsed playback time for the current track on both backends; `CurrentTrackDurationSeconds` is nullable for consumer-provided resolvers.
 

@@ -170,6 +170,11 @@ fresh session (the walk test applies to agents too).
   `duack-skills/`, `docs/` and `README.md` before the shipping PR
   opens.
 
+Use `/pr-review <number>` (`.opencode/commands/pr-review.md`) to run the full loop: `qa` on the
+PR diff, independent verification of blocking findings, and a dated verdict recorded in
+`docs/plans/vnext/REVIEWS.md`. It reports findings without editing code or posting a GitHub
+review unless asked.
+
 No agent listens to audio: perceptual verdicts (does the crossfade
 sound right) belong to a human, while numeric ones (curve shape, dB
 depth, tick accounting) are agent-verified.

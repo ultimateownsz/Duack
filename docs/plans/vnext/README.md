@@ -3,6 +3,8 @@
 Shared evidence, ADRs, gates, verification standards, sequencing, and math live in
 [`SHARED.md`](SHARED.md). Start there, then open the slice you are assigned.
 
+Review verdicts that affected this workspace are recorded in [`REVIEWS.md`](REVIEWS.md).
+
 Create a slice folder only when that slice starts. Unstarted slices keep a spec (`PLAN.md`) here
 as an index row; add `STATUS.md` and `slice.md` when work begins. Track this plan only when a new
 slice is created that references it — until then these files are uncommitted working state.

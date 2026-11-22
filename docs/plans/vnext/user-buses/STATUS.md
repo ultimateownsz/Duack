@@ -14,8 +14,19 @@ Started: Nov 22, 2026.
 
 ## Open questions
 
-- Whether the Ambience sample lands in `Duack.Sample.Desktop` or a new sample
-  project (default: extend the existing storyline sample unless it fights the
-  regression standard).
-- Player-settings store stays per plan: no per-bus player volumes (music/SFX pair
-  only) unless the debrief says otherwise.
+- **Human listening pending** (the slice cannot tick its box without it): the demo wires the
+  ambience bus into the shared storyline — the notice cue routes to `ambience`, the dialog
+  holds a bus-targeted duck for its duration, and the M key hot-mutes the bus while music and
+  SFX-path cues continue. Verify on desktop (and web, built explicitly) by the worst moment.
+- Whether the Ambience sample truly needs a dedicated sample project (default applied: it is
+  wired into the existing storyline of both heads, which the regression standard already
+  tracks).
+- Player-settings store stays per plan: no per-bus player volumes (music/SFX pair only) unless
+  the debrief says otherwise.
+
+## Known limitations
+
+- Per-bus active-voice counts need backend completion telemetry the `ISfxBackend` seam does not
+  expose (`Play` returns only whether the one-shot started); `BusMixer.Views` deliberately
+  omits them. Revisit if per-playback SFX handles (recorded as a deferred experiment in
+  SHARED.md §13) ever land.

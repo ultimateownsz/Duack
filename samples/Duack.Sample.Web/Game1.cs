@@ -165,6 +165,12 @@ public class Game1 : Game, IDisposable
             _manager.Play(frame.Music, fadeInSeconds: 0.8f);
         }
 
+        // Slice C duck intents: the dialog holds the ambience bus down; the battle intro releases.
+        if (frame.BeginDuckSource is not null)
+            _manager.BeginDuck(frame.BeginDuckSource);
+        if (frame.EndDuckSource is not null)
+            _manager.EndDuck(frame.EndDuckSource);
+
         if (frame.Sfx is not null)
         {
             // Never let a previous one-shot (e.g. a long dialog cue) bleed into the next cue.
@@ -180,7 +186,7 @@ public class Game1 : Game, IDisposable
             if (frame.Sfx == StoryController.HitCue && _hitBag is not null)
                 cueName = _hitBag.Draw();
 
-            if (_sfx!.Play(cueName, frame.Pitch, duck: duck) &&
+            if (_sfx!.Play(cueName, frame.Pitch, duck: duck, bus: frame.Bus) &&
                 (frame.Sfx == StoryController.HitCue || frame.Sfx == StoryController.BattleStartCue))
             {
                 _flash = 0.12f;

@@ -33,11 +33,32 @@ var config = new AudioConfigBuilder()
 - MasterVolume, Music.MasterVolume, Sfx.MasterVolume → [0,1].
 - Music.CrossfadeSeconds → [0.1, 10].
 - Contexts → [0,1].
-- Duck sources: Ratio [0,1], Attack/Hold/Release >= 0.
+- Sfx.Buses → [0,1] per bus.
+- Duck sources: Ratio [0,1], Attack/Hold/Release >= 0; `Target` names what the source ducks ("music" default, or a user bus).
 - CueVariation rebuilt (ranges normalized).
 - SchemaVersion normalized.
 
 `PlayerAudioSettings.Sanitize()` same bounds, NaN → low bound.
+
+## User-defined buses
+
+Named buses sit below master alongside the fixed music/SFX pair — one more multiplication, no
+mixer graph. Gate 2's default routing (revisitable, see `docs/plans/vnext/user-buses/`): the bus
+is a per-play argument; contexts stay music-only.
+
+```csharp
+var config = new AudioConfigBuilder()
+    .WithBus("ambience", 0.4f)
+    .WithBus("ui", 0.9f)
+    .Build();
+
+var sfx = new SfxManager(library, backend, music, sfxConfig: config.Sfx);
+sfx.Play("birds", bus: "ambience");       // routes; unknown names fall back to SFX + BusFellBack event
+sfx.Buses.SetMute("ambience", true);      // hot, zero gain, raises Changed
+```
+
+Full setup, runtime control (mute/pause/master mute), bus ducking, ref-counted holds, and the
+no-silent-failure reports live in [../buses/SKILL.md](../buses/SKILL.md).
 
 ## JSON contexts
 

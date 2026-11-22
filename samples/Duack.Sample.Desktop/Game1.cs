@@ -46,6 +46,7 @@ public class Game1 : Game
     private float _hitFlash; // seconds of hit-entity flash remaining
     private int _hitSide; // -1 none, 0 player, 1 foe
     private float _duckPeakHold = 1f; // lowest duck ratio seen, decays toward 1.0
+    private bool _ambienceMuted; // slice C: M-key toggle of the demo's ambience bus
 
     public Game1()
     {
@@ -136,6 +137,14 @@ public class Game1 : Game
         {
             _manager.Play("battle");
         }
+        else if (WasKeyPressed(keyboard, _previousKeyboard, Keys.M))
+        {
+            // Slice C: hot mute of the ambience bus; music and SFX-path cues are untouched.
+            _ambienceMuted = !_ambienceMuted;
+            _sfx.Buses.SetMute(SampleAudio.AmbienceBus, _ambienceMuted);
+            Console.WriteLine($"[Sample] ambience bus muted: {_ambienceMuted}" +
+                              $" views: [{string.Join(", ", _sfx.Buses.Views.Select(v => $"{v.Name}:{v.EffectiveGain}"))}]");
+        }
         else
         {
             ApplyFrame(_story.Update(dt));
@@ -178,6 +187,12 @@ public class Game1 : Game
             _manager.Play(frame.Music, fadeInSeconds: 0.8f);
         }
 
+        // Slice C duck intents: the dialog holds the ambience bus down; the battle intro releases.
+        if (frame.BeginDuckSource is not null)
+            _manager.BeginDuck(frame.BeginDuckSource);
+        if (frame.EndDuckSource is not null)
+            _manager.EndDuck(frame.EndDuckSource);
+
         if (frame.Sfx is not null)
         {
             // Never let a previous one-shot (e.g. a long dialog cue) bleed into the next cue.
@@ -193,7 +208,7 @@ public class Game1 : Game
             if (frame.Sfx == StoryController.HitCue && _hitBag is not null)
                 cueName = _hitBag.Draw();
 
-            if (_sfx.Play(cueName, frame.Pitch, duck: duck) &&
+            if (_sfx.Play(cueName, frame.Pitch, duck: duck, bus: frame.Bus) &&
                 (frame.Sfx == StoryController.HitCue || frame.Sfx == StoryController.BattleStartCue))
             {
                 _flash = 0.12f;

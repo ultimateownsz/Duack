@@ -25,6 +25,23 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 
 #### 2026-11-22
 
+- **User-defined buses (vNext slice C).** `AudioConfigBuilder.WithBus("ambience", volume)`
+  names any number of buses under the existing chain; `SfxManager.Play(..., bus: "ambience")`
+  routes a cue by per-play argument (the default Gate 2 routing — per-cue, contexts stay
+  music-only — adopted early as a revisitable default, see `docs/plans/vnext/user-buses/`).
+  `SfxManager.Buses` is a `BusMixer` with per-bus volume, `SetMute`, `SetPaused` and a global
+  `MasterMuted`, all hot-updatable and reported through per-bus readback views (`Views`) and a
+  `Changed` event so a frontend mixer can render this state without owning it. Unknown bus names
+  fall back to the SFX bus and raise `BusFellBack`; a play whose composed effective gain is zero
+  raises `ZeroEffectiveGain` (no backend call, no duck) instead of audibly disappearing. Ducking
+  extends to buses: `DuckSourceConfig.Target` names a bus (`"ambience"`) instead of the music, and
+  `DuckMixer.BeginDuck`/`EndDuck` are ref-counted so overlapping speakers cannot release the duck
+  early. Known limitation: per-bus active-voice counts need backend completion telemetry the
+  `ISfxBackend` seam does not expose yet and are deferred. Human listening on the ambience sample
+  still pending. (#31)
+
+#### 2026-11-22
+
 - **OpenCode review agent crew.** `.opencode/agents/` gains three
   subagents modeled on the FlatRedBall2 discipline-agent subset:
   `qa` reviews diffs and PRs against AGENTS.md and issues a good or

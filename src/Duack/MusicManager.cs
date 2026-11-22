@@ -217,6 +217,15 @@ public class MusicManager
     /// <summary>Holds a duck source on or off (e.g. dialogue open/close).</summary>
     public void SetDuck(string source, bool active) => _duck.Set(source, active);
 
+    /// <summary>
+    /// Begins a ref-counted duck hold on the named source (see <see cref="DuckMixer.BeginDuck"/>):
+    /// overlapping callers each hold once and the source releases only when the last hold ends.
+    /// </summary>
+    public void BeginDuck(string source) => _duck.BeginDuck(source);
+
+    /// <summary>Ends one <see cref="BeginDuck"/> hold (see <see cref="DuckMixer.EndDuck"/>).</summary>
+    public void EndDuck(string source) => _duck.EndDuck(source);
+
     /// <summary>Stops playback and clears all transition state.</summary>
     /// <param name="fadeOutSeconds">Optional fade out duration in seconds.</param>
     public void Stop(float? fadeOutSeconds = null)

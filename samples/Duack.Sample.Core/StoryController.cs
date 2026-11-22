@@ -30,7 +30,14 @@ public enum StoryScene
 /// as "redraw scene text". A frame can carry both an sfx and a music switch — the fainting blow
 /// plays its hit cue while the music fades back to the overworld.
 /// </summary>
-public readonly record struct StoryFrame(string? Sfx = null, float Pitch = 0f, string? Music = null, bool SceneChanged = false);
+public readonly record struct StoryFrame(
+    string? Sfx = null,
+    float Pitch = 0f,
+    string? Music = null,
+    bool SceneChanged = false,
+    string? Bus = null,
+    string? BeginDuckSource = null,
+    string? EndDuckSource = null);
 
 /// <summary>
 /// The sample's scripted storyline as a pure state machine — no MonoGame types, fully headless and
@@ -52,6 +59,12 @@ public sealed class StoryController
     public const string HitCue = "hit";
     public const string OverworldPlaylist = "overworld";
     public const string BattlePlaylist = "battle";
+
+    /// <summary>The bus the notice cue routes to (see <see cref="SampleAudio.AmbienceBus"/>).</summary>
+    public const string AmbienceBus = SampleAudio.AmbienceBus;
+
+    /// <summary>The duck source held while the dialog speaks (targets the ambience bus).</summary>
+    public const string DialogueDuckSource = SampleAudio.DialogueDuckSource;
 
     /// <summary>Number of dialog lines before the battle starts.</summary>
     public const int DialogLineCount = 3;
@@ -158,7 +171,7 @@ public sealed class StoryController
     {
         Scene = StoryScene.Notice;
         _sceneSeconds = 0f;
-        return new StoryFrame(Sfx: NoticeCue, SceneChanged: true);
+        return new StoryFrame(Sfx: NoticeCue, Bus: AmbienceBus, SceneChanged: true);
     }
 
     private StoryFrame EnterDialog()
@@ -166,7 +179,7 @@ public sealed class StoryController
         Scene = StoryScene.Dialog;
         DialogLine = 0;
         _sceneSeconds = 0f;
-        return new StoryFrame(Sfx: DialogCue, SceneChanged: true);
+        return new StoryFrame(Sfx: DialogCue, BeginDuckSource: DialogueDuckSource, SceneChanged: true);
     }
 
     private StoryFrame AdvanceDialog()
@@ -183,7 +196,7 @@ public sealed class StoryController
     {
         Scene = StoryScene.BattleIntro;
         _sceneSeconds = 0f;
-        return new StoryFrame(Sfx: BattleStartCue, SceneChanged: true);
+        return new StoryFrame(Sfx: BattleStartCue, EndDuckSource: DialogueDuckSource, SceneChanged: true);
     }
 
     private StoryFrame EnterBattle()

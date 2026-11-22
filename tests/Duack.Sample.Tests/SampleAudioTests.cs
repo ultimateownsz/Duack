@@ -87,4 +87,15 @@ public class SampleAudioTests
         Assert.Equal(0.1f, duck.ReleaseSeconds);
     }
 
+    [Fact]
+    public void BuildConfig_wires_the_ambience_bus_and_a_dialogue_duck_against_it()
+    {
+        var config = SampleAudio.BuildConfig();
+
+        Assert.Equal(0.55f, config.Sfx.Buses[SampleAudio.AmbienceBus]);
+        var dialogue = config.Music.DuckSources[SampleAudio.DialogueDuckSource];
+        Assert.Equal(0.35f, dialogue.Ratio);
+        Assert.Equal(SampleAudio.AmbienceBus, dialogue.Target);
+        Assert.Equal("music", config.Music.DuckSources[SampleAudio.SfxDuckSource].Target);
+    }
 }

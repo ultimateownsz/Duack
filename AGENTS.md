@@ -142,6 +142,36 @@ Maintainer release notes: `git-cliff --tag <version>` (conventional commits).
 Release authority is enforced by repository permissions (write access + tag
 creation), not by documentation.
 
+## OpenCode agent
+
+`.opencode/agents/` holds three subagents launched with the `subagent`
+tool. They treat this file as their constraint source and never
+restate its rules. None of them keeps state in memory: verdicts and
+notes land in the PR review or the planning files, re-derivable by a
+fresh session (the walk test applies to agents too).
+
+- `qa` - skeptical reviewer, never fixes. Run it on the working diff
+  before opening a PR and on any open PR diff before merge.
+- `refactoring-specialist` - the only agent that edits code.
+  Refactors test-first and runs targeted suites only; the unfiltered
+  whole-suite run happens once at phase end, not as a reflex.
+- `docs-writer` - maps landed changes to `CHANGELOG.md`,
+  `duack-skills/`, `docs/` and `README.md` before the shipping PR
+  opens.
+
+No agent listens to audio: perceptual verdicts (does the crossfade
+sound right) belong to a human, while numeric ones (curve shape, dB
+depth, tick accounting) are agent-verified.
+
+Plan-phase PR gate: before its checkbox may tick, `qa` reviews the PR
+diff against the phase doc, which is the contract. The verdict is
+good only when the diff implements exactly the contract, adds no
+unplanned scope, carries green targeted tests and its changelog
+entry, and the checkbox and index status are ticked in the same
+commit. Otherwise the verdict is blocked with the failing criterion
+and file and line proof, recorded as the PR review. A blocked PR
+never ticks its checkbox.
+
 ## Build & test
 ```
 dotnet build Duack.slnx

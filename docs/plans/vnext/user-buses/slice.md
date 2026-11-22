@@ -20,8 +20,6 @@ Populated as implementation decisions land. ADR deviations belong in
 
 ### Working decisions
 
-- **qa verdict: good** (Nov 22, 2026), with recorded non-blocking findings:
-
 - **Bus-duck scaling applies at play time.** One-shots do not update per frame and have no
   completion telemetry, so a play routed to a bus is scaled by `DuckRatioFor(bus)` when it
   starts (`SfxManager.Play`). Chaos-free with holds: cues played while the hold is active are
@@ -43,8 +41,9 @@ Populated as implementation decisions land. ADR deviations belong in
   README/CHANGELOG avoid dialogue framing. The sample's dialog-hold wiring stays — it is the
   scenario the pending human listening check must judge. Revisit if Gate 0 or a consumer
   reports the need.
-- **qa verdict: good** (Nov 22, 2026), with recorded non-blocking findings:
-  - The issue's "single resolver readback" is split across two surfaces by design:
+- **qa verdict: good** (Nov 22, 2026), with recorded non-blocking findings (round 1 below;
+  round 2 verified W1/W2 and the docs increments - no new findings except a duplicated qa
+  heading here, now merged):  - The issue's "single resolver readback" is split across two surfaces by design:
     `BusMixer.Views` carries per-bus gain state, `MusicManager.DuckRatioFor(bus)` carries the
     duck contribution; a duck source targeting the literal `"sfx"` bus affects only bus-routed
     plays (the fixed SFX path is outside bus-duck composition).

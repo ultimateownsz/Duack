@@ -11,6 +11,16 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 
 ### Changed
 
+#### 2026-11-22
+- `BusMixer.SetBus` change detection compares volumes bit-exactly
+  (`BitConverter.SingleToInt32Bits`) instead of `==`: no behavior change (both values pass
+  the same clamp, and the warning the change answers is about tolerance, which change
+  detection must not apply) - it makes the exactness intent explicit and answers the
+  float-equality analyzer warning. Ships with no new test because the behavior is covered by
+  the existing same-value/different-value `Changed` pin tests. (#31)
+- Skills and code comments are now self-contained descriptions of behavior, without
+  references to internal planning artifacts. Docs only; no behavior change. (#31)
+
 #### 2026-11-01
 - Added a separate `.github/workflows/release-cli.yml` that publishes `DuackCli` as its own optional NuGet .NET tool (triggered by `cli-v*` tags), plus a README install note and CLI skill install instructions. (#11)
 
@@ -25,7 +35,27 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 
 #### 2026-11-22
 
-- **OpenCode review agent crew.** `.opencode/agents/` gains three
+- **User-defined buses.** `AudioConfigBuilder.WithBus("ambience", volume)`
+  names any number of buses under the existing chain; `SfxManager.Play(..., bus: "ambience")`
+  routes a cue by per-play argument; contexts stay music-only.
+  `SfxManager.Buses` is a `BusMixer` with per-bus volume, `SetMute`, `SetPaused` and a global
+  `MasterMuted`, all hot-updatable and reported through per-bus readback views (`Views`) and a
+  `Changed` event so a frontend mixer can render this state without owning it. Unknown bus names
+  fall back to the SFX bus and raise `BusFellBack`; a play whose composed effective gain is zero
+  raises `ZeroEffectiveGain` (no backend call, no duck) instead of audibly disappearing. Ducking
+  extends to buses: `DuckSourceConfig.Target` names a bus (`"ambience"`) instead of the music, and
+  `DuckMixer.BeginDuck`/`EndDuck` are ref-counted so overlapping duck holds cannot release the
+  duck early. Known limitation: per-bus active-voice counts need backend completion telemetry the
+  `ISfxBackend` seam does not expose yet and are deferred. The sample demo covers bus routing
+  and the mute/hot-volume path; no bus-targeted duck is demoed until a real project proves
+  that scenario. Human listening on the ambience sample still pending. Bus-targeted ducks
+  (`DuckSourceConfig.Target` on a bus) are carried unvalidated: no worked example in the
+  skills until a real project proves the dialogue-style scenario. (#31)
+- Sfx full-suite notes: `DuckMixer.Set(name, false)` now also clears ref-counted holds
+  (releases like `ReleaseAll` for that source, at that source's release constant); the fixed
+  SFX path (`Play` without `bus`) stays outside bus-duck composition, so a duck source
+  targeting the literal `"sfx"` bus applies only to bus-routed plays. Both behaviors unit-pinned.
+- **OpenCode review agent crew.** `.opencode/agents/` gains three `.opencode/agents/` gains three
   subagents modeled on the FlatRedBall2 discipline-agent subset:
   `qa` reviews diffs and PRs against AGENTS.md and issues a good or
   blocked verdict at a new plan-phase PR gate before a phase checkbox
@@ -66,6 +96,17 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
   single large `Update()` can complete a multi-phase transition.
 
 ### Fixed
+
+#### 2026-11-22
+- `BusMixer.SetBus` no longer fires the `Changed` event when the volume value is unchanged -
+  a per-frame hot-update loop re-notified all subscribers every frame. Creating a bus by the
+  first call still notifies (it is a state change). Repro: set the same value twice and
+  assert one event (BusMixerTests.SetBus_SameValueOnKnownBus_SecondCallDoesNotRaiseChanged).
+- Documented (no behavior change, pinned by test): `BusMixer.SetBus` on an unknown name
+  intentionally creates the bus - it is the authoring surface, matching the
+  `DuckMixer.ReloadSources` hot-update pattern - while `Resolve` on unknown names falls back
+  to SFX and reports via `BusFellBack`; the asymmetry between authoring (creates) and
+  routing (falls back loudly) is deliberate. (#31)
 
 #### 2026-11-22
 - **PR #22 review findings (#25–#29).** `tools/plan_split.py` no longer treats a `##` line

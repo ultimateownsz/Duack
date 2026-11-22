@@ -11,6 +11,9 @@ public static class SampleAudio
     /// <summary>Duck-source name the sfx cue path pulses (matches the "sfx" duck source below).</summary>
     public const string SfxDuckSource = "sfx";
 
+    /// <summary>The demo's user bus: the notice cue routes here.</summary>
+    public const string AmbienceBus = "ambience";
+
     /// <summary>
     /// Builds the auto-playlists for a discovered library: one looping single-track playlist per
     /// track (scene music addressed by track name) plus the bag-shuffled <c>music</c> playlist.
@@ -37,6 +40,7 @@ public static class SampleAudio
                 HoldSeconds = 0.15f,
                 ReleaseSeconds = 0.1f,
             })
+            .WithBus(AmbienceBus, 0.55f) // the notice cue rides the ambience bus
             .WithCrossfadeSeconds(1.2f)
             .Build();
 }

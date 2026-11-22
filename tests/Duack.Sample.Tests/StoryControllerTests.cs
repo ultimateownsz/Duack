@@ -43,6 +43,7 @@ public class StoryControllerTests
 
         var notice = story.Update(4f); // crosses the notice threshold
         Assert.Equal("notice-video-game-sfx", notice.Sfx);
+        Assert.Equal(SampleAudio.AmbienceBus, notice.Bus); // the demo's ambience routing
         Assert.True(notice.SceneChanged);
         Assert.Equal(StoryScene.Notice, story.Scene);
 

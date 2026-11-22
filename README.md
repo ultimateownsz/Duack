@@ -28,7 +28,8 @@ If the built-in path were enough, you would not be reading this. Duack is for th
 |----------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Crossfading                | Overlap two songs on desktop; on web, sequence fade-out → swap → fade-in. Also support standalone fade-in and fade-out.                                                                                        |
 | Runtime playlist control   | Provide a `MusicPlaylistController` with `Play`, `Next`, and `Stop`, repeat modes, and bag-style shuffle so tracks don’t repeat until the bag empties.                                                         |
-| Centralized volume chain   | Compose volume deterministically from Master → music/SFX buses, per-context scales, and player settings.                                                                                                       |
+| Centralized volume chain   | Compose volume deterministically from Master → music/SFX buses, per-context scales, and player settings. User buses (ambience, UI...) add one more named factor, routed per cue.                              |
+| User-defined buses         | Name buses in code (`AudioConfigBuilder.WithBus`), route cues with a per-play `bus` argument, and control each at runtime with volume, mute, pause, a global master mute, and ref-counted duck holds. Buses are arithmetic on the same chain — no mixer graph.  |
 | Music [ducking](https://en.wikipedia.org/wiki/Ducking)              | Duck music under sound effects. Declare duck sources with ratio, attack, hold, and release; trigger them by cue, meter live gain, and support hot updates with `ReloadDuckSources()` if available.             |
 | Cue variation              | Offer [XACT](https://en.wikipedia.org/wiki/Cross-platform_Audio_Creation_Tool)-style via the `MarbleBag` class for variant selection and authored per-play jitter: pitch for music, and pitch plus volume for SFX. |
 | Persistent player settings | Support file, `localStorage`, and in-memory stores; sanitize settings and layer them over the authored mix.                                                                                                    |
@@ -38,7 +39,7 @@ If the built-in path were enough, you would not be reading this. Duack is for th
 | Lightweight dependencies   | Keep the core pure BCL, with heavyweight codec tooling outside the game.                                                                                                                                       |
 
 **What it's not**: middleware.
-- No editor, no mixer graph, no content pipeline beyond your audio files and none are planned. The engine APIs play sounds; Duack owns the mix.
+- No editor, no mixer graph, no content pipeline beyond your audio files. Buses are volume arithmetic on one chain and effects (when they land) are baked at build time. The engine APIs play sounds; Duack owns the mix.
 Duack replaces the ad-hoc audio code indie teams write themselves when middleware is too heavy.
 - No UI tooling. For game UI, check out [Gum UI](https://github.com/vchelaru/Gum). Duack stays code-only, but transition state (crossfade progress, duck meter) is already queryable, and more can be exposed on request.
 

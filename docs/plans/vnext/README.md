@@ -15,7 +15,7 @@ slice is created that references it — until then these files are uncommitted w
 | --- | --- | --- | --- |
 | A — Voice concurrency | [voice-concurrency/](voice-concurrency/) | awaiting human listening (unmerged) | Implementation lives on `feat/voice-concurrency` (pushed at `29aa0c6b`), not merged into `master` yet. Core, tests, CHANGELOG, skill, and a dedicated `Duack.Sample.Concurrency` example exist on that branch; full suite green there. Admission limiting is already cross-platform. Cross-platform follow-up documented in the slice PLAN addendum (web `Update(dt)` wiring, audible-stealing seam, verification in the existing web sample). Human listening check pending. |
 | B — 2D positional SFX | [2d-spatial/](2d-spatial/) | draft | No gate; debrief-tunable curves. |
-| C — User-defined buses | [user-buses/](user-buses/) | blocked | Gate 2 routing decision; slip-rule default after 2026-12-01. |
+| C — User-defined buses | [user-buses/](user-buses/) | in progress | Gate 2 resolved Nov 22, 2026: the maintainer adopted the default routing (per-cue argument, optional directory convention, contexts stay music-only) as a revisitable default. See [user-buses/STATUS.md](user-buses/STATUS.md). |
 | D — Build-time effects | [baked-effects/](baked-effects/) | blocked | Dormant until positive evidence of a runtime-color need; Gate 1 spike may run standalone. |
 | E — Named mix states | [mix-states/](mix-states/) | draft | After C (needs bus tree and resolution path); authored config only. |
 

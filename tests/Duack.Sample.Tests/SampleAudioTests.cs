@@ -87,4 +87,16 @@ public class SampleAudioTests
         Assert.Equal(0.1f, duck.ReleaseSeconds);
     }
 
+    [Fact]
+    public void BuildConfig_wires_the_ambience_bus_without_a_bus_duck()
+    {
+        var config = SampleAudio.BuildConfig();
+
+        Assert.Equal(0.55f, config.Sfx.Buses[SampleAudio.AmbienceBus]);
+        Assert.Equal("music", config.Music.DuckSources[SampleAudio.SfxDuckSource].Target);
+
+        // No bus-targeted duck: the scenario (e.g. dialogue ducking a bus) stays out of the
+        // sample until a real project proves it. The mechanism keeps its core unit tests.
+        Assert.DoesNotContain(config.Music.DuckSources.Values, d => d.Target != "music");
+    }
 }

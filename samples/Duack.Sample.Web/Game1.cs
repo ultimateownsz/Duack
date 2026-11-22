@@ -180,7 +180,7 @@ public class Game1 : Game, IDisposable
             if (frame.Sfx == StoryController.HitCue && _hitBag is not null)
                 cueName = _hitBag.Draw();
 
-            if (_sfx!.Play(cueName, frame.Pitch, duck: duck) &&
+            if (_sfx!.Play(cueName, frame.Pitch, duck: duck, bus: frame.Bus) &&
                 (frame.Sfx == StoryController.HitCue || frame.Sfx == StoryController.BattleStartCue))
             {
                 _flash = 0.12f;

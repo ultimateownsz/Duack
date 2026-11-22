@@ -54,6 +54,13 @@ public class MusicManager
     /// <summary>Combined duck ratio the music is currently multiplied by (1 = unducked).</summary>
     public float DuckRatio => _duck.EffectiveRatio;
 
+    /// <summary>
+    /// The combined duck ratio currently aimed at <paramref name="target"/>: <c>music</c> equals
+    /// <see cref="DuckRatio"/>; a bus target composes only the sources aimed at that bus (1 when
+    /// none are active).
+    /// </summary>
+    public float DuckRatioFor(string target) => _duck.RatioFor(target);
+
     /// <summary>Combined gain reduction / attenuation currently applied to music (0 = no reduction, 1 = full silence).</summary>
     public float GainReduction => _duck.GainReduction;
 
@@ -209,6 +216,15 @@ public class MusicManager
 
     /// <summary>Holds a duck source on or off (e.g. dialogue open/close).</summary>
     public void SetDuck(string source, bool active) => _duck.Set(source, active);
+
+    /// <summary>
+    /// Begins a ref-counted duck hold on the named source (see <see cref="DuckMixer.BeginDuck"/>):
+    /// overlapping callers each hold once and the source releases only when the last hold ends.
+    /// </summary>
+    public void BeginDuck(string source) => _duck.BeginDuck(source);
+
+    /// <summary>Ends one <see cref="BeginDuck"/> hold (see <see cref="DuckMixer.EndDuck"/>).</summary>
+    public void EndDuck(string source) => _duck.EndDuck(source);
 
     /// <summary>Stops playback and clears all transition state.</summary>
     /// <param name="fadeOutSeconds">Optional fade out duration in seconds.</param>

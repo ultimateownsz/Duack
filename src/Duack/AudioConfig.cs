@@ -19,6 +19,12 @@ public class DuckSourceConfig
 
     /// <summary>Time constant for easing the music back to full volume.</summary>
     public float ReleaseSeconds { get; set; } = 0.35f;
+
+    /// <summary>
+    /// What this source ducks: <c>music</c> (the default, as always) or the name of a user
+    /// bus (e.g. <c>ambience</c>), whose cues scale by this ratio while the hold is active.
+    /// </summary>
+    public string Target { get; set; } = "music";
 }
 
 /// <summary>Music mix: master volume, per-context scale, crossfade, and duck sources.</summary>
@@ -59,6 +65,13 @@ public class SfxConfig
     /// </summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public CueVariation? CueVariation { get; set; }
+
+    /// <summary>
+    /// User-defined buses: a name and volume per bus. Composed below master alongside the fixed
+    /// music/SFX pair; cues routed to a bus scale by its effective gain (see
+    /// <see cref="BusMixer"/>). The fixed SFX bus itself is not listed here.
+    /// </summary>
+    public Dictionary<string, float> Buses { get; set; } = new();
 }
 
 /// <summary>
@@ -86,6 +99,9 @@ public class AudioConfig
         MasterVolume = System.Math.Clamp(MasterVolume, 0f, 1f);
         Music.MasterVolume = System.Math.Clamp(Music.MasterVolume, 0f, 1f);
         Sfx.MasterVolume = System.Math.Clamp(Sfx.MasterVolume, 0f, 1f);
+
+        foreach (var bus in Sfx.Buses.Keys.ToList())
+            Sfx.Buses[bus] = System.Math.Clamp(Sfx.Buses[bus], 0f, 1f);
         Music.CrossfadeSeconds = System.Math.Clamp(Music.CrossfadeSeconds, 0.1f, 10f);
 
         foreach (var context in Music.Contexts.Keys.ToList())

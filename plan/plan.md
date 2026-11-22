@@ -33,12 +33,12 @@ How it is worked:
   the same commit. Work nobody planned gets a new box or a new phase,
   never quiet widening of the ones that exist. Phase work lists are
   stated as non-exhaustive.
-- Every checkbox names its issue, created before the work starts:
-  `- [ ] <step> (#123)`. Implementation commits end in `Refs: #123`, so
-  `git log --grep '#123'` lists exactly the commits behind that box — the
-  set to review, document or revert when a change proves wrong. The issue
-  holds the problem, acceptance criteria and repro; evidence goes in its
-  comments. Status stays here.
+- Conventional Commits are the truth. A feature ships on a branch named
+  after what it implements; a slice never gets its own tracking issue, so
+  no checkbox must carry an issue number — the PR and the commit history
+  behind it are the record. Checkbox references to issues remain welcome
+  where a real issue exists. The issue templates remain for reproduced
+  bugs. Status stays here.
 - Decisions and gotchas keep stable IDs: `D<n>` and `G<n>`, ranges
   reserved per phase in overview.md. Cite D30; never cite "the decision
   in the other phase about X". An ID is never renumbered or reused.

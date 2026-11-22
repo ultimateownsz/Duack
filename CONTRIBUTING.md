@@ -40,8 +40,9 @@ the finish line gets close.
 
 ## Pull requests
 
-1. An agreed issue first, except typos and tiny doc fixes. Cite it on the
-   plan checkbox and in commit footers.
+1. A branch named after what it implements, Conventional Commits throughout.
+   A slice never gets its own tracking issue; the commit history is the
+   record (issue templates remain for reproduced bugs).
 2. One change per PR.
 3. A test that fails before your bug fix and passes after it.
 4. Run it on at least one target (desktop or web) and say which.

@@ -8,7 +8,7 @@ settings) extracted from a production game and published as preview NuGet packag
 Every code change is recorded in `CHANGELOG.md` under `## Unreleased`, in the appropriate
 `### Added` / `### Changed` / `### Fixed` / `### Known Limitations` category and a dated
 `#### YYYY-MM-DD` subsection before it lands. For fixes, record the symptom plus enough
-reproduction detail to re-verify or revert. Reference the related PR/issue (e.g. `(#123)`)
+reproduction detail to re-verify or revert. Reference the related PR (e.g. `(#123)`)
 so it surfaces in the auto-generated release notes. Do not edit code without reflecting it there.
 
 ## Test-Driven Development (non-negotiable)
@@ -104,8 +104,8 @@ Rules of engagement:
   a plan initiative; `plan/plan.md` states how the plan lane works.
   Anything else is a one-off: do it now, or put it in `design/TODOS.md`.
   Never inline phase content in `plan.md`.
-- Features require a real issue. If `design/deferred.md` already contains
-  the idea, check its reopening condition before re-proposing it.
+- Feature requests are recorded in `design/deferred.md` with a reopening
+  condition; no tracking issue is opened for planned work.
 - Experiments answer "would this work", not "should we build this". Docs
   live in `design/experiments/<NN>-<slug>.md`, code lives on
   `exp/<slug>` branches and is never merged as-is, and every experiment
@@ -117,21 +117,12 @@ Rules of engagement:
 - Commits and branches follow CONTRIBUTING.md: Conventional Commits,
   one branch per phase, named after what it implements.
 
-GitHub issues are an inbox, not state. An initiative records its tracking
-issue number in the index row; status and progress never live in issue
-comments. A feature request filed as an issue is recorded in
-`design/deferred.md` with its reopening condition and closed with a
-pointer to that entry. Do not leave wishlist issues open.
-
-Every checkbox names its issue (`- [ ] <step> (#123)`), created before the
-work starts. The issue holds the problem, acceptance criteria and repro;
-the plan file holds status. End every implementing commit with a
-`Refs: #123` footer, so `git log --grep '#123'` lists exactly the commits
-behind that box — the set to review, document, or revert when a change
-turns out to be a bug or a misunderstanding. Post evidence (review
-verdicts, listening results, commit links) to the issue as comments, never
-status. Issue templates for work items and bugs live in
-`.github/ISSUE_TEMPLATE/`.
+A slice does not get its own tracking issue: never open an issue whose
+title is the slice or feature name — the PR and its Conventional Commits
+are the record. Checkbox references to issues remain welcome where a real
+issue exists (a reproduced bug, a follow-up), written `- [ ] <step> (#123)`;
+they are not required for planned feature work. Issue templates for bugs
+live in `.github/ISSUE_TEMPLATE/`.
 
 Provenance: this workspace is built on the primitives of Interpretable
 Context Methodology (ICM: sequence, shelf, catalog; folder structure as

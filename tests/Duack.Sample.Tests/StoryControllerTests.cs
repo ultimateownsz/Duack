@@ -62,25 +62,8 @@ public class StoryControllerTests
 
         Assert.Equal("dialog", frame.Sfx);
         Assert.True(frame.SceneChanged);
-        Assert.Equal(SampleAudio.DialogueDuckSource, frame.BeginDuckSource); // holds the ambience duck
-        Assert.Null(frame.EndDuckSource);
         Assert.Equal(StoryScene.Dialog, story.Scene);
         Assert.Equal(0, story.DialogLine);
-    }
-
-    [Fact]
-    public void The_last_dialog_line_releases_the_dialogue_duck()
-    {
-        var story = new StoryController();
-        story.Advance();                    // -> Notice
-        story.Advance();                    // -> Dialog (hold begins)
-        story.Advance();                    // line 2
-        story.Advance();                    // line 3 -> BattleIntro
-
-        var frame = story.Advance();        // last line -> BattleIntro (hold ends)
-
-        Assert.Equal(StoryScene.BattleIntro, story.Scene);
-        Assert.Equal(SampleAudio.DialogueDuckSource, frame == default ? null : frame.EndDuckSource);
     }
 
     [Fact]

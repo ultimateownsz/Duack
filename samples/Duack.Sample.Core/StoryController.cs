@@ -35,9 +35,7 @@ public readonly record struct StoryFrame(
     float Pitch = 0f,
     string? Music = null,
     bool SceneChanged = false,
-    string? Bus = null,
-    string? BeginDuckSource = null,
-    string? EndDuckSource = null);
+    string? Bus = null);
 
 /// <summary>
 /// The sample's scripted storyline as a pure state machine — no MonoGame types, fully headless and
@@ -62,9 +60,6 @@ public sealed class StoryController
 
     /// <summary>The bus the notice cue routes to (see <see cref="SampleAudio.AmbienceBus"/>).</summary>
     public const string AmbienceBus = SampleAudio.AmbienceBus;
-
-    /// <summary>The duck source held while the dialog speaks (targets the ambience bus).</summary>
-    public const string DialogueDuckSource = SampleAudio.DialogueDuckSource;
 
     /// <summary>Number of dialog lines before the battle starts.</summary>
     public const int DialogLineCount = 3;
@@ -179,7 +174,7 @@ public sealed class StoryController
         Scene = StoryScene.Dialog;
         DialogLine = 0;
         _sceneSeconds = 0f;
-        return new StoryFrame(Sfx: DialogCue, BeginDuckSource: DialogueDuckSource, SceneChanged: true);
+        return new StoryFrame(Sfx: DialogCue, SceneChanged: true);
     }
 
     private StoryFrame AdvanceDialog()
@@ -196,7 +191,7 @@ public sealed class StoryController
     {
         Scene = StoryScene.BattleIntro;
         _sceneSeconds = 0f;
-        return new StoryFrame(Sfx: BattleStartCue, EndDuckSource: DialogueDuckSource, SceneChanged: true);
+        return new StoryFrame(Sfx: BattleStartCue, SceneChanged: true);
     }
 
     private StoryFrame EnterBattle()

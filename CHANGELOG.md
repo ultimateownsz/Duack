@@ -46,9 +46,11 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
   extends to buses: `DuckSourceConfig.Target` names a bus (`"ambience"`) instead of the music, and
   `DuckMixer.BeginDuck`/`EndDuck` are ref-counted so overlapping duck holds cannot release the
   duck early. Known limitation: per-bus active-voice counts need backend completion telemetry the
-  `ISfxBackend` seam does not expose yet and are deferred. Human listening on the ambience sample
-  still pending. Bus-targeted ducks (`DuckSourceConfig.Target` on a bus) are carried unvalidated:
-  no worked example in the skills until a real project proves the dialogue-style scenario. (#31)
+  `ISfxBackend` seam does not expose yet and are deferred. The sample demo covers bus routing
+  and the mute/hot-volume path; no bus-targeted duck is demoed until a real project proves
+  that scenario. Human listening on the ambience sample still pending. Bus-targeted ducks
+  (`DuckSourceConfig.Target` on a bus) are carried unvalidated: no worked example in the
+  skills until a real project proves the dialogue-style scenario. (#31)
 - Sfx full-suite notes: `DuckMixer.Set(name, false)` now also clears ref-counted holds
   (releases like `ReleaseAll` for that source, at that source's release constant); the fixed
   SFX path (`Play` without `bus`) stays outside bus-duck composition, so a duck source

@@ -15,9 +15,11 @@ Started: Nov 22, 2026.
 ## Open questions
 
 - **Human listening pending** (the slice cannot tick its box without it): the demo wires the
-  ambience bus into the shared storyline — the notice cue routes to `ambience`, the dialog
-  holds a bus-targeted duck for its duration, and the M key hot-mutes the bus while music and
-  SFX-path cues continue. Verify on desktop (and web, built explicitly) by the worst moment.
+  ambience bus into the shared storyline — the notice cue routes to `ambience`, and the M key
+  (desktop) hot-mutes the bus while music and SFX-path cues continue. The bus-targeted
+  dialogue-duck scenario was removed from the demo on the maintainer's PR-review call (above)
+  and stays unvalidated until a real project proves it. Verify on desktop (and web, built
+  explicitly) by the worst moment.
 - Whether the Ambience sample truly needs a dedicated sample project (default applied: it is
   wired into the existing storyline of both heads, which the regression standard already
   tracks).

@@ -77,3 +77,32 @@ the PR head at review time, so findings stay re-derivable after the branch moves
 - `python tools/plan_check.py` → `pass` (see F4 caveat).
 - Scope: `.gitattributes` is no longer in the PR diff because master advanced to `52cb505`;
   `.gitignore:9-12` ignores Python bytecode.
+
+## 2026-11-22 — re-review at head `9c13104` (base `52cb505`): good
+
+Re-ran the `qa` review against the live PR head after the fix commit. Every finding from the
+`c09b054` review was independently re-verified against `9c13104` (via the GitHub contents API,
+not the local tree). All findings are fixed; none remain open.
+
+- F1 (changelog missing): fixed in `650df42` — `CHANGELOG.md` carries the dated `### Added`
+  entry with `(#22)`. Verified in the head snapshot.
+- F2 → issue #25 (closed): `README.md` and `voice-concurrency/STATUS.md` now state Slice A
+  lives on `feat/voice-concurrency` (pushed at `29aa0c6b`), unmerged; the "landed"/"not pushed"
+  claims are gone. Verified in the head snapshot.
+- F3 → issue #26 (closed): one slice-folder convention (folder with `PLAN.md` from the split;
+  `STATUS.md`/`slice.md` when the slice starts) stated identically in `README.md`,
+  `SHARED.md`, and `plan/01-vnext/overview.md`; matches the shipped tree.
+- F4 → issue #27 (closed): `plan/01-vnext/phase-01-vnext-slices.md` exists (template shape,
+  ID range reserved in the overview); `tools/plan_check.py` now link-checks `docs/plans/`
+  and tolerates `file:line` backtick references.
+- F5 → issue #28 (closed): `AGENTS.md` names the per-slice shape and links `docs/plans/vnext/`;
+  no dangling "above".
+- F6 → issue #29 (closed): `_parse` is fence-aware (`FENCE_RE`, tracked ``` / ~~~ fences);
+  regression test `test_fenced_heading_is_not_a_section` written red first, then green.
+
+Verification at `9c13104`: `python -m unittest discover -s tools/tests` 13/13;
+`python tools/plan_check.py` → `pass`; `dotnet build Duack.slnx` clean;
+`dotnet test Duack.slnx` 293+15+28+43 green.
+
+Verdict: **good**. Human sign-off (perception, "does it sound right") remains out of scope for
+agents and is not required for this PR — it is tooling and docs only.

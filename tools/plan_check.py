@@ -63,6 +63,8 @@ def check_links_in(text, file_path):
             check_path(target, where, base=file_path.parent)
     for m in re.finditer(r"`([^`]+)`", text):
         token = m.group(1).strip()
+        # Allow file:line references such as `tools/plan_check.py:24-27`.
+        token = re.sub(r":\d[\d,\-]*$", "", token)
         if token.startswith(DOC_PATH_ROOTS) and not token.endswith("/"):
             check_path(token, where)
 
@@ -154,8 +156,9 @@ def check_deferred():
 
 def scan_workspace_docs():
     """Link-check every planning doc, including subsystem write-ups an
-    agent adds later under design/."""
-    for base in (ROOT / "plan", ROOT / "design"):
+    agent adds later under design/ and the per-slice workspaces under
+    docs/plans/."""
+    for base in (ROOT / "plan", ROOT / "design", ROOT / "docs" / "plans"):
         if not base.exists():
             continue
         for f in sorted(base.rglob("*.md")):

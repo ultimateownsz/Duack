@@ -138,6 +138,19 @@ open. If any answer needed memory, you failed. The scripted portion:
 `python tools/plan_check.py` (or `py tools/plan_check.py` where that is
 the name) must print `pass`.
 
+When a large plan is made or handed in as one monolithic file, split it into
+the per-slice shape `docs/plans/vnext/` uses — an index `README.md` with one
+row per slice, a shared `SHARED.md`, and one `<slug>/PLAN.md` per slice —
+with `python tools/plan_split.py <PLAN.md> [--out
+<dir>] [--slug A=<slug>] [--force] [--remove-input]`. It writes an index
+(`README.md`), a `SHARED.md` holding every non-slice section with its `##`
+headings intact (so `§N` references still resolve), and one `<slug>/PLAN.md`
+per `Slice X — Name` section. Slugs come from the slice name unless overridden;
+generated statuses are `draft` and must be filled in by hand. It never
+overwrites existing output without `--force` and never deletes the input
+without `--remove-input`. Create `STATUS.md` and `slice.md` only when a slice
+starts. Tool tests: `python -m unittest discover -s tools/tests`.
+
 Maintainer release notes: `git-cliff --tag <version>` (conventional commits).
 Release authority is enforced by repository permissions (write access + tag
 creation), not by documentation.
@@ -158,6 +171,11 @@ fresh session (the walk test applies to agents too).
 - `docs-writer` - maps landed changes to `CHANGELOG.md`,
   `duack-skills/`, `docs/` and `README.md` before the shipping PR
   opens.
+
+Use `/pr-review <number>` (`.opencode/commands/pr-review.md`) to run the full loop: `qa` on the
+PR diff, independent verification of blocking findings, and a dated verdict recorded in
+`docs/plans/vnext/REVIEWS.md`. It reports findings without editing code or posting a GitHub
+review unless asked.
 
 No agent listens to audio: perceptual verdicts (does the crossfade
 sound right) belong to a human, while numeric ones (curve shape, dB

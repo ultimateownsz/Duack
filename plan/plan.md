@@ -52,4 +52,4 @@ How it is worked:
 
 | Initiative | Phase | Doc | Status |
 |---|---|---|---|
-| (none yet) | | | |
+| Duack vNext | 01 | plan/01-vnext/overview.md | In progress |

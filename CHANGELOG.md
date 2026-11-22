@@ -35,6 +35,9 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
   AGENTS.md documents when each is used. Ships untested on purpose:
   agent prompts and documentation only, no production code touched.
 
+#### 2026-11-22
+- **Plan splitter, per-slice vNext workspace, and PR-review loop.** `tools/plan_split.py` turns a monolithic markdown plan into `README.md`, `SHARED.md` and one `<slug>/PLAN.md` per slice, with 12 stdlib tests under `tools/tests/`. `docs/plans/vnext/` is now in that shape. `AGENTS.md` documents the splitter and the new `/pr-review <number>` OpenCode command, which launches the `qa` agent, verifies blocking findings and records a dated verdict in `docs/plans/vnext/REVIEWS.md` — the first entry covers this PR. Python bytecode is gitignored. (#22)
+
 #### 2026-10-31
 - `MusicManager.CurrentTrackElapsedSeconds` reports elapsed playback time for the current track on both backends; `CurrentTrackDurationSeconds` is nullable for consumer-provided resolvers.
 
@@ -60,6 +63,25 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
   `Non_overlap_repeat_track_fade_in_does_not_inherit_the_previous_fade_out`.
   Also made `MusicTransitionSequencer.Advance` consume a delta across phase boundaries so a
   single large `Update()` can complete a multi-phase transition.
+
+### Fixed
+
+#### 2026-11-22
+- **PR #22 review findings (#25–#29).** `tools/plan_split.py` no longer treats a `##` line
+  inside a fenced code block as a section (regression test:
+  `test_fenced_heading_is_not_a_section`; repro was a plan example line
+  `## 9. Slice Z — Fake` producing a `fake/` folder and vanishing from `SHARED.md`).
+  `AGENTS.md` now names the per-slice shape (`README.md` index, `SHARED.md`, one
+  `<slug>/PLAN.md` per slice) instead of pointing at "the shape above".
+  `plan/01-vnext/` gains `phase-01-vnext-slices.md` (the phase that was advertised
+  without a doc) and `tools/plan_check.py` now link-checks `docs/plans/` too, so the
+  vNext workspace is no longer invisible to the walk-test check.
+  The slice-folder convention is stated identically in `docs/plans/vnext/README.md`,
+  `SHARED.md` and `plan/01-vnext/overview.md` (folder with `PLAN.md` from the split;
+  `STATUS.md`/`slice.md` when the slice starts), matching the shipped tree.
+  Slice A's status in `docs/plans/vnext/README.md` and its `STATUS.md` now states the
+  code lives on the unmerged `feat/voice-concurrency` branch (pushed at `29aa0c6b`),
+  not merged into `master`.
 
 ### Changed
 

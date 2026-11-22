@@ -34,6 +34,7 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
   landed changes to the changelog, skills, docs and README.
   AGENTS.md documents when each is used. Ships untested on purpose:
   agent prompts and documentation only, no production code touched.
+- Every plan checkbox now names its issue (`- [ ] <step> (#N)`), created before work starts, and implementing commits carry a `Refs: #N` footer. `git log --grep '#N'` lists the exact commits behind a box so a change can be reviewed, documented or reverted as a unit. Added matching human/agent issue templates under `.github/ISSUE_TEMPLATE/` and documented the convention in `AGENTS.md`, `CONTRIBUTING.md`, `plan/plan.md`, `design/TODOS.md` and both plan templates. (#24)
 
 #### 2026-10-31
 - `MusicManager.CurrentTrackElapsedSeconds` reports elapsed playback time for the current track on both backends; `CurrentTrackDurationSeconds` is nullable for consumer-provided resolvers.

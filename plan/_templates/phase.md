@@ -20,8 +20,15 @@ discovered mid-phase becomes a new box or a new phase, never quiet
 widening of one. Every tick lands in the same commit as the work it
 describes.
 
-- [ ] <step>
-- [ ] <step>
+Each box carries its issue number, created before the work starts:
+`- [ ] <step> (#N)`. The issue holds the problem, acceptance criteria and
+repro; this file holds the status. End every implementing commit with a
+`Refs: #N` footer so `git log --grep '#N'` gives the exact set to review,
+document or revert. Review verdicts and listening results go in issue
+comments as evidence, never as status.
+
+- [ ] <step> (#N)
+- [ ] <step> (#N)
 
 ## Decisions and gotchas
 

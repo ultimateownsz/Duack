@@ -123,6 +123,16 @@ comments. A feature request filed as an issue is recorded in
 `design/deferred.md` with its reopening condition and closed with a
 pointer to that entry. Do not leave wishlist issues open.
 
+Every checkbox names its issue (`- [ ] <step> (#123)`), created before the
+work starts. The issue holds the problem, acceptance criteria and repro;
+the plan file holds status. End every implementing commit with a
+`Refs: #123` footer, so `git log --grep '#123'` lists exactly the commits
+behind that box — the set to review, document, or revert when a change
+turns out to be a bug or a misunderstanding. Post evidence (review
+verdicts, listening results, commit links) to the issue as comments, never
+status. Issue templates for work items and bugs live in
+`.github/ISSUE_TEMPLATE/`.
+
 Provenance: this workspace is built on the primitives of Interpretable
 Context Methodology (ICM: sequence, shelf, catalog; folder structure as
 agent architecture, plain files as state). It is not a stock ICM form:

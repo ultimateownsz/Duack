@@ -2,7 +2,9 @@
 
 - Problem: <the problem this initiative exists to solve, stated from
   the user's perspective>
-- Tracking: #<issue number, or none>
+- Tracking: #<issue number, or none> — the initiative-level issue. Each
+  phase checkbox names its own issue number, written on the box before
+  work starts; see `_templates/phase.md`.
 - Pinned metric: <the one number this initiative must move, and how a
   test or script enforces it>
 

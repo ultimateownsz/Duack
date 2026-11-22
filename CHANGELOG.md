@@ -23,8 +23,17 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 
 ### Added
 
-#### 2026-11-20
-- Added `tools/plan_split.py`, a stdlib-only companion to `plan_check.py` that turns a large monolithic markdown plan into a per-slice workspace: `README.md` (index), `SHARED.md` (all non-slice sections, `##` headings preserved so `§N` references still resolve), and `<slug>/PLAN.md` for each `Slice X — Name` section. Slugs are derived from the slice name or supplied with `--slug A=voice-concurrency`; the tool refuses to overwrite existing output without `--force` and leaves the input in place unless `--remove-input` is passed. Generated statuses are `draft` for a human to fill in, and `STATUS.md`/`slice.md` are intentionally not generated until a slice starts. Documented in `AGENTS.md`; pinned by 12 stdlib tests under `tools/tests/`. Python bytecode is now gitignored.
+#### 2026-11-22
+
+- **OpenCode review agent crew.** `.opencode/agents/` gains three
+  subagents modeled on the FlatRedBall2 discipline-agent subset:
+  `qa` reviews diffs and PRs against AGENTS.md and issues a good or
+  blocked verdict at a new plan-phase PR gate before a phase checkbox
+  may tick; `refactoring-specialist` refactors test-first and runs
+  only the targeted suites a diff touches; `docs-writer` maps
+  landed changes to the changelog, skills, docs and README.
+  AGENTS.md documents when each is used. Ships untested on purpose:
+  agent prompts and documentation only, no production code touched.
 
 #### 2026-10-31
 - `MusicManager.CurrentTrackElapsedSeconds` reports elapsed playback time for the current track on both backends; `CurrentTrackDurationSeconds` is nullable for consumer-provided resolvers.

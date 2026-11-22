@@ -11,6 +11,14 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 
 ### Changed
 
+#### 2026-11-22
+- `BusMixer.SetBus` change detection compares volumes bit-exactly
+  (`BitConverter.SingleToInt32Bits`) instead of `==`: no behavior change (both values pass
+  the same clamp, and the warning the change answers is about tolerance, which change
+  detection must not apply) - it makes the exactness intent explicit and answers the
+  float-equality analyzer warning. Ships with no new test because the behavior is covered by
+  the existing same-value/different-value `Changed` pin tests. (#31)
+
 #### 2026-11-01
 - Added a separate `.github/workflows/release-cli.yml` that publishes `DuackCli` as its own optional NuGet .NET tool (triggered by `cli-v*` tags), plus a README install note and CLI skill install instructions. (#11)
 

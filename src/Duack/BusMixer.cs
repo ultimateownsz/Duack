@@ -67,7 +67,11 @@ public sealed class BusMixer
         {
             // Per-frame hot-update loops set the same value every frame; only real state
             // changes re-notify (creation is a state change and always notifies).
-            if (state.Volume == volume) return;
+            // Bit-exact comparison, not a tolerance question: both values pass the same
+            // clamp, so any difference however small is an authored change that must notify -
+            // an epsilon here would silently drop legitimate updates.
+            if (BitConverter.SingleToInt32Bits(state.Volume)
+                == BitConverter.SingleToInt32Bits(volume)) return;
             state.Volume = volume;
             Changed?.Invoke();
         }

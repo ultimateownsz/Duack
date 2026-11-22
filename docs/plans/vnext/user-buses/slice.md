@@ -3,6 +3,25 @@
 Populated as implementation decisions land. ADR deviations belong in
 [STATUS.md](STATUS.md) with rationale, never here.
 
+### Structure decisions (Nov 22, 2026, from review-structure.md §3)
+
+- **D1 — Flat buses only.** No parent-chain gain tree, no per-bus effects, no solo, no
+  snapshot transitions. A bus tree is a mixer graph; the README scope promise excludes it,
+  and an effect hook would be untestable dead surface in a pure-BCL assembly. Re-propose
+  against [review-structure.md](review-structure.md) §2 only with new evidence.
+- **D2 — Bus naming stays lowercase, Ordinal-compared, config-seeded.** `sfx` is the fixed
+  fallback name and must not be renamed or re-cased (see review-structure.md V1).
+- **D3 — Mutation surface is methods + `Changed`, never public mutable fields.** Same-value
+  setters are no-ops that do not re-notify; `Resolve` is the only routing surface and the
+  authoring surface (`SetBus`) is the only creator.
+- **D4 — Ducking stays in the existing duck system.** Bus gain never embeds duck
+  multipliers.
+- **D5 — Gain resolves live** on every play, never resolve-once-at-play.
+
+### Working decisions
+
+- **qa verdict: good** (Nov 22, 2026), with recorded non-blocking findings:
+
 - **Bus-duck scaling applies at play time.** One-shots do not update per frame and have no
   completion telemetry, so a play routed to a bus is scaled by `DuckRatioFor(bus)` when it
   starts (`SfxManager.Play`). Chaos-free with holds: cues played while the hold is active are

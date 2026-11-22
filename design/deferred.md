@@ -34,6 +34,24 @@ real backlog.
   browser that produce it. Until measured, an experiment belongs in
   design/experiments/ before this becomes an initiative.
 
+### Startup validation of string name references (buses, duck targets, contexts, playlists)
+- What: an eager, additive validation pass that cross-checks declared string references —
+  duck source `Target`s against the bus table and registered sources, bus names referenced
+  in plays, music context names — and fails fast on the first run instead of relying on
+  play-time events or silent no-ops.
+- Why not built: no reported bite yet. The play-time reports (`BusFellBack`,
+  `ZeroEffectiveGain`) cover the hottest surface (buses), and userland constants close the
+  rest at the call site. The typed-ref alternative (readonly struct end-to-end) was
+  evaluated and rejected: it only helps if strings stop compiling everywhere at once, costs
+  a custom JSON converter per wrapped name in the source-generated contexts, and
+  `default(...)` bypasses constructor validation anyway (qa-verified Nov 22, 2026, evidence
+  in issue #31's comment thread / slice C review).
+- Reopens when: a user reports a typo-caused silent failure on any surface that never
+  reports at play time (unknown context silently at scale 1, `SetDuck`/`BeginDuck`/`EndDuck`
+  on an unregistered source, `DuckSourceConfig.Target` naming a never-declared bus), or
+  when slice E's named mix states add more cross-referencing string surfaces that make the
+  silent paths materially likelier.
+
 ### Post-1.0 deprecation policy
 - What: adopt `[Obsolete]` with a stated removal version as the standard
   breaking-change instrument.

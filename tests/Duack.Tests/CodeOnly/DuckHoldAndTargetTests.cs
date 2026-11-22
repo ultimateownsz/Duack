@@ -5,7 +5,7 @@ using System.Linq;
 namespace Duack.Tests.CodeOnly;
 
 /// <summary>
-/// Pins slice C duck extensions: ref-counted <see cref="DuckMixer.BeginDuck"/>/<see
+/// Pins duck extensions: ref-counted <see cref="DuckMixer.BeginDuck"/>/<see
 /// cref="DuckMixer.EndDuck"/> holds (overlapping speakers cannot release early) and
 /// per-source duck <c>Target</c>s — "music" (default) composes the music's
 /// <see cref="DuckMixer.EffectiveRatio"/>, a bus target composes only under <see

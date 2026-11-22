@@ -11,7 +11,7 @@ public static class SampleAudio
     /// <summary>Duck-source name the sfx cue path pulses (matches the "sfx" duck source below).</summary>
     public const string SfxDuckSource = "sfx";
 
-    /// <summary>The demo's user bus (slice C): the notice cue routes here.</summary>
+    /// <summary>The demo's user bus: the notice cue routes here.</summary>
     public const string AmbienceBus = "ambience";
 
     /// <summary>Duck source that ducks the <see cref="AmbienceBus"/> while the dialog speaks.</summary>
@@ -43,7 +43,7 @@ public static class SampleAudio
                 HoldSeconds = 0.15f,
                 ReleaseSeconds = 0.1f,
             })
-            .WithBus(AmbienceBus, 0.55f) // slice C: notice cue rides the ambience bus
+            .WithBus(AmbienceBus, 0.55f) // the notice cue rides the ambience bus
             .WithDuckSource(DialogueDuckSource, new DuckSourceConfig
             {
                 Ratio = 0.35f,

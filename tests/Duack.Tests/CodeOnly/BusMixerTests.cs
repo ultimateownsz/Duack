@@ -5,7 +5,7 @@ using System.Linq;
 namespace Duack.Tests.CodeOnly;
 
 /// <summary>
-/// Pins slice C user buses: <see cref="SfxConfig.Buses"/> composition,
+/// Pins user buses: <see cref="SfxConfig.Buses"/> composition,
 /// <see cref="BusMixer"/> routing (un-routed cues land on the SFX bus, unknown names fall
 /// back and report), per-bus mute/pause and hot volume updates, global master mute, and the
 /// readback view.
@@ -126,7 +126,7 @@ public class BusMixerTests
     [Fact]
     public void SetBus_UnknownName_IntentionallyCreatesTheBus_AndRaisesChanged()
     {
-        // Decision W2 (a) in review-structure.md: SetBus is the authoring surface and creates
+        // SetBus is the authoring surface and intentionally creates
         // the bus (authored-config hot updates follow the DuckMixer.ReloadSources pattern);
         // Resolve is the routing surface and falls back loudly. The asymmetry is deliberate.
         var mixer = new BusMixer(null);

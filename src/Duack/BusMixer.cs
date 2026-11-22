@@ -7,13 +7,13 @@ namespace Duack;
 /// Runtime state and routing for the user-defined buses authored in <see cref="SfxConfig.Buses"/>.
 ///
 /// <para>
-/// Routing (per the Gate 2 default, recorded in docs/plans/vnext/user-buses/STATUS.md): a cue
-/// reaches a bus by its per-play <c>bus</c> argument. An un-routed cue stays on the fixed SFX bus;
-/// an unknown bus name falls back to the SFX bus and raises <see cref="BusFellBack"/> so the
-/// routing mistake surfaces instead of staying silent (the no-silent-failure principle applied to
-/// routing). Effective gain per bus is volume × (muted or paused ? 0 : 1); the global master mute
-/// zero-folds into every resolution, and <see cref="Changed"/> fires on any state change so a
-/// frontend mixer can render this state without owning it.
+/// Routing: a cue reaches a bus by its per-play <c>bus</c> argument. An un-routed cue stays on
+/// the fixed SFX bus; an unknown bus name falls back to the SFX bus and raises <see
+/// cref="BusFellBack"/> so the routing mistake surfaces instead of staying silent (the
+/// no-silent-failure principle applied to routing). Effective gain per bus is volume × (muted
+/// or paused ? 0 : 1); the global master mute zero-folds into every resolution, and <see
+/// cref="Changed"/> fires on any state change so a frontend mixer can render this state
+/// without owning it.
 /// </para>
 /// </summary>
 public sealed class BusMixer
@@ -57,8 +57,8 @@ public sealed class BusMixer
     /// This is the authoring surface: an unknown name intentionally creates the bus (authored
     /// hot updates follow the <c>DuckMixer.ReloadSources</c> pattern) and raises <see
     /// cref="Changed"/>. The routing surface is <see cref="Resolve"/>, which falls back loudly
-    /// instead - the asymmetry is deliberate (D3 and W2 in
-    /// docs/plans/vnext/user-buses/review-structure.md).
+    /// instead - the asymmetry between authoring (creates) and routing (falls back) is
+    /// deliberate.
     /// </summary>
     public void SetBus(string name, float volume)
     {

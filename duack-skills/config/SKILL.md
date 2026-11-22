@@ -43,8 +43,7 @@ var config = new AudioConfigBuilder()
 ## User-defined buses
 
 Named buses sit below master alongside the fixed music/SFX pair — one more multiplication, no
-mixer graph. Gate 2's default routing (revisitable, see `docs/plans/vnext/user-buses/`): the bus
-is a per-play argument; contexts stay music-only.
+mixer graph. Routing: the bus is a per-play argument; contexts stay music-only.
 
 ```csharp
 var config = new AudioConfigBuilder()

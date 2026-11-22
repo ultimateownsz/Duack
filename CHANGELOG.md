@@ -18,6 +18,11 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
   detection must not apply) - it makes the exactness intent explicit and answers the
   float-equality analyzer warning. Ships with no new test because the behavior is covered by
   the existing same-value/different-value `Changed` pin tests. (#31)
+- Skills and code comments no longer reference the internal planning workspace (slice/gate/
+  review-doc names): the buses and config skills and the `BusMixer`/`SfxManager` doc comments
+  are self-contained descriptions of behavior. The routing-model history and the structure
+  review stay in `docs/plans/vnext/user-buses/` for contributors. Docs only; no behavior
+  change. (#31)
 
 #### 2026-11-01
 - Added a separate `.github/workflows/release-cli.yml` that publishes `DuackCli` as its own optional NuGet .NET tool (triggered by `cli-v*` tags), plus a README install note and CLI skill install instructions. (#11)

@@ -69,7 +69,7 @@ public sealed class SfxManager
     public float SfxBusVolume { get; set; }
 
     /// <summary>
-    /// Runtime state and routing for the user-defined buses (slice C): volumes, mute, pause and
+    /// Runtime state and routing for the user-defined buses: volumes, mute, pause and
     /// the master mute, with <see cref="BusMixer.BusFellBack"/> reporting unknown bus names.
     /// </summary>
     public BusMixer Buses => _buses;

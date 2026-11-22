@@ -46,7 +46,7 @@ public class Game1 : Game
     private float _hitFlash; // seconds of hit-entity flash remaining
     private int _hitSide; // -1 none, 0 player, 1 foe
     private float _duckPeakHold = 1f; // lowest duck ratio seen, decays toward 1.0
-    private bool _ambienceMuted; // slice C: M-key toggle of the demo's ambience bus
+    private bool _ambienceMuted; // M-key toggle of the demo's ambience bus
 
     public Game1()
     {

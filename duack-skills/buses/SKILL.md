@@ -1,6 +1,6 @@
 ---
 name: buses
-description: Duack user-defined buses (slice C) — authoring buses with AudioConfigBuilder.WithBus, routing cues per play, runtime volume/mute/pause/master mute on BusMixer, ref-counted duck holds, and the no-silent-failure reports (BusFellBack, ZeroEffectiveGain). Use when wiring ambience/UI buses or setting up per-bus mixing.
+description: Duack user-defined buses — authoring buses with AudioConfigBuilder.WithBus, routing cues per play, runtime volume/mute/pause/master mute on BusMixer, ref-counted duck holds, and the no-silent-failure reports (BusFellBack, ZeroEffectiveGain). Use when wiring ambience/UI buses or setting up per-bus mixing.
 ---
 
 # Duack — User-Defined Buses
@@ -8,9 +8,8 @@ description: Duack user-defined buses (slice C) — authoring buses with AudioCo
 ## What a bus is
 
 A named volume stage under the existing chain: Master → user bus → fixed SFX bus → per-play
-volume (× per-context scales for music, × duck for the music or a bus). Buses are **volume
-arithmetic**, one more multiplication — not a mixer graph, and there are no bus effects
-(see `docs/plans/vnext/` for the edge of the roadmap).
+volume (× per-context scales for music, × duck where a duck is aimed). Buses are **volume
+arithmetic**, one more multiplication — not a mixer graph, and there are no bus effects.
 
 ## Setup (authoring)
 
@@ -35,9 +34,9 @@ sfx.Play("birds", bus: "ambience");  // routed to the bus
 sfx.Play("click");                   // no bus = the fixed SFX bus
 ```
 
-Routing is a per-play argument (the default routing model, revisitable — see
-`docs/plans/vnext/user-buses/STATUS.md`). Contexts stay music-only. An un-routed cue always
-lands on the SFX bus.
+Routing is a per-play argument; it is never a context mapping (contexts stay music-only) and
+never a registration step — any bus the mixer knows is immediately routable. An un-routed cue
+always lands on the SFX bus.
 
 ## Runtime control (hot, no rebuild)
 

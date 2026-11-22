@@ -28,8 +28,27 @@ def _slugify(name):
     return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
 
 
+FENCE_RE = re.compile(r"^(```+|~~~+)")
+
+
+def _unfenced(text):
+    """Yield the offsets of line starts that sit outside fenced code blocks."""
+    outside = []
+    fence = None
+    for match in re.finditer(r"^.*$", text, re.M):
+        if fence is None:
+            outside.append(match.start())
+            fence_match = FENCE_RE.match(match.group(0))
+            if fence_match:
+                fence = fence_match.group(1)[:3]
+        elif FENCE_RE.match(match.group(0)) and match.group(0).startswith(fence):
+            fence = None
+    return outside
+
+
 def _parse(text):
-    matches = list(HEADING_RE.finditer(text))
+    starts = set(_unfenced(text))
+    matches = [m for m in HEADING_RE.finditer(text) if m.start() in starts]
     if not matches:
         raise PlanSplitError("no '##' sections found; nothing to split")
     preamble = text[:matches[0].start()].rstrip()

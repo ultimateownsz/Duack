@@ -9,6 +9,10 @@ This initiative's canonical plan and durable state live in `docs/plans/vnext/`:
 - `<slice>/STATUS.md` — state and open questions for that slice.
 - `<slice>/slice.md` — decisions made while building that slice.
 
-Start at the index. Unstarted slices have only `PLAN.md`; the folder is created when the slice
-starts. The plan is tracked only when a new slice is created that references it — until then these
-files are uncommitted working state.
+Phases:
+
+- phase-01: D1 to D19, G1 to G19
+
+Start at the index. Every slice's folder holds its `PLAN.md` from the moment the plan is split;
+`STATUS.md` and `slice.md` are added when the slice starts. The plan is tracked only when a new
+slice is created that references it — until then these files are uncommitted working state.

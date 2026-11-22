@@ -2,11 +2,11 @@
 
 | Slice | Status | Notes |
 | --- | --- | --- |
-| A — Voice concurrency | awaiting human listening | Core, tests, CHANGELOG, skill, and dedicated `Duack.Sample.Concurrency` example landed; storyline samples untouched; full suite green. Admission limiting is already cross-platform. Cross-platform follow-up documented in [`PLAN.md`](PLAN.md) addendum (web `Update(dt)` wiring, audible-stealing seam, verification in the existing web sample). Human listening check pending. |
+| A — Voice concurrency | awaiting human listening (unmerged) | Implementation lives on `feat/voice-concurrency` (pushed at `29aa0c6b`), not merged into `master` yet. Core, tests, CHANGELOG, skill, and a dedicated `Duack.Sample.Concurrency` example exist on that branch; storyline samples untouched; full suite green there. Admission limiting is already cross-platform. Cross-platform follow-up documented in [`PLAN.md`](PLAN.md) addendum (web `Update(dt)` wiring, audible-stealing seam, verification in the existing web sample). Human listening check pending. |
 
-Verified: `dotnet build Duack.slnx` clean; `dotnet test Duack.slnx` green (392 tests);
-`python tools/plan_check.py` → `pass`. Commits on `feat/voice-concurrency` (not pushed):
-`4ae8db3` (core), `5a90bef` (example), `fa94769` (docs).
+Verified on `feat/voice-concurrency`: `dotnet build Duack.slnx` clean; `dotnet test Duack.slnx`
+green (392 tests). Commits on that branch: `4ae8db3` (core), `5a90bef` (example),
+`fa94769` (docs). None of this work is on `master` until that branch is merged.
 
 ## Open questions for the maintainer
 

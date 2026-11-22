@@ -98,7 +98,7 @@ Gate 2 — Routing model (blocks slice C implementation). Decide how a cue gets 
 ## 10. Workspace conventions (agent operating rules)
 
 - `docs/plans/vnext/README.md` is the index. This file holds the evidence, ADRs, gates, standards, sequencing, and math shared by every slice.
-- Each slice has its own folder with `<slice>/PLAN.md` (spec). Add `<slice>/STATUS.md` (state and open questions) and `<slice>/slice.md` (decisions made while building) only when that slice starts; unstarted slices remain index rows with a spec only.
+- Each slice has its own folder with `<slice>/PLAN.md` (spec), present from the moment the plan is split. Add `<slice>/STATUS.md` (state and open questions) and `<slice>/slice.md` (decisions made while building) only when that slice starts; until then the folder holds the spec only.
 - Record any decision that deviates from an ADR in that slice's STATUS.md with rationale; do not silently override an ADR.
 - Track the plan only when a new slice is created that references it. Until then these files stay uncommitted working state.
 - Walk test before each handoff: a fresh agent session reading only the repo files (README, this plan, slice file, STATUS) can state what is done, what is in progress, and what is blocked. If not, the files are wrong, not the reader.

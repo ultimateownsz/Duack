@@ -139,7 +139,9 @@ open. If any answer needed memory, you failed. The scripted portion:
 the name) must print `pass`.
 
 When a large plan is made or handed in as one monolithic file, split it into
-the per-slice shape above with `python tools/plan_split.py <PLAN.md> [--out
+the per-slice shape `docs/plans/vnext/` uses — an index `README.md` with one
+row per slice, a shared `SHARED.md`, and one `<slug>/PLAN.md` per slice —
+with `python tools/plan_split.py <PLAN.md> [--out
 <dir>] [--slug A=<slug>] [--force] [--remove-input]`. It writes an index
 (`README.md`), a `SHARED.md` holding every non-slice section with its `##`
 headings intact (so `§N` references still resolve), and one `<slug>/PLAN.md`

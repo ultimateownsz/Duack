@@ -109,6 +109,38 @@ public class BusMixerTests
     }
 
     [Fact]
+    public void SetBus_SameValueOnKnownBus_SecondCallDoesNotRaiseChanged()
+    {
+        var mixer = new BusMixer(ConfigBus("ambience", 0.4f).Buses);
+        var changed = 0;
+        mixer.Changed += () => changed++;
+
+        // First: hot update (state change). Second: same value — a per-frame hot-update loop
+        // must not re-notify every frame.
+        mixer.SetBus("ambience", 0.7f);
+        mixer.SetBus("ambience", 0.7f);
+
+        Assert.Equal(1, changed);
+    }
+
+    [Fact]
+    public void SetBus_UnknownName_IntentionallyCreatesTheBus_AndRaisesChanged()
+    {
+        // Decision W2 (a) in review-structure.md: SetBus is the authoring surface and creates
+        // the bus (authored-config hot updates follow the DuckMixer.ReloadSources pattern);
+        // Resolve is the routing surface and falls back loudly. The asymmetry is deliberate.
+        var mixer = new BusMixer(null);
+        var changed = 0;
+        mixer.Changed += () => changed++;
+
+        mixer.SetBus("ambience", 0.5f);
+
+        Assert.Equal(0.5f, mixer.Resolve("ambience").Gain, 4);
+        Assert.False(mixer.Resolve("ambience").FellBack);
+        Assert.Equal(1, changed);
+    }
+
+    [Fact]
     public void Views_ExposeVolumeMutePauseAndEffectiveGain()
     {
         var buses = new AudioConfigBuilder().WithBus("ambience", 0.4f).WithBus("ui", 0.9f).Build().Sfx.Buses;

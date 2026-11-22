@@ -87,6 +87,17 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 ### Fixed
 
 #### 2026-11-22
+- `BusMixer.SetBus` no longer fires the `Changed` event when the volume value is unchanged -
+  a per-frame hot-update loop re-notified all subscribers every frame. Creating a bus by the
+  first call still notifies (it is a state change). Repro: set the same value twice and
+  assert one event (BusMixerTests.SetBus_SameValueOnKnownBus_SecondCallDoesNotRaiseChanged).
+- Documented (no behavior change, pinned by test): `BusMixer.SetBus` on an unknown name
+  intentionally creates the bus - it is the authoring surface, matching the
+  `DuckMixer.ReloadSources` hot-update pattern - while `Resolve` on unknown names falls back
+  to SFX and reports via `BusFellBack`; the asymmetry is deliberate (D3/W2 in
+  docs/plans/vnext/user-buses/review-structure.md). (#31)
+
+#### 2026-11-22
 - **PR #22 review findings (#25–#29).** `tools/plan_split.py` no longer treats a `##` line
   inside a fenced code block as a section (regression test:
   `test_fenced_heading_is_not_a_section`; repro was a plan example line

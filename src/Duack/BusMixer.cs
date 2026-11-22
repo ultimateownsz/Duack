@@ -52,15 +52,30 @@ public sealed class BusMixer
                 _buses[name] = new BusState(volume);
     }
 
-    /// <summary>Hot-updates a bus's authored volume (same clamp as <see cref="AudioConfig.Sanitize"/>).</summary>
+    /// <summary>
+    /// Hot-updates a bus's authored volume (same clamp as <see cref="AudioConfig.Sanitize"/>).
+    /// This is the authoring surface: an unknown name intentionally creates the bus (authored
+    /// hot updates follow the <c>DuckMixer.ReloadSources</c> pattern) and raises <see
+    /// cref="Changed"/>. The routing surface is <see cref="Resolve"/>, which falls back loudly
+    /// instead - the asymmetry is deliberate (D3 and W2 in
+    /// docs/plans/vnext/user-buses/review-structure.md).
+    /// </summary>
     public void SetBus(string name, float volume)
     {
         volume = Math.Clamp(float.IsNaN(volume) ? 0f : volume, 0f, 1f);
         if (_buses.TryGetValue(name, out var state))
+        {
+            // Per-frame hot-update loops set the same value every frame; only real state
+            // changes re-notify (creation is a state change and always notifies).
+            if (state.Volume == volume) return;
             state.Volume = volume;
+            Changed?.Invoke();
+        }
         else
+        {
             _buses[name] = new BusState(volume);
-        Changed?.Invoke();
+            Changed?.Invoke();
+        }
     }
 
     /// <summary>Silences a bus at zero gain; <see cref="SetMute(name, false)"/> restores it.</summary>

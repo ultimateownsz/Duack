@@ -17,6 +17,20 @@ public sealed class DuckMixer
     /// <summary>The combined ratio applied to the music each frame (1 = no ducking).</summary>
     public float EffectiveRatio { get; private set; } = 1f;
 
+    /// <summary>
+    /// The combined ratio currently applied to a duck target: <c>music</c> equals <see
+    /// cref="EffectiveRatio"/>; a bus target composes only the sources aimed at that bus.
+    /// Targets with no active sources return 1.
+    /// </summary>
+    public float RatioFor(string target)
+    {
+        var ratio = 1f;
+        foreach (var source in _sources.Values)
+            if (source.Target == target)
+                ratio *= source.CurrentRatio;
+        return ratio;
+    }
+
     /// <summary>Combined gain reduction / attenuation currently applied to music (0 = no reduction, 1 = full silence).</summary>
     public float GainReduction => 1f - EffectiveRatio;
 
@@ -27,7 +41,7 @@ public sealed class DuckMixer
     public IReadOnlyList<DuckSourceView> Sources =>
         _sources.Select(kv => new DuckSourceView(
             kv.Key, kv.Value.IsActive, kv.Value.CurrentRatio,
-            kv.Value.IsActive ? kv.Value.Config.Ratio : 1f)).ToList();
+            kv.Value.IsActive ? kv.Value.Config.Ratio : 1f, kv.Value.Target)).ToList();
 
     /// <summary>Registers (or replaces) the configuration for a named source.</summary>
     public void SetSource(string name, DuckSourceConfig config) =>
@@ -60,7 +74,35 @@ public sealed class DuckMixer
     public void Set(string name, bool active)
     {
         if (_sources.TryGetValue(name, out var source))
+        {
             source.IsActive = active;
+            if (active) return;
+            source.Holds = 0;
+        }
+    }
+
+    /// <summary>
+    /// Begins a ref-counted duck hold on the named source. Overlapping callers each hold once,
+    /// and the source releases only when every hold has ended — a second speaker ending cannot
+    /// drop the duck while the first one still speaks. Un-paired with <see cref="EndDuck"/>.
+    /// </summary>
+    public void BeginDuck(string name)
+    {
+        if (!_sources.TryGetValue(name, out var source)) return;
+        source.Holds++;
+        source.IsActive = true;
+    }
+
+    /// <summary>
+    /// Ends one <see cref="BeginDuck"/> hold. The source releases (easing through its release
+    /// constant) only when holds reach zero. Over-releases are harmless.
+    /// </summary>
+    public void EndDuck(string name)
+    {
+        if (!_sources.TryGetValue(name, out var source)) return;
+        source.Holds = Math.Max(0, source.Holds - 1);
+        if (source.Holds == 0 && source.PulseRemaining <= 0f)
+            source.IsActive = false;
     }
 
     /// <summary>Ducks for <paramref name="holdSeconds"/> (or the source's configured hold), then releases.</summary>
@@ -86,6 +128,7 @@ public sealed class DuckMixer
         foreach (var source in _sources.Values)
         {
             source.IsActive = false;
+            source.Holds = 0;
             source.PulseRemaining = 0f;
             source.CurrentRatio = 1f;
         }
@@ -102,7 +145,8 @@ public sealed class DuckMixer
         foreach (var source in _sources.Values)
         {
             source.Update(deltaSeconds);
-            ratio *= source.CurrentRatio;
+            if (source.Target == "music")
+                ratio *= source.CurrentRatio;
         }
         EffectiveRatio = ratio;
     }
@@ -114,19 +158,26 @@ public sealed class DuckMixer
         private const float SettleEpsilon = 0.0001f;
 
         public DuckSourceConfig Config { get; private set; } = config;
+        public string Target { get; private set; } = config.Target;
         public bool IsActive;
+        public int Holds;
         public float PulseRemaining;
         public float CurrentRatio = 1f;
 
         /// <summary>Replaces the config in place, keeping active/pulse/current-ratio state.</summary>
-        public void Apply(DuckSourceConfig config) => Config = config;
+        public void Apply(DuckSourceConfig config)
+        {
+            Config = config;
+            Target = config.Target;
+        }
 
         public void Update(float deltaSeconds)
         {
             if (PulseRemaining > 0f)
             {
                 PulseRemaining -= deltaSeconds;
-                if (PulseRemaining <= 0f)
+                // Holds keep the duck alive after a pulse expires.
+                if (PulseRemaining <= 0f && Holds == 0)
                     IsActive = false;
             }
 
@@ -146,4 +197,5 @@ public sealed class DuckMixer
 }
 
 /// <summary>Diagnostics view of one duck source (target = the ratio it is easing toward).</summary>
-public readonly record struct DuckSourceView(string Name, bool IsActive, float CurrentRatio, float TargetRatio);
+public readonly record struct DuckSourceView(
+    string Name, bool IsActive, float CurrentRatio, float TargetRatio, string Target = "music");

@@ -30,6 +30,17 @@ public sealed class AudioConfigBuilder
         return this;
     }
 
+    /// <summary>
+    /// Defines (or replaces) a named user bus with its volume in [0, 1]. Cues routed to the bus
+    /// via <see cref="SfxManager.Play(string, float, float, bool, string?)"/> scale by its
+    /// effective gain; un-routed cues stay on the fixed SFX bus.
+    /// </summary>
+    public AudioConfigBuilder WithBus(string name, float volume)
+    {
+        _config.Sfx.Buses[name] = volume;
+        return this;
+    }
+
     /// <summary>Sets the music crossfade time in seconds.</summary>
     public AudioConfigBuilder WithCrossfadeSeconds(float value)
     {

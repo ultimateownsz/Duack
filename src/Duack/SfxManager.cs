@@ -25,6 +25,7 @@ public sealed class SfxManager
     private readonly MusicManager _music;
     private readonly SfxConfig? _sfxConfig;
     private readonly string _duckSource;
+    private readonly BusMixer _buses;
     private readonly MarbleBag<string> _bag;
     private readonly Random _random;
 
@@ -51,6 +52,7 @@ public sealed class SfxManager
         _music = music ?? throw new ArgumentNullException(nameof(music));
         _duckSource = duckSource ?? throw new ArgumentNullException(nameof(duckSource));
         _sfxConfig = sfxConfig;
+        _buses = new BusMixer(sfxConfig?.Buses);
         _random = random ?? Random.Shared;
         MasterVolume = masterVolume;
         SfxBusVolume = sfxBusVolume;
@@ -66,6 +68,18 @@ public sealed class SfxManager
     /// <summary>SFX bus volume, read live on every play; defaults to the constructor argument.</summary>
     public float SfxBusVolume { get; set; }
 
+    /// <summary>
+    /// Runtime state and routing for the user-defined buses (slice C): volumes, mute, pause and
+    /// the master mute, with <see cref="BusMixer.BusFellBack"/> reporting unknown bus names.
+    /// </summary>
+    public BusMixer Buses => _buses;
+
+    /// <summary>
+    /// Raised when a play's composed effective gain resolves to zero — the cue is reported instead
+    /// of audibly disappearing. No backend call and no music duck happen for such a play.
+    /// </summary>
+    public event Action<string>? ZeroEffectiveGain;
+
     /// <summary>The discovered one-shot cue names (see <see cref="AudioLibrary.Sfx"/>).</summary>
     public IReadOnlyList<string> Names => _library.Sfx;
 
@@ -75,17 +89,27 @@ public sealed class SfxManager
     /// not in the library or the backend refuses to play it. Pass <paramref name="duck"/> = false
     /// to play the cue without ducking the music (e.g. a cue that accompanies a scene switch).
     /// </summary>
-    public bool Play(string cueName, float pitch = 0f, float volume = 1f, bool duck = true)
+    public bool Play(string cueName, float pitch = 0f, float volume = 1f, bool duck = true, string? bus = null)
     {
         if (!_library.IsSfx(cueName)) return false;
-
         // Per-play jitter from the authored cue variation, resolved fresh on every play so a live
         // settings change applies without rebuilding the manager; added on top of the caller's
         // pitch and scaling the caller's volume, then composed with the buses.
         var variation = _sfxConfig?.CueVariation;
         var cuePlay = variation?.Resolve(_random) ?? new CuePlay(0f, 1f);
         var finalPitch = variation is null ? pitch : Math.Clamp(pitch + cuePlay.Pitch, -1f, 1f);
-        var finalVolume = Math.Clamp(volume * cuePlay.VolumeScale, 0f, 1f) * MasterVolume * SfxBusVolume;
+        var resolution = _buses.Resolve(bus);
+        var finalVolume = Math.Clamp(volume * cuePlay.VolumeScale, 0f, 1f)
+                          * MasterVolume * SfxBusVolume * resolution.Gain
+                          * (bus is null ? 1f : _music.DuckRatioFor(resolution.Bus));
+
+        // A play that resolves to zero gain reports its cause instead of staying silent: no
+        // backend call, no music duck, nothing audible to duck for.
+        if (finalVolume <= 0f)
+        {
+            ZeroEffectiveGain?.Invoke(cueName);
+            return true;
+        }
 
         if (!_backend.Play(cueName, finalPitch, Math.Clamp(finalVolume, 0f, 1f))) return false;
 

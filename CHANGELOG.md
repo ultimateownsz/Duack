@@ -34,6 +34,7 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
   landed changes to the changelog, skills, docs and README.
   AGENTS.md documents when each is used. Ships untested on purpose:
   agent prompts and documentation only, no production code touched.
+- Every plan checkbox now names its issue (`- [ ] <step> (#N)`), created before work starts, and implementing commits carry a `Refs: #N` footer. `git log --grep '#N'` lists the exact commits behind a box so a change can be reviewed, documented or reverted as a unit. Added matching human/agent issue templates under `.github/ISSUE_TEMPLATE/` and documented the convention in `AGENTS.md`, `CONTRIBUTING.md`, `plan/plan.md`, `design/TODOS.md` and both plan templates. (#24)
 
 #### 2026-11-22
 - **Plan splitter, per-slice vNext workspace, and PR-review loop.** `tools/plan_split.py` turns a monolithic markdown plan into `README.md`, `SHARED.md` and one `<slug>/PLAN.md` per slice, with 12 stdlib tests under `tools/tests/`. `docs/plans/vnext/` is now in that shape. `AGENTS.md` documents the splitter and the new `/pr-review <number>` OpenCode command, which launches the `qa` agent, verifies blocking findings and records a dated verdict in `docs/plans/vnext/REVIEWS.md` — the first entry covers this PR. Python bytecode is gitignored. (#22)

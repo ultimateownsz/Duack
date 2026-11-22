@@ -165,7 +165,7 @@ public class Game1 : Game, IDisposable
             _manager.Play(frame.Music, fadeInSeconds: 0.8f);
         }
 
-        // Slice C duck intents: the dialog holds the ambience bus down; the battle intro releases.
+        // Bus duck intents: the dialog holds the ambience bus down; the battle intro releases.
         if (frame.BeginDuckSource is not null)
             _manager.BeginDuck(frame.BeginDuckSource);
         if (frame.EndDuckSource is not null)

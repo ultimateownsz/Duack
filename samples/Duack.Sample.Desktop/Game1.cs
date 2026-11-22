@@ -139,7 +139,7 @@ public class Game1 : Game
         }
         else if (WasKeyPressed(keyboard, _previousKeyboard, Keys.M))
         {
-            // Slice C: hot mute of the ambience bus; music and SFX-path cues are untouched.
+            // Hot mute of the ambience bus; music and SFX-path cues are untouched.
             _ambienceMuted = !_ambienceMuted;
             _sfx.Buses.SetMute(SampleAudio.AmbienceBus, _ambienceMuted);
             Console.WriteLine($"[Sample] ambience bus muted: {_ambienceMuted}" +
@@ -187,7 +187,7 @@ public class Game1 : Game
             _manager.Play(frame.Music, fadeInSeconds: 0.8f);
         }
 
-        // Slice C duck intents: the dialog holds the ambience bus down; the battle intro releases.
+        // Bus duck intents: the dialog holds the ambience bus down; the battle intro releases.
         if (frame.BeginDuckSource is not null)
             _manager.BeginDuck(frame.BeginDuckSource);
         if (frame.EndDuckSource is not null)

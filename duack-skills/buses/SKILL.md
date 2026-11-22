@@ -1,6 +1,6 @@
 ---
 name: buses
-description: Duack user-defined buses (slice C) — authoring buses with AudioConfigBuilder.WithBus, routing cues per play, runtime volume/mute/pause/master mute on BusMixer, ducking a bus, ref-counted duck holds, and the no-silent-failure reports (BusFellBack, ZeroEffectiveGain). Use when wiring ambience/UI/dialogue buses or setting up per-bus mixing.
+description: Duack user-defined buses (slice C) — authoring buses with AudioConfigBuilder.WithBus, routing cues per play, runtime volume/mute/pause/master mute on BusMixer, ref-counted duck holds, and the no-silent-failure reports (BusFellBack, ZeroEffectiveGain). Use when wiring ambience/UI buses or setting up per-bus mixing.
 ---
 
 # Duack — User-Defined Buses
@@ -51,31 +51,30 @@ sfx.Buses.Views;   // readback: per-bus Volume, Muted, Paused, EffectiveGain
 sfx.Buses.Changed += () => ...;          // fires on any state change (frontend mixer hook)
 ```
 
-## Ducking a bus
+## Ducking basics and holds
 
-Duck sources gain a `Target`: the default `"music"` (as always) or a bus name.
+Duck sources are declared under `MusicConfig.DuckSources` as always — the music duck
+under SFX is the settled case (see `../ducking/SKILL.md`).
 
-```csharp
-.WithDuckSource("dialogue", new DuckSourceConfig
-{
-    Ratio = 0.35f, AttackSeconds = 0.08f, ReleaseSeconds = 0.6f,
-    Target = "ambience",   // the dialog ducks the ambience bus, not the music
-})
-```
-
-While the hold is active, plays routed to `ambience` scale by the duck's current ratio.
-Read a target's combined ratio with `MusicManager.DuckRatioFor("ambience")`.
-
-### Ref-counted holds (overlapping speakers)
+### Ref-counted holds (overlapping sources)
 
 ```csharp
-musicManager.BeginDuck("dialogue");  // each speaker holds once
-musicManager.EndDuck("dialogue");    // releases only when the LAST hold ends
+musicManager.BeginDuck("sfx-dip");  // each source holds once
+musicManager.EndDuck("sfx-dip");    // releases only when the LAST hold ends
 ```
 
-`BeginDuck`/`EndDuck` are ref-counted so a second speaker ending cannot drop the duck while
-the first still speaks. Over-releases are harmless; `ReleaseDucks()` clears everything
+`BeginDuck`/`EndDuck` are ref-counted so a second source ending cannot drop the duck while
+the first still plays. Over-releases are harmless; `ReleaseDucks()` clears everything
 (scene switches).
+
+## Bus-targeted ducks — supported, not yet validated
+
+A duck source can name a bus as its `Target`, scaling plays routed to that bus instead of the
+music (`DuckMixer.RatioFor`/`MusicManager.DuckRatioFor(bus)` read the combined ratio). The
+mechanism is implemented and unit-tested, but **no real project has used it yet**, so this
+skill deliberately carries no worked example: wire it only when a concrete need shows up, and
+record the use case where it came from. If you reach for it, treat the setup as a candidate to
+validate by listening, not as a settled recipe.
 
 ## No silent failures
 

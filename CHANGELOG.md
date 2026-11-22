@@ -35,10 +35,11 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
   fall back to the SFX bus and raise `BusFellBack`; a play whose composed effective gain is zero
   raises `ZeroEffectiveGain` (no backend call, no duck) instead of audibly disappearing. Ducking
   extends to buses: `DuckSourceConfig.Target` names a bus (`"ambience"`) instead of the music, and
-  `DuckMixer.BeginDuck`/`EndDuck` are ref-counted so overlapping speakers cannot release the duck
-  early. Known limitation: per-bus active-voice counts need backend completion telemetry the
+  `DuckMixer.BeginDuck`/`EndDuck` are ref-counted so overlapping duck holds cannot release the
+  duck early. Known limitation: per-bus active-voice counts need backend completion telemetry the
   `ISfxBackend` seam does not expose yet and are deferred. Human listening on the ambience sample
-  still pending. (#31)
+  still pending. Bus-targeted ducks (`DuckSourceConfig.Target` on a bus) are carried unvalidated:
+  no worked example in the skills until a real project proves the dialogue-style scenario. (#31)
 - Sfx full-suite notes: `DuckMixer.Set(name, false)` now also clears ref-counted holds
   (releases like `ReleaseAll` for that source, at that source's release constant); the fixed
   SFX path (`Play` without `bus`) stays outside bus-duck composition, so a duck source

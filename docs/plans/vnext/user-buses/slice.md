@@ -18,6 +18,12 @@ Populated as implementation decisions land. ADR deviations belong in
   positional constructions compiling.
 - No per-bus active voice counts: `ISfxBackend` has no completion callback and honest
   absence beats invented numbers (recorded as a known limitation in STATUS.md).
+- **Bus-targeted ducks are carried unvalidated.** The maintainer's call (Nov 22, 2026): the
+  mechanism is implemented and unit-tested, but until a real user and project prove the
+  dialogue-style use case, the buses skill documents it without a worked example and the
+  README/CHANGELOG avoid dialogue framing. The sample's dialog-hold wiring stays — it is the
+  scenario the pending human listening check must judge. Revisit if Gate 0 or a consumer
+  reports the need.
 - **qa verdict: good** (Nov 22, 2026), with recorded non-blocking findings:
   - The issue's "single resolver readback" is split across two surfaces by design:
     `BusMixer.Views` carries per-bus gain state, `MusicManager.DuckRatioFor(bus)` carries the

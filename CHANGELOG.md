@@ -18,11 +18,8 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
   detection must not apply) - it makes the exactness intent explicit and answers the
   float-equality analyzer warning. Ships with no new test because the behavior is covered by
   the existing same-value/different-value `Changed` pin tests. (#31)
-- Skills and code comments no longer reference the internal planning workspace (slice/gate/
-  review-doc names): the buses and config skills and the `BusMixer`/`SfxManager` doc comments
-  are self-contained descriptions of behavior. The routing-model history and the structure
-  review stay in `docs/plans/vnext/user-buses/` for contributors. Docs only; no behavior
-  change. (#31)
+- Skills and code comments are now self-contained descriptions of behavior, without
+  references to internal planning artifacts. Docs only; no behavior change. (#31)
 
 #### 2026-11-01
 - Added a separate `.github/workflows/release-cli.yml` that publishes `DuackCli` as its own optional NuGet .NET tool (triggered by `cli-v*` tags), plus a README install note and CLI skill install instructions. (#11)
@@ -38,10 +35,9 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 
 #### 2026-11-22
 
-- **User-defined buses (vNext slice C).** `AudioConfigBuilder.WithBus("ambience", volume)`
+- **User-defined buses.** `AudioConfigBuilder.WithBus("ambience", volume)`
   names any number of buses under the existing chain; `SfxManager.Play(..., bus: "ambience")`
-  routes a cue by per-play argument (the default Gate 2 routing — per-cue, contexts stay
-  music-only — adopted early as a revisitable default, see `docs/plans/vnext/user-buses/`).
+  routes a cue by per-play argument; contexts stay music-only.
   `SfxManager.Buses` is a `BusMixer` with per-bus volume, `SetMute`, `SetPaused` and a global
   `MasterMuted`, all hot-updatable and reported through per-bus readback views (`Views`) and a
   `Changed` event so a frontend mixer can render this state without owning it. Unknown bus names
@@ -107,8 +103,8 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 - Documented (no behavior change, pinned by test): `BusMixer.SetBus` on an unknown name
   intentionally creates the bus - it is the authoring surface, matching the
   `DuckMixer.ReloadSources` hot-update pattern - while `Resolve` on unknown names falls back
-  to SFX and reports via `BusFellBack`; the asymmetry is deliberate (D3/W2 in
-  docs/plans/vnext/user-buses/review-structure.md). (#31)
+  to SFX and reports via `BusFellBack`; the asymmetry between authoring (creates) and
+  routing (falls back loudly) is deliberate. (#31)
 
 #### 2026-11-22
 - **PR #22 review findings (#25–#29).** `tools/plan_split.py` no longer treats a `##` line

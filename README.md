@@ -39,7 +39,7 @@ If the built-in path were enough, you would not be reading this. Duack is for th
 | Lightweight dependencies   | Keep the core pure BCL, with heavyweight codec tooling outside the game.                                                                                                                                       |
 
 **What it's not**: middleware.
-- No editor, no mixer graph, no content pipeline beyond your audio files. Buses are volume arithmetic on one chain and effects (when they land) are baked at build time — see `docs/plans/vnext/` for the edge of the roadmap. The engine APIs play sounds; Duack owns the mix.
+- No editor, no mixer graph, no content pipeline beyond your audio files. Buses are volume arithmetic on one chain and effects (when they land) are baked at build time. The engine APIs play sounds; Duack owns the mix.
 Duack replaces the ad-hoc audio code indie teams write themselves when middleware is too heavy.
 - No UI tooling. For game UI, check out [Gum UI](https://github.com/vchelaru/Gum). Duack stays code-only, but transition state (crossfade progress, duck meter) is already queryable, and more can be exposed on request.
 

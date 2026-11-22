@@ -32,6 +32,15 @@ A target user (indie C# game dev, 2D games, desktop-first) described the system 
 
 Mom Test assessment: he built it, so past behavior proves the need. That evidence stands on its own; it does not depend on the debrief. He was scheduled to prototype with the released library over the weekend of Nov 14–15, 2026; that session did not happen. Consequence of v2: slices A and B may be fully built now — their need is proven by his hand-rolled implementations, and the debrief only tunes them (curve taste, concurrency numbers). The debrief still gates the decisions that need his data: the routing model (Gate 2), the runtime-filter question (slice D trigger), and any curve presets he indicates are taste rather than necessity.
 
+## 1b. Ordering addendum (Nov 22, 2026)
+
+The maintainer re-ordered the remaining slices: C (user buses) → then B (2D spatial),
+with D left dormant and A (implementated on `feat/voice-concurrency`) awaiting the
+human listening check. This deviates from ADR-1's evidence ordering and is not new
+evidence against it: the reordering is a priority call on which slice ships next,
+not a claim that buses are cheaper to build than spatial. §11's sequencing remains
+the reference; if the ordering above stalls, nothing re-tuned ADR-1.
+
 ## 2. Decisions already made (do not relitigate without new evidence)
 
 ADR-1 — Evidence-ordered slices. Build in order of evidence-to-cost ratio: concurrency → 2D spatial → user buses → build-time effects experiment. Rationale: each item is cheaper and better-evidenced than the next.
@@ -77,7 +86,7 @@ Slip rule: if no debrief has happened by December 1, 2026, apply the default dec
 
 Gate 1 — Sync-offset spike (blocks send/return mode in slice D). Start two SoundEffectInstances of the same buffer in one frame on MonoGame and on KNI; measure the offset; classify audible for reverb-class effects only, or kill send/return and keep replacement mode.
 
-Gate 2 — Routing model (blocks slice C implementation). Decide how a cue gets a bus: per-cue in code, per-directory convention (`SFX/UI/`), or per-context in config. Prefer whatever he hand-rolled; default proposal: per-cue argument with optional directory convention, contexts stay music-only.
+Gate 2 — Routing model (blocks slice C implementation). Decide how a cue gets a bus: per-cue in code, per-directory convention (`SFX/UI/`), or per-context in config. Prefer whatever he hand-rolled; default proposal: per-cue argument with optional directory convention, contexts stay music-only. RESOLVED Nov 22, 2026: the maintainer adopted the default proposal early (before the slip rule would on Dec 1, 2026), as revisitable — if the debrief shows he routed differently, the routing surface is revised and the changes record a preview-breaking CHANGELOG note.
 
 ## 8. Verification standards (the agent cannot hear)
 

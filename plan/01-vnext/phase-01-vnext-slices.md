@@ -29,7 +29,7 @@ track slice completion only.
 
 - [ ] Slice A — voice concurrency (context: docs/plans/vnext/voice-concurrency/)
 - [ ] Slice B — 2D positional SFX
-- [ ] Slice C — user-defined buses
+- [ ] Slice C — user-defined buses (#31)
 - [ ] Slice E — named mix states
 - [ ] Slice D — build-time effects experiment (dormant until Gate 0 evidence)
 

@@ -39,10 +39,11 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
   early. Known limitation: per-bus active-voice counts need backend completion telemetry the
   `ISfxBackend` seam does not expose yet and are deferred. Human listening on the ambience sample
   still pending. (#31)
-
-#### 2026-11-22
-
-- **OpenCode review agent crew.** `.opencode/agents/` gains three
+- Sfx full-suite notes: `DuckMixer.Set(name, false)` now also clears ref-counted holds
+  (releases like `ReleaseAll` for that source, at that source's release constant); the fixed
+  SFX path (`Play` without `bus`) stays outside bus-duck composition, so a duck source
+  targeting the literal `"sfx"` bus applies only to bus-routed plays. Both behaviors unit-pinned.
+- **OpenCode review agent crew.** `.opencode/agents/` gains three `.opencode/agents/` gains three
   subagents modeled on the FlatRedBall2 discipline-agent subset:
   `qa` reviews diffs and PRs against AGENTS.md and issues a good or
   blocked verdict at a new plan-phase PR gate before a phase checkbox

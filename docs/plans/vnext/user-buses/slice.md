@@ -18,3 +18,12 @@ Populated as implementation decisions land. ADR deviations belong in
   positional constructions compiling.
 - No per-bus active voice counts: `ISfxBackend` has no completion callback and honest
   absence beats invented numbers (recorded as a known limitation in STATUS.md).
+- **qa verdict: good** (Nov 22, 2026), with recorded non-blocking findings:
+  - The issue's "single resolver readback" is split across two surfaces by design:
+    `BusMixer.Views` carries per-bus gain state, `MusicManager.DuckRatioFor(bus)` carries the
+    duck contribution; a duck source targeting the literal `"sfx"` bus affects only bus-routed
+    plays (the fixed SFX path is outside bus-duck composition).
+  - `DuckMixer.Set(name, false)` now also clears ref-counted holds — deliberate
+    (scene-switch semantics of `ReleaseAll`, per-source), unit-pinned.
+  - The web head lacks the desktop's M-key mute toggle (the mute demo is desktop-only;
+    verify web by explicit build when listening).

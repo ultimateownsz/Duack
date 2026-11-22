@@ -104,6 +104,24 @@ public class DuckHoldAndTargetTests
     }
 
     [Fact]
+    public void Set_Off_ClearsHolds()
+    {
+        var mixer = Mixer("dialogue");
+        mixer.BeginDuck("dialogue");
+        mixer.BeginDuck("dialogue");
+
+        mixer.Set("dialogue", false);
+        mixer.Update(1f);
+        Assert.Equal(1f, mixer.RatioFor("music"), 3);
+
+        // A later BeginDuck starts from zero holds again.
+        mixer.BeginDuck("dialogue");
+        mixer.Update(1f);
+        Assert.Equal(0.5f, mixer.RatioFor("music"), 3);
+        mixer.EndDuck("dialogue");
+    }
+
+    [Fact]
     public void TargetDefaultsToMusic()
     {
         var mixer = Mixer("sfx", ratio: 0.3f);

@@ -72,6 +72,13 @@ public class SfxConfig
     /// <see cref="BusMixer"/>). The fixed SFX bus itself is not listed here.
     /// </summary>
     public Dictionary<string, float> Buses { get; set; } = new();
+
+    /// <summary>
+    /// Spatial settings for positional cues (distances, pan law, distance model). Excluded from
+    /// JSON when default so simple mixes stay readable.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public SpatialConfig? Spatial { get; set; }
 }
 
 /// <summary>
@@ -99,6 +106,7 @@ public class AudioConfig
         MasterVolume = System.Math.Clamp(MasterVolume, 0f, 1f);
         Music.MasterVolume = System.Math.Clamp(Music.MasterVolume, 0f, 1f);
         Sfx.MasterVolume = System.Math.Clamp(Sfx.MasterVolume, 0f, 1f);
+        Sfx.Spatial?.Sanitize();
 
         foreach (var bus in Sfx.Buses.Keys.ToList())
             Sfx.Buses[bus] = System.Math.Clamp(Sfx.Buses[bus], 0f, 1f);

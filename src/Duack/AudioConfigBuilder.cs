@@ -32,7 +32,7 @@ public sealed class AudioConfigBuilder
 
     /// <summary>
     /// Defines (or replaces) a named user bus with its volume in [0, 1]. Cues routed to the bus
-    /// via <see cref="SfxManager.Play(string, float, float, bool, string?)"/> scale by its
+    /// via <see cref="SfxManager.Play(string,float,float,bool,string,float)"/> scale by its
     /// effective gain; un-routed cues stay on the fixed SFX bus.
     /// </summary>
     public AudioConfigBuilder WithBus(string name, float volume)
@@ -73,6 +73,20 @@ public sealed class AudioConfigBuilder
     public AudioConfigBuilder WithSfxCueVariation(CueVariation variation)
     {
         _config.Sfx.CueVariation = variation;
+        return this;
+    }
+
+    /// <summary>Sets the sound-effect spatial settings (distances, pan law, distance model).</summary>
+    public AudioConfigBuilder WithSpatial(SpatialConfig spatial)
+    {
+        _config.Sfx.Spatial = spatial;
+        return this;
+    }
+
+    /// <summary>Configures the default sound-effect spatial settings in place.</summary>
+    public AudioConfigBuilder WithSpatial(Action<SpatialConfig> configure)
+    {
+        configure(_config.Sfx.Spatial ??= new SpatialConfig());
         return this;
     }
 

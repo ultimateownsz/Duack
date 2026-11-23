@@ -9,6 +9,16 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 
 ## [Unreleased]
 
+### Added
+
+#### 2026-11-23
+- **2D positional SFX.** `SfxManager.SetListener(x, y)` anchors the listener;
+  `SfxManager.PlayAt(cue, sourceX, sourceY, ...)` attenuates by the listener distance
+  (`SpatialConfig`: reference/max distance, rolloff, distance model — linear, inverse, or
+  exponential) and pans by the listener-space x offset with a saturating tanh curve. Non-positional
+  backends keep working: they receive the composed volume without the pan. Moving sources are
+  tracked per cue via `SfxManager.UpdatePosition`, which re-mixes the backend's active voices.
+
 ### Changed
 
 #### 2026-11-22

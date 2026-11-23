@@ -74,6 +74,12 @@ public sealed class SfxManager
     /// </summary>
     public BusMixer Buses => _buses;
 
+    /// <summary>Listener position in world units, the origin of every positional play.</summary>
+    public (float X, float Y) ListenerPosition { get; private set; }
+
+    /// <summary>Sets the listener position in world units; positional plays are relative to it.</summary>
+    public void SetListener(float x, float y) => ListenerPosition = (x, y);
+
     /// <summary>
     /// Raised when a play's composed effective gain resolves to zero — the cue is reported instead
     /// of audibly disappearing. No backend call and no music duck happen for such a play.
@@ -89,7 +95,7 @@ public sealed class SfxManager
     /// not in the library or the backend refuses to play it. Pass <paramref name="duck"/> = false
     /// to play the cue without ducking the music (e.g. a cue that accompanies a scene switch).
     /// </summary>
-    public bool Play(string cueName, float pitch = 0f, float volume = 1f, bool duck = true, string? bus = null)
+    public bool Play(string cueName, float pitch = 0f, float volume = 1f, bool duck = true, string? bus = null, float pan = 0f)
     {
         if (!_library.IsSfx(cueName)) return false;
         // Per-play jitter from the authored cue variation, resolved fresh on every play so a live
@@ -111,10 +117,50 @@ public sealed class SfxManager
             return true;
         }
 
-        if (!_backend.Play(cueName, finalPitch, Math.Clamp(finalVolume, 0f, 1f))) return false;
+        // A backend with positional playback gets the pan; one without keeps unpositioned mono
+        // playback and only loses the stereo placement, never the composed volume.
+        if (_backend is IPositionalSfxBackend positional)
+        {
+            if (!positional.Play(cueName, finalPitch, Math.Clamp(finalVolume, 0f, 1f), pan)) return false;
+        }
+        else if (!_backend.Play(cueName, finalPitch, Math.Clamp(finalVolume, 0f, 1f))) return false;
 
         if (duck) _music.Pulse(_duckSource);
         return true;
+    }
+
+    /// <summary>
+    /// Plays a cue positioned in the listener's world space (see <see cref="SetListener"/>): the
+    /// distance to the listener drives the attenuation through the authored
+    /// <see cref="SfxConfig.Spatial"/> settings and the listener-space x offset drives a
+    /// constant-power pan. Cues at or past the spatial max distance resolve to zero gain and
+    /// never reach the backend.
+    /// </summary>
+    public bool PlayAt(string cueName, float sourceX, float sourceY, float pitch = 0f,
+        float volume = 1f, bool duck = true, string? bus = null)
+    {
+        var spatial = _sfxConfig?.Spatial ?? new SpatialConfig();
+        var dx = sourceX - ListenerPosition.X;
+        var dy = sourceY - ListenerPosition.Y;
+        var distance = MathF.Sqrt(dx * dx + dy * dy);
+        var gain = SpatialMath.DistanceGain(distance, spatial.ReferenceDistance, spatial.MaxDistance, spatial.Model, spatial.Rolloff);
+        var pan = SpatialMath.Pan(dx, spatial.PanDistance, spatial.PanSaturation, spatial.PanSigma);
+        return Play(cueName, pitch, volume * gain, duck, bus, pan);
+    }
+
+    /// <summary>
+    /// Re-mixes every still-playing voice of a moving source to a new pan and distance gain.
+    /// Quietly does nothing when the backend holds no voice for the cue.
+    /// </summary>
+    public void UpdatePosition(string cueName, float sourceX, float sourceY)
+    {
+        var spatial = _sfxConfig?.Spatial ?? new SpatialConfig();
+        var dx = sourceX - ListenerPosition.X;
+        var dy = sourceY - ListenerPosition.Y;
+        var distance = MathF.Sqrt(dx * dx + dy * dy);
+        var pan = SpatialMath.Pan(dx, spatial.PanDistance, spatial.PanSaturation, spatial.PanSigma);
+        var gain = SpatialMath.DistanceGain(distance, spatial.ReferenceDistance, spatial.MaxDistance, spatial.Model, spatial.Rolloff);
+        (_backend as IPositionalSfxBackend)?.SetCueMix(cueName, pan, gain);
     }
 
     /// <summary>Stops every one-shot this manager's backend is currently playing.</summary>

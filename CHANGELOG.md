@@ -21,6 +21,9 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 - Skills and code comments are now self-contained descriptions of behavior, without
   references to internal planning artifacts. Docs only; no behavior change. (#31)
 
+#### 2026-11-23
+- Removed `planner` skill from `duack-skills/` — planner is repo tooling for project-specific planning workflow, not marketplace content. Users keep local copy at `.vibe/skills/planner/` or equivalent. No behavior change.
+
 #### 2026-11-01
 - Added a separate `.github/workflows/release-cli.yml` that publishes `DuackCli` as its own optional NuGet .NET tool (triggered by `cli-v*` tags), plus a README install note and CLI skill install instructions. (#11)
 

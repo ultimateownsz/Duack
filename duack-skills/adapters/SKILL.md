@@ -1,7 +1,18 @@
 ---
 name: adapters
-description: Duack adapters — Duack (core: SoundEffectMusicBackend, SoundEffectSfxBackend, IAudioClip seams), Duack.MonoGame (SoundEffectClipLibrary, SoundEffectAudioClip), and Duack.KNI (MediaPlayerMusicBackend, WebAudioSfxBackend, localStorage store). Use when wiring Duack to MonoGame/KNI, implementing IMusicBackend/ISfxBackend, or handling web autoplay and completion races.
+description: "Duack adapters — Duack (core: SoundEffectMusicBackend, SoundEffectSfxBackend, IAudioClip seams), Duack.MonoGame (SoundEffectClipLibrary, SoundEffectAudioClip), and Duack.KNI (MediaPlayerMusicBackend, WebAudioSfxBackend, localStorage store). Use when wiring Duack to MonoGame/KNI, implementing IMusicBackend/ISfxBackend, or handling web autoplay and completion races."
+license: MIT
+metadata:
+  author: ultimateownsz
+  version: "0.1.0-preview.5"
 ---
+
+## Install
+```sh
+dotnet add package Duack --version 0.1.0-preview.5
+dotnet add package Duack.MonoGame --version 0.1.0-preview.5   # desktop
+dotnet add package Duack.KNI --version 0.1.0-preview.5        # browser/WASM
+```
 
 # Duack — Adapters
 

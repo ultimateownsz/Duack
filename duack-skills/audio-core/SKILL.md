@@ -1,7 +1,18 @@
 ---
 name: audio-core
 description: "Duack audio library — core types, namespaces, quick reference. Use when working with Duack's audio mixing, ducking, crossfades, playlists, SFX variation, player settings, or the two-directory audio convention. Triggers on: Duack, DuckMixer, MusicManager, MusicVolumeMath, AudioConfig, SfxManager, MarbleBag, AudioLibrary, ISfxBackend, IMusicBackend, PlayerSettings."
+license: MIT
+metadata:
+  author: ultimateownsz
+  version: "0.1.0-preview.5"
 ---
+
+## Install
+```sh
+dotnet add package Duack --version 0.1.0-preview.5
+dotnet add package Duack.MonoGame --version 0.1.0-preview.5   # desktop (MonoGame/KNI desktop)
+dotnet add package Duack.KNI --version 0.1.0-preview.5        # browser/WASM
+```
 
 # Duack — Audio Library for XNA-related libraries
 
@@ -31,9 +42,9 @@ before applying skill snippets to a newer package.
 
 ### 1. Install
 ```sh
-dotnet add package Duack --prerelease
-dotnet add package Duack.MonoGame --prerelease   # desktop (MonoGame/KNI desktop)
-dotnet add package Duack.KNI --prerelease        # browser/WASM
+dotnet add package Duack --version 0.1.0-preview.5
+dotnet add package Duack.MonoGame --version 0.1.0-preview.5   # desktop (MonoGame/KNI desktop)
+dotnet add package Duack.KNI --version 0.1.0-preview.5        # browser/WASM
 ```
 
 ### 2. Organize audio files
@@ -298,9 +309,9 @@ See the `crossfade` skill for detailed crossfade and scene transition patterns.
 
 Install:
 ```
-dotnet add package Duack --prerelease
-dotnet add package Duack.MonoGame --prerelease   # desktop
-dotnet add package Duack.KNI --prerelease        # browser/WASM
+dotnet add package Duack --version 0.1.0-preview.5
+dotnet add package Duack.MonoGame --version 0.1.0-preview.5   # desktop
+dotnet add package Duack.KNI --version 0.1.0-preview.5        # browser/WASM
 ```
 
 Config (code-first):

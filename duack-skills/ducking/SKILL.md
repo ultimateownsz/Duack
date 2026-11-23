@@ -1,7 +1,16 @@
 ---
 name: ducking
 description: Sidechain ducking in Duack - DuckMixer, named duck sources (sfx, dialogue), attack/hold/release, Pulse/SetDuck/ReleaseDucks/IsDuckReady, ReloadSources (host-driven), and gating scene transitions on duck recovery. Use when implementing music ducking, sidechain compression, dialogue ducking, or scene-switch duck handling.
+license: MIT
+metadata:
+  author: ultimateownsz
+  version: "0.1.0-preview.5"
 ---
+
+## Install
+```sh
+dotnet add package Duack --version 0.1.0-preview.5
+```
 
 # Duack — Sidechain Ducking
 

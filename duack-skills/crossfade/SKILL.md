@@ -1,7 +1,18 @@
 ---
 name: crossfade
 description: "Duack crossfades and scene transitions — sequential crossfades between any number of tracks, desktop (overlap) vs web (sequenced) backends, playlists, ducking during transitions, hard-reset vs natural-gate patterns. Triggers on: crossfade, scene transition, MusicManager.Play, ReleaseDucks, IsDuckReady, sound effects (SFX) ducking delay."
+license: MIT
+metadata:
+  author: ultimateownsz
+  version: "0.1.0-preview.5"
 ---
+
+## Install
+```sh
+dotnet add package Duack --version 0.1.0-preview.5
+dotnet add package Duack.MonoGame --version 0.1.0-preview.5   # desktop
+dotnet add package Duack.KNI --version 0.1.0-preview.5        # browser/WASM
+```
 
 # Duack — Crossfades and Scene Transitions
 

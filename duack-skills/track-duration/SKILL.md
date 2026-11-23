@@ -1,7 +1,16 @@
 ---
 name: track-duration
 description: Optional consumer-side pattern for reporting track duration to Duack via MusicManager.CurrentTrackDurationSeconds, since Duack core does not probe audio files. Use when building a now-playing timer UI that needs elapsed/total time.
+license: MIT
+metadata:
+  author: ultimateownsz
+  version: "0.1.0-preview.5"
 ---
+
+## Install
+```sh
+dotnet add package Duack --version 0.1.0-preview.5
+```
 
 # Track Duration (consumer-side)
 

@@ -1,7 +1,16 @@
 ---
 name: playlists
 description: Playlists in Duack — PlaylistConfig, PlaylistDefinition, PlaylistTrack, Repeat/Shuffle modes, MusicPlaylistController sequencing, bag-style shuffle via MarbleBag, auto-build from AudioLibrary, and crossfade integration. Use when authoring multi-track sequences, shuffle, loop behavior, or playlist-driven music.
+license: MIT
+metadata:
+  author: ultimateownsz
+  version: "0.1.0-preview.5"
 ---
+
+## Install
+```sh
+dotnet add package Duack --version 0.1.0-preview.5
+```
 
 # Duack — Playlists
 

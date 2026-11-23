@@ -1,7 +1,16 @@
 ---
 name: cli
 description: Duack CLI (tools/DuackCli) — duackcli convert, scan, normalize commands, NAudio/OggVorbisEncoder (desktop-only tooling). Use when converting WAV to OGG, scanning audio manifests, or normalizing loudness.
+license: MIT
+metadata:
+  author: ultimateownsz
+  version: "0.1.0-preview.5"
 ---
+
+## Install
+```sh
+dotnet tool install --global DuackCli --version 0.1.0-preview.5
+```
 
 # Duack CLI
 

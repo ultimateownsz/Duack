@@ -1,7 +1,16 @@
 ---
 name: audio-library
 description: Duack's two-directory audio convention — AudioLibrary classification/scan, CandidatePaths, ToPlaylist/BuildPlaylists, AudioLibraryManifest for web hosts, duackcli scan. Use when organizing audio files, scanning content, supporting web manifests, or wiring cue names without hand-registration.
+license: MIT
+metadata:
+  author: ultimateownsz
+  version: "0.1.0-preview.5"
 ---
+
+## Install
+```sh
+dotnet add package Duack --version 0.1.0-preview.5
+```
 
 # Duack — Audio Library (Two-Directory Convention)
 

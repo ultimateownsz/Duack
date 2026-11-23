@@ -1,7 +1,16 @@
 ---
 name: sfx-variation
 description: SFX variation in Duack — MarbleBag<T> draw-without-replacement randomizer, CueVariation pitch/volume jitter, CuePlay, and SfxManager cue playback with auto-ducking. Use when adding footstep/hit variation, avoiding back-to-back repeats, per-play pitch randomization, or one-shot SFX that duck music.
+license: MIT
+metadata:
+  author: ultimateownsz
+  version: "0.1.0-preview.5"
 ---
+
+## Install
+```sh
+dotnet add package Duack --version 0.1.0-preview.5
+```
 
 # Duack — SFX Variation
 

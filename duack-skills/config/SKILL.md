@@ -1,7 +1,16 @@
 ---
 name: config
 description: Duack configuration — AudioConfig/AudioConfigBuilder, SchemaVersion, Sanitize clamping, source-generated contexts, host-driven hot reload (no built-in file watcher). Use when authoring config in code, configuring buses/contexts/duck sources, or setting player settings.
+license: MIT
+metadata:
+  author: ultimateownsz
+  version: "0.1.0-preview.5"
 ---
+
+## Install
+```sh
+dotnet add package Duack --version 0.1.0-preview.5
+```
 
 # Duack — Configuration
 

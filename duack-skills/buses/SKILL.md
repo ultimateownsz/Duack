@@ -1,7 +1,18 @@
 ---
 name: buses
 description: Duack user-defined buses — authoring buses with AudioConfigBuilder.WithBus, routing cues per play, runtime volume/mute/pause/master mute on BusMixer, ref-counted duck holds, and the no-silent-failure reports (BusFellBack, ZeroEffectiveGain). Use when wiring ambience/UI buses or setting up per-bus mixing.
+license: MIT
+metadata:
+  author: ultimateownsz
+  version: "0.1.0-preview.6"
 ---
+
+## Install
+```sh
+dotnet add package Duack --version 0.1.0-preview.6
+dotnet add package Duack.MonoGame --version 0.1.0-preview.6   # desktop
+dotnet add package Duack.KNI --version 0.1.0-preview.6        # browser/WASM
+```
 
 # Duack — User-Defined Buses
 

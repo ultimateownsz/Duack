@@ -1,7 +1,16 @@
 ---
 name: player-settings
 description: Player audio settings in Duack — PlayerAudioSettings, PlayerSettings layering, persistence stores (file/web/in-memory), PlayerSettingsStoreSelector, VolumeCurve perceptual sliders, save/load/clear overrides. Use when adding a settings overlay, volume sliders, persisting player preferences, or choosing a storage backend.
+license: MIT
+metadata:
+  author: ultimateownsz
+  version: "0.1.0-preview.5"
 ---
+
+## Install
+```sh
+dotnet add package Duack --version 0.1.0-preview.5
+```
 
 # Duack — Player Settings
 

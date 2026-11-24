@@ -32,6 +32,7 @@ track slice completion only.
 - [x] Slice C — user-defined buses (#31)
 - [ ] Slice E — named mix states
 - [ ] Slice D — build-time effects experiment (dormant until Gate 0 evidence)
+- [ ] Slice F — bus unification (#36)
 
 ## Decisions and gotchas
 

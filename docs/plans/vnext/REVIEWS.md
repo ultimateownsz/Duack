@@ -106,3 +106,32 @@ Verification at `9c13104`: `python -m unittest discover -s tools/tests` 13/13;
 
 Verdict: **good**. Human sign-off (perception, "does it sound right") remains out of scope for
 agents and is not required for this PR — it is tooling and docs only.
+
+## 2026-11-24 — slice F recording review at head `c74d3c0`: good
+
+Pre-PR `qa` review of the working diff that records slice F (bus unification, #36) in the
+plan workspace before any implementation: `docs/plans/vnext/bus-unification/PLAN.md` (new)
+plus the slice F row in `docs/plans/vnext/README.md`. Docs only, no code, no public API.
+
+- Head at review: `c74d3c0` (base `master`)
+- Verdict: **good** — diff contains exactly the two claimed files (37 insertions, no quiet
+  scope); PLAN.md faithfully carries issue #36's problem, seven scope bullets, non-goals,
+  gates M/D and acceptance criteria with nothing dropped or added beyond the issue; every
+  relative link resolves; quoted claims verified line-by-line against `user-buses/slice.md`
+  (qa verdict lines, D1–D5), `user-buses/review-structure.md` (W1/W2, Non-work list),
+  `user-buses/STATUS.md` (Gate 2), `user-buses/PLAN.md` ("per-bus readback of the stages"),
+  and `SHARED.md` (§0/§3/§8/§9 citations); slice lettering F does not collide with A–E and
+  contradicts no SHARED.md §11 sequencing reference; `STATUS.md`/`slice.md` correctly absent
+  per the start-the-slice convention; walk test passes from the files alone;
+  `python tools/plan_check.py` → `pass`.
+- Non-blocking, fixed in the follow-up commit carrying this record:
+  - "Docs ride in the same PR (SHARED.md §8)" cited the wrong section — the discipline is
+    §9 (preview-API, matching skills updates). Corrected.
+  - D1 attribution pointed at review-structure.md §4; D1 is recorded in §3, §4 holds the
+    Non-work list. Corrected to name both.
+- Non-blocking, left as-is: the pre-existing slice E README row says "needs bus tree" while
+  D1 records hierarchy as rejected — wording predates slice F and is maintainer scope.
+
+The same follow-up commit adds the slice F checkbox (`(#36)`) to
+`plan/01-vnext/phase-01-vnext-slices.md`, which the review caught as missing from the
+original recording.

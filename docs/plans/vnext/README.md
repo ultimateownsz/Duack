@@ -18,6 +18,7 @@ slice is created that references it — until then these files are uncommitted w
 | C — User-defined buses | [user-buses/](user-buses/) | in progress | Gate 2 resolved Nov 22, 2026: the maintainer adopted the default routing (per-cue argument, optional directory convention, contexts stay music-only) as a revisitable default. See [user-buses/STATUS.md](user-buses/STATUS.md). |
 | D — Build-time effects | [baked-effects/](baked-effects/) | blocked | Dormant until positive evidence of a runtime-color need; Gate 1 spike may run standalone. |
 | E — Named mix states | [mix-states/](mix-states/) | draft | After C (needs bus tree and resolution path); authored config only. |
+| F — Bus unification | [bus-unification/](bus-unification/) | draft | Additional slice on top of C, tracked by #36: one flat `BusConfig` table for master/music/sfx and user buses, one resolver, unified readback. Slice-local gates M and D (the `"sfx"` duck-fold is the one behavior change). Hierarchy stays rejected (`user-buses/review-structure.md` D1). `STATUS.md`/`slice.md` added when the slice starts. |
 
 Initiative-wide open questions are the gates in [`SHARED.md`](SHARED.md). Slice-specific state and
 open questions live in each started slice's `STATUS.md`. ADR deviations are recorded in the

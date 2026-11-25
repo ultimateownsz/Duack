@@ -3,7 +3,6 @@ using Duack.MonoGame;
 using Duack.Sample.Core;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 
 namespace Duack.Sample.Desktop;
 
@@ -41,13 +40,10 @@ public class Game1 : Game
     private readonly StoryController _story = new();
     private MarbleBag<string> _hitBag = null!;
 
-    private KeyboardState _previousKeyboard;
     private float _flash; // seconds of screen flash remaining (battle-start)
     private float _hitFlash; // seconds of hit-entity flash remaining
     private int _hitSide; // -1 none, 0 player, 1 foe
     private float _duckPeakHold = 1f; // lowest duck ratio seen, decays toward 1.0
-    private bool _ambienceMuted; // M-key toggle of the demo's ambience bus
-    private bool _sfxBusMuted; // N-key toggle of the fixed sfx bus (same mixer path as M)
 
     public Game1()
     {
@@ -102,12 +98,6 @@ public class Game1 : Game
     {
         var dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-        if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed ||
-            Keyboard.GetState().IsKeyDown(Keys.Escape))
-        {
-            Exit();
-        }
-
         _manager.Update(dt);
 
         if (_flash > 0f)
@@ -115,52 +105,9 @@ public class Game1 : Game
         if (_hitFlash > 0f)
             _hitFlash = Math.Max(0f, _hitFlash - dt);
 
-        var keyboard = Keyboard.GetState();
-
-        if (WasKeyPressed(keyboard, _previousKeyboard, Keys.Space))
-        {
-            ApplyFrame(_story.Advance());
-        }
-        else if (WasKeyPressed(keyboard, _previousKeyboard, Keys.R))
-        {
-            ApplyFrame(_story.Restart());
-        }
-        else if (WasKeyPressed(keyboard, _previousKeyboard, Keys.S))
-        {
-            // Random draw from the discovered sfx bag (still auto-ducks the music).
-            _sfx.PlayNext();
-        }
-        else if (WasKeyPressed(keyboard, _previousKeyboard, Keys.D1))
-        {
-            _manager.Play("overworld");
-        }
-        else if (WasKeyPressed(keyboard, _previousKeyboard, Keys.D2))
-        {
-            _manager.Play("battle");
-        }
-        else if (WasKeyPressed(keyboard, _previousKeyboard, Keys.M))
-        {
-            // Hot mute of the ambience bus through the bus mixer; music and SFX-path cues stay.
-            _ambienceMuted = !_ambienceMuted;
-            _sfx.Buses.SetMute(SampleAudio.AmbienceBus, _ambienceMuted);
-            Console.WriteLine($"[Sample] ambience bus muted: {_ambienceMuted}" +
-                              $" views: [{SampleAudio.DescribeBuses(_sfx.Buses)}]");
-        }
-        else if (WasKeyPressed(keyboard, _previousKeyboard, Keys.N))
-        {
-            // Hot mute of the FIXED sfx bus - the same mixer path as the ambience user bus
-            // above: the unified table makes them one machinery (Views readback, SetMute).
-            _sfxBusMuted = !_sfxBusMuted;
-            _sfx.Buses.SetMute(BusNames.Sfx, _sfxBusMuted);
-            Console.WriteLine($"[Sample] sfx bus muted: {_sfxBusMuted}" +
-                              $" views: [{SampleAudio.DescribeBuses(_sfx.Buses)}]");
-        }
-        else
-        {
-            ApplyFrame(_story.Update(dt));
-        }
-
-        _previousKeyboard = keyboard;
+        // The demo is a non-interactive showcase (maintainer ruling, Nov 25 round 3): the
+        // storyline advances on its own timers, no key drives anything.
+        ApplyFrame(_story.Update(dt));
 
         base.Update(gameTime);
     }
@@ -169,7 +116,8 @@ public class Game1 : Game
     private void ApplyFrame(StoryFrame frame)
     {
         if (frame.SceneChanged)
-            Console.WriteLine($"[Sample] scene: {_story.Scene}");
+            Console.WriteLine($"[Sample] scene: {_story.Scene}" +
+                              $" views: [{SampleAudio.DescribeBuses(_sfx.Buses)}]");
 
         // Release any lingering duck from the previous scene so it doesn't bleed
         // into the incoming track's crossfade (e.g., dialog SFX still playing).
@@ -504,7 +452,4 @@ public class Game1 : Game
 
     private void DrawRect(Rectangle rect, Color color) =>
         _spriteBatch!.Draw(_pixel, rect, color);
-
-    private static bool WasKeyPressed(KeyboardState current, KeyboardState previous, Keys key) =>
-        current.IsKeyDown(key) && previous.IsKeyUp(key);
 }

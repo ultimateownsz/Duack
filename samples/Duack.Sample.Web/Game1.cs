@@ -7,7 +7,6 @@ using Duack.KNI;
 using Duack.Sample.Core;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 
 namespace Duack.Sample.Web;
 
@@ -30,16 +29,12 @@ public class Game1 : Game, IDisposable
     private readonly StoryController _story = new();
     private MarbleBag<string> _hitBag = null!;
 
-    private KeyboardState _previousKeyboard;
     private float _flash;
     private float _hitFlash;
     private int _hitSide = -1;
     private float _duckPeakHold = 1f;
 
     private bool _musicStarted;
-    private bool _ambienceMuted; // M-key toggle of the demo's ambience bus
-    private bool _sfxBusMuted; // N-key toggle of the fixed sfx bus (same mixer path as M)
-    private WebAudioSfxBackend? _sfxBackend; // web seam: per-bus JS gain nodes
 
     public Game1()
     {
@@ -102,7 +97,6 @@ public class Game1 : Game, IDisposable
         var sfxUrls = _library.Sfx.Select(cue => new KeyValuePair<string, string>(
             cue, $"Content/Audio/SFX/{cue}.wav"));
         var sfxBackend = new WebAudioSfxBackend(new WebAudioNative(), sfxUrls);
-        _sfxBackend = sfxBackend; // hot bus volume also reaches the per-bus JS gain nodes
         _sfx = new SfxManager(_library, sfxBackend, _manager, "sfx", masterVolume: config.Buses[BusNames.Master].Volume, sfxBusVolume: config.Buses[BusNames.Sfx].Volume, sfxConfig: config.Sfx);
 
         _manager.TrackCompleted += finished =>
@@ -120,9 +114,6 @@ public class Game1 : Game, IDisposable
     {
         var dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-        if (Keyboard.GetState().IsKeyDown(Keys.Escape))
-            Exit();
-
         _manager.Update(dt);
 
         if (_flash > 0f) _flash = Math.Max(0f, _flash - dt);
@@ -136,42 +127,21 @@ public class Game1 : Game, IDisposable
             _manager.Play(StoryController.OverworldPlaylist);
         }
 
-        var keyboard = Keyboard.GetState();
+        // The demo is a non-interactive showcase (maintainer ruling, Nov 25 round 3): the
+        // storyline advances on its own timers, no key drives anything.
+        ApplyFrame(_story.Update(dt));
 
-        if (WasKeyPressed(keyboard, _previousKeyboard, Keys.Space))
-            ApplyFrame(_story.Advance());
-        else if (WasKeyPressed(keyboard, _previousKeyboard, Keys.R))
-            ApplyFrame(_story.Restart());
-        else if (WasKeyPressed(keyboard, _previousKeyboard, Keys.M))
-        {
-            // Hot mute of the ambience bus through the bus mixer, same path as the desktop M key.
-            // No backend push: the ambience node carries no audio on this seam yet (the core
-            // hands the backend no bus name), so muting the mixer is what changes the mix.
-            _ambienceMuted = !_ambienceMuted;
-            _sfx!.Buses.SetMute(SampleAudio.AmbienceBus, _ambienceMuted);
-            System.Diagnostics.Debug.WriteLine(
-                $"[Sample] ambience bus muted: {_ambienceMuted} views: [{SampleAudio.DescribeBuses(_sfx.Buses)}]");
-        }
-        else if (WasKeyPressed(keyboard, _previousKeyboard, Keys.N))
-        {
-            // Hot mute of the FIXED sfx bus - the same mixer path as the ambience user bus -
-            // plus the web seam: the sfx gain node moves, so CURRENTLY PLAYING one-shots
-            // dip live too (desktop is arithmetic-only and applies on the next play).
-            _sfxBusMuted = !_sfxBusMuted;
-            _sfx!.Buses.SetMute(BusNames.Sfx, _sfxBusMuted);
-            _sfxBackend?.SetBusVolume(BusNames.Sfx, _sfxBusMuted ? 0f : _sfx.SfxBusVolume);
-            System.Diagnostics.Debug.WriteLine(
-                $"[Sample] sfx bus muted: {_sfxBusMuted} views: [{SampleAudio.DescribeBuses(_sfx.Buses)}]");
-        }
-        else
-            ApplyFrame(_story.Update(dt));
-
-        _previousKeyboard = keyboard;
         base.Update(gameTime);
     }
 
     private void ApplyFrame(StoryFrame frame)
     {
+        // One readback line per scene switch, same as the desktop head: the non-interactive
+        // demo keeps slice F's one-mixer-path acceptance visible without interaction.
+        if (frame.SceneChanged)
+            System.Diagnostics.Debug.WriteLine(
+                $"[Sample] scene: {_story.Scene} views: [{(_sfx is null ? "no sfx yet" : SampleAudio.DescribeBuses(_sfx.Buses))}]");
+
         if (frame.Music is not null || frame.SceneChanged)
             _manager.ReleaseDucks();
 
@@ -425,9 +395,6 @@ public class Game1 : Game, IDisposable
 
     private void DrawRect(Rectangle rect, Color color) =>
         _spriteBatch!.Draw(_pixel, rect, color);
-
-    private static bool WasKeyPressed(KeyboardState current, KeyboardState previous, Keys key) =>
-        current.IsKeyDown(key) && previous.IsKeyUp(key);
 
     /// <inheritdoc />
     public new void Dispose()

@@ -72,6 +72,22 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
   table (`WithBus("master", v)` replaces the same single entry), and the runtime still
   composes the fixed fields from the table values exactly as before. (#36)
 
+#### 2026-11-25
+- **The sample heads are non-interactive demos now** (maintainer ruling, Nov 25, human
+  listening round 3: the storyline auto-plays, so the keyboard controls were dead surface
+  advertising an interaction that does not exist). Removed in both heads: Space
+  (advance/skip), R (restart), S (random cue), 1/2 (playlist), M (ambience-bus mute), N
+  (sfx-bus mute — including the web head's `SetBusVolume` push), and the ESC exit branches,
+  plus all keyboard plumbing that served only them (`WasKeyPressed`, `_previousKeyboard`,
+  `KeyboardState`, the XNA `Input` using). The story advances solely on its timers;
+  `StoryController.Advance`/`Restart` stay public on the engine-free core (their semantics
+  are pinned headlessly; no head calls them). Slice F's one-mixer-path acceptance stays
+  visible without interaction: each scene switch now prints ONE line combining the scene
+  name with the shared bus readback
+  (`SampleAudio.DescribeBuses`: master/music/sfx + ambience with live gains and duck
+  ratios). No library behavior change; `WebAudioSfxBackend.SetBusVolume` remains the web
+  seam surface (pinned in the adapter tests) — its sample caller is what was removed. (#36)
+
 #### 2026-11-22
 - `BusMixer.SetBus` change detection compares volumes bit-exactly
   (`BitConverter.SingleToInt32Bits`) instead of `==`: no behavior change (both values pass

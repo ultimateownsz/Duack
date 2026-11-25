@@ -14,8 +14,9 @@ dotnet run --project samples/Duack.Sample.Desktop -c Release
 
 ## The loop (no controls)
 
-The demo is non-interactive: the storyline auto-plays on its timers (~23 s per loop) with
-no keyboard handling at all. Each cue rings on the screen it belongs to — the notice sfx
+The demo is non-interactive: the storyline auto-plays on its timers (~24–25 s per loop) with
+no keyboard handling at all. Each beat is sized to outlast its cue, so every one-shot plays
+out naturally instead of being clipped at the scene switch. Each cue rings on the screen it belongs to — the notice sfx
 on the walk screen, the first dialog line on the notice screen, the battle-start sting on
 the dialog screen (the battle track crossfading in behind it), the KO hit on the battle
 screen — and every screen loads clean, with nothing bleeding in from the previous one.

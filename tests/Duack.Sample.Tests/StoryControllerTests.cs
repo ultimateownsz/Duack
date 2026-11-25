@@ -11,15 +11,17 @@ namespace Duack.Sample.Tests;
 /// </summary>
 public class StoryControllerTests
 {
+    /// <summary>Drives the auto-advancing story (Update ticks) until it reaches the named scene.</summary>
+    private static void DriveToScene(StoryController story, StoryScene scene)
+    {
+        for (var i = 0; i < 200 && story.Scene != scene; i++)
+            story.Update(1f);
+        Assert.Equal(scene, story.Scene);
+    }
+
     private static void ToBattle(StoryController story)
     {
-        story.Advance(); // Walk -> Notice
-        story.Advance(); // Notice -> Dialog (line 0)
-        story.Advance(); // line 1
-        story.Advance(); // line 2
-        story.Advance(); // past the last line -> BattleIntro
-        story.Advance(); // BattleIntro -> Battle
-        Assert.Equal(StoryScene.Battle, story.Scene);
+        DriveToScene(story, StoryScene.Battle);
     }
 
     [Fact]
@@ -41,13 +43,22 @@ public class StoryControllerTests
         Assert.Null(early.Sfx);
         Assert.False(early.SceneChanged);
 
+        // Maintainer ruling (Nov 25, round 2): the entry cue fires on the OLD screen - the
+        // notice cue rings on the walk screen, no switch attached.
         var notice = story.Update(4f); // crosses the notice threshold
         Assert.Equal("notice-video-game-sfx", notice.Sfx);
         Assert.Equal(SampleAudio.AmbienceBus, notice.Bus); // the demo's ambience routing
-        Assert.True(notice.SceneChanged);
-        Assert.Equal(StoryScene.Notice, story.Scene);
+        Assert.False(notice.SceneChanged);                 // switch comes a beat later
+        Assert.Equal(StoryScene.Walk, story.Scene);
 
-        var idle = story.Update(0.5f); // standing at the NPC: no re-trigger
+        // One beat later, the clean switch: scene change carries NO cue.
+        var switchFrame = story.Update(1f);
+        Assert.True(switchFrame.SceneChanged);
+        Assert.Null(switchFrame.Sfx);
+        Assert.Equal(StoryScene.Notice, story.Scene);
+        Assert.Equal(StoryController.NoticeThreshold, story.WalkProgress); // frozen at the NPC
+
+        var idle = story.Update(0.2f); // standing at the NPC: no re-trigger
         Assert.Null(idle.Sfx);
         Assert.False(idle.SceneChanged);
     }
@@ -56,12 +67,17 @@ public class StoryControllerTests
     public void Notice_times_out_into_the_dialog_with_the_dialog_cue()
     {
         var story = new StoryController();
-        story.Advance(); // -> Notice
+        DriveToScene(story, StoryScene.Notice);
 
-        var frame = story.Update(1.5f); // past the notice pause
+        var cue = story.Update(1.5f); // past the notice pause
 
-        Assert.Equal("dialog", frame.Sfx);
-        Assert.True(frame.SceneChanged);
+        Assert.Equal("dialog", cue.Sfx);   // the first line's cue rings on the NOTICE screen
+        Assert.False(cue.SceneChanged);
+        Assert.Equal(StoryScene.Notice, story.Scene);
+
+        var switchFrame = story.Update(1f); // one beat later
+        Assert.True(switchFrame.SceneChanged);
+        Assert.Null(switchFrame.Sfx);
         Assert.Equal(StoryScene.Dialog, story.Scene);
         Assert.Equal(0, story.DialogLine);
     }
@@ -70,9 +86,7 @@ public class StoryControllerTests
     public void Dialog_advances_line_by_line_with_the_dialog_cue_and_ends_with_battle_start()
     {
         var story = new StoryController();
-        story.Advance(); // -> Notice
-        story.Advance(); // -> Dialog (line 0, cue fired on open)
-        Assert.Equal(StoryScene.Dialog, story.Scene);
+        DriveToScene(story, StoryScene.Dialog);
 
         var line1 = story.Advance();
         Assert.Equal(1, story.DialogLine);
@@ -82,9 +96,17 @@ public class StoryControllerTests
         Assert.Equal(2, story.DialogLine);
         Assert.Equal("dialog", line2.Sfx);
 
-        var done = story.Advance(); // past the last line
-        Assert.Equal("battle-start", done.Sfx);
-        Assert.True(done.SceneChanged);
+        // The sting rings on the DIALOG screen - the battle-music crossfade starts with it
+        // here, before any switch happens.
+        var sting = story.Advance(); // past the last line
+        Assert.Equal("battle-start", sting.Sfx);
+        Assert.False(sting.SceneChanged);
+        Assert.Equal(StoryScene.Dialog, story.Scene);
+
+        // One beat later, the intro screen loads clean.
+        var switchFrame = story.Update(1f);
+        Assert.True(switchFrame.SceneChanged);
+        Assert.Null(switchFrame.Sfx);
         Assert.Equal(StoryScene.BattleIntro, story.Scene);
     }
 
@@ -92,8 +114,7 @@ public class StoryControllerTests
     public void Dialog_lines_auto_advance_on_their_timer()
     {
         var story = new StoryController();
-        story.Advance(); // -> Notice
-        story.Advance(); // -> Dialog (line 0)
+        DriveToScene(story, StoryScene.Dialog);
 
         var frame = story.Update(2f); // past the per-line timer
 
@@ -120,12 +141,7 @@ public class StoryControllerTests
     /// <summary>Advances a fresh story up to (but not into) the Battle scene.</summary>
     private static void ToBattle_story_helper_to_intro(StoryController story)
     {
-        story.Advance(); // -> Notice
-        story.Advance(); // -> Dialog
-        story.Advance();
-        story.Advance();
-        story.Advance(); // -> BattleIntro
-        Assert.Equal(StoryScene.BattleIntro, story.Scene);
+        DriveToScene(story, StoryScene.BattleIntro);
     }
 
     [Fact]
@@ -253,27 +269,52 @@ public class StoryControllerTests
     }
 
     [Fact]
-    public void Advance_skips_each_pace_break_but_never_the_battle_itself()
+    public void Space_kicks_off_the_exit_cue_beat_and_never_skips_a_beat_or_the_battle()
     {
         var story = new StoryController();
 
-        Assert.True(story.Advance().SceneChanged); // Walk -> Notice
-        Assert.Equal(StoryScene.Notice, story.Scene);
-        Assert.True(story.Advance().SceneChanged); // Notice -> Dialog
-        Assert.Equal(StoryScene.Dialog, story.Scene);
+        // Space on the walk: jump to the NPC and fire the notice cue ON the walk screen.
+        var notice = story.Advance();
+        Assert.Equal("notice-video-game-sfx", notice.Sfx);
+        Assert.False(notice.SceneChanged);
+        Assert.Equal(StoryScene.Walk, story.Scene);
 
-        story.Advance(); // line 1
-        story.Advance(); // line 2
-        var intro = story.Advance(); // -> BattleIntro
-        Assert.Equal("battle-start", intro.Sfx);
-        Assert.True(intro.SceneChanged);
+        // The beat itself is NOT skippable: Space during it does nothing (one rule for every
+        // beat, entry or ending, mirroring the battle-ending rule).
+        Assert.Equal(default(StoryFrame), story.Advance());
+        Assert.Equal(StoryScene.Walk, story.Scene);
 
-        var battle = story.Advance(); // -> Battle
+        // The intro still skips straight into the battle - a music/scene switch, no cue.
+        DriveToScene(story, StoryScene.BattleIntro);
+        var battle = story.Advance();
         Assert.Equal("battle", battle.Music);
+        Assert.Null(battle.Sfx);
+        Assert.True(battle.SceneChanged);
         Assert.Equal(StoryScene.Battle, story.Scene);
 
         var idle = story.Advance(); // the spectacle itself cannot be skipped
         Assert.Equal(default, idle);
         Assert.Equal(StoryScene.Battle, story.Scene);
+    }
+
+    [Fact]
+    public void Across_the_full_loop_no_frame_ever_carries_both_a_cue_and_a_scene_switch()
+    {
+        // Maintainer ruling (Nov 25): every cue lands on the screen it belongs to; every
+        // SceneChanged frame carries NO sfx. Pin the whole loop, walk -> ... -> battle -> walk.
+        var story = new StoryController();
+        var backToWalk = false;
+
+        for (var i = 0; i < 400 && !backToWalk; i++)
+        {
+            var frame = story.Update(1f);
+            Assert.False(frame.Sfx is not null && frame.SceneChanged,
+                $"frame {i} mixes cue '{frame.Sfx}' with a scene switch");
+            Assert.False(frame.Sfx is not null && frame.Music is not null,
+                $"frame {i} mixes cue '{frame.Sfx}' with a music switch");
+            backToWalk = frame.SceneChanged && story.Scene == StoryScene.Walk && story.BattleRound > 0;
+        }
+
+        Assert.True(backToWalk, "the loop never returned to the walk after the battle");
     }
 }

@@ -194,6 +194,22 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 ### Fixed
 
 #### 2026-11-25
+- **Every screen now loads clean — the entry cues land on their own screen too** (maintainer
+  ruling, Nov 25, human listening round 2, extending the KO fix to the story's ENTRY
+  transitions). Symptom: the same Sfx-over-switch bleed existed at walk→notice (the notice
+  cue played into the freshly loaded notice screen), notice→dialog (the first line's cue)
+  and dialog→battle-intro (the battle-start sting) — each transition frame carried BOTH the
+  sfx and the scene switch, the same overlap the KO fix removed. Fix: `StoryController` now
+  runs the same beat pattern on every entry — the cue fires while the OLD screen is still up
+  (`NoticeCueBeatSeconds`/`DialogCueBeatSeconds` 0.5 s, `StingBeatSeconds` 0.6 s; the storyline
+  loop is ~1.6 s longer per full pass), and the switch frame one beat later carries the scene
+  change and NO sfx. The battle-music crossfade still starts with the sting (both heads key
+  on `BattleStartCue` itself), firing a beat earlier on the dialog screen; the intro screen
+  keeps its `BattleIntroSeconds` pause. Space still kicks a pace break's exit cue off
+  (skipping the wait), but no beat — entry, ending, or the battle — can be skipped;
+  `Restart()` and a new battle clear all beat state. Pinned headlessly: the full-loop
+  no-mixed-frames pin (no frame ever carries both a cue and a scene/music switch) plus
+  per-beat pins for all three entries. (#36)
 - **The KO hit no longer bleeds over the walk screen** (maintainer ruling from human
   listening, Nov 25: no cue from a finished gameplay screen may survive into the next
   screen). Symptom: play either sample head through a battle; on the KO, the fainting

@@ -181,8 +181,10 @@ public class Game1 : Game
         if (frame.SceneChanged)
             _sfx.Stop();
 
-        // Battle-start sting: crossfade the overworld track out during the intro so it is
-        // already gone by the time the battle screen appears.
+        // Battle-start sting: the cue fires on the DIALOG screen now (every cue lands on the
+        // screen it belongs to; the switches load screens clean), so the battle playlist starts
+        // crossfading here, one beat before the intro screen appears - and the intro screen's
+        // own BattleIntroSeconds pause keeps the battle itself starting from a settled mix.
         if (frame.Sfx == StoryController.BattleStartCue)
         {
             if (_manager.CurrentTrack?.Name != StoryController.BattlePlaylist)

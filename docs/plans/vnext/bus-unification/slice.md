@@ -99,6 +99,17 @@ Populated as implementation decisions land. ADR deviations belong in
   is pinned in core tests only. Human-eyeball list for both heads recorded with D23-D26 in
   the work item report; the checkbox cannot tick before it.
 
+### Listening-feedback decisions (Nov 25, 2026, `2ce3d5a`)
+
+- **D27 — Maintainer ruling: no cue survives a screen switch.** From human listening on the
+  desktop sample (same week): the fainting blow's hit cue bled over the walk screen — the
+  classic XNA/MonoGame forum complaint about one-shots overlapping a freshly loaded screen.
+  Ruling: a beat's cue never shares its frame with a scene switch. The battle now ends ON the
+  battle screen (KO hit, then `_battleEnding` beat), and the next tick returns a clean walk
+  frame with music only. Entry stings stay (battle-start sting untouched — ruled an entry
+  beat, not a leftover). The dead duck-exception (`duck = frame.Music is null`) was removed
+  from both heads since no storyline frame carries both `Sfx` and `Music` anymore.
+
 Deviations from PLAN wording, all changelogged: "one resolver" landed as two mixer instances
 over one table (D13, forced by D7); `BusMixer` ctor signature and `BusView` shape changed
 (PLAN said "public surface unchanged") — forced by whole-table seeding and the readback field;

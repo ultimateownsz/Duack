@@ -226,6 +226,24 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
   `Restart()` and a new battle clear all beat state. Pinned headlessly: the full-loop
   no-mixed-frames pin (no frame ever carries both a cue and a scene/music switch) plus
   per-beat pins for all three entries. (#36)
+- **Beats let each cue finish instead of clipping it at the switch** (maintainer clarification,
+  Nov 25, human listening round 4: the no-bleed rulings D27–D29 mean "no lingering sound
+  reaches the next screen", NOT truncation; the change should make sounds play the way a
+  player expects, not act as a workaround). Symptom: the battle-start sting's tail was
+  clipped at the dialog→intro switch (the 0.6 s beat equaled the cue, so the switch-frame
+  `Stop()` chopped it) and the notice cue was cut roughly in half at the walk→notice switch
+  (0.5 s beat vs a 1.08 s asset); a drawn 1.73 s hit-2 could also be clipped by the
+  battle-ending beat's 1.2 s. Fix: every beat is sized to its cue's shipped asset plus one
+  named tail margin (`BeatTailSeconds` 0.10 s, documented as covering the Update tick
+  boundary): `NoticeCueBeatSeconds` 0.5 → 1.18 s, `StingBeatSeconds` 0.6 → 0.70 s, and the
+  battle-ending beat gains its own constant `BattleEndingSeconds` = 1.83 s (longest hit
+  draw) instead of reusing `BattleRoundSeconds`. `ISfxBackend` exposes no completion
+  telemetry, so the beats are sized from the shipped WAVs (event-driven switching needs
+  per-playback handles — the deferred experiment). The storyline loop grows ~1.41 s
+  (~24.5 s); heads' `Stop()` on scene change stays and now cuts nothing. Pinned headlessly
+  against the shipped WAV durations (`Every_beat_outlasts_its_cue...`). Pre-existing,
+  confirmed, not fixed here (out of scope): the `dialog` cue has no shipped asset, so it
+  silently plays nothing. (#36)
 - **The KO hit no longer bleeds over the walk screen** (maintainer ruling from human
   listening, Nov 25: no cue from a finished gameplay screen may survive into the next
   screen). Symptom: play either sample head through a battle; on the KO, the fainting

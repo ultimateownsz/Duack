@@ -72,23 +72,31 @@ public sealed class StoryController
     /// <summary>Number of dialog lines before the battle starts.</summary>
     public const int DialogLineCount = 3;
 
-    // Timings, in seconds. Large enough to be readable, small enough to loop in ~20 s.
+    // Timings, in seconds. Large enough to be readable, small enough to loop in ~24.5 s.
+    // Beat sizing (maintainer rulings, Nov 25): a beat's cue must FINISH on its screen - the
+    // no-bleed rule means "no lingering sound reaches the next screen", never truncation.
+    // ISfxBackend exposes no completion telemetry, so the beat constants are sized from the
+    // SHIPPED audio assets below plus BeatTailSeconds; event-driven switching would need
+    // per-playback handles (the deferred ISfxBackend experiment).
     public const float NoticeThreshold = 0.6f;   // walk progress at which the NPC notices
     public const float WalkSpeed = 0.15f;        // walk progress per second
     public const float NoticeSeconds = 1.0f;     // pause at the noticed NPC
     public const float DialogLineSeconds = 1.5f; // auto-advance per dialog line
     public const float BattleIntroSeconds = 1.2f; // the battle-music crossfade and the intro screen's pause before the fight
-    public const float BattleRoundSeconds = 1.2f; // one hit per round
-    public const float NoticeCueBeatSeconds = 0.5f; // the notice cue rings on the WALK screen before the notice screen loads
-    public const float DialogCueBeatSeconds = 0.5f; // the first line's cue rings on the NOTICE screen before the dialog loads
-    public const float StingBeatSeconds = 0.6f;    // the battle-start sting rings on the DIALOG screen before the intro loads
+    public const float BeatTailSeconds = 0.10f;    // beat tail margin: covers the Update tick boundary, so the beat always outlasts its cue
+    public const float BattleRoundSeconds = 1.2f;  // one hit per round
+    public const float NoticeCueBeatSeconds = 1.18f; // the notice cue rings on the WALK screen (notice-video-game-sfx.wav: 1.08 s) before the notice screen loads
+    public const float DialogCueBeatSeconds = 0.5f;  // pacing pause only: the dialog cue has no shipped asset (pre-existing; the cue plays nothing)
+    public const float StingBeatSeconds = 0.70f;     // the battle-start sting rings on the DIALOG screen (battle-start.wav: 0.60 s) before the intro loads
+    public const float BattleEndingSeconds = 1.83f;  // the KO hit finishes on the BATTLE screen before the walk loads (longest drawn variant, hit-2.wav: 1.73 s)
 
     private float _sceneSeconds;
 
     /// <summary>
-    /// The battle-ending beat: the KO hit has landed on the battle screen; the NEXT
-    /// <see cref="BattleRoundSeconds"/> tick switches to the walk clean. Only true inside the
-    /// Battle scene, reset by <see cref="Restart"/> and <see cref="EnterBattle"/>.
+    /// The battle-ending beat: the KO hit has landed on the battle screen and FINISHES there
+    /// (<see cref="BattleEndingSeconds"/>, sized to the longest hit the bag can draw); the
+    /// tick after switches to the walk clean. Only true inside the Battle scene, reset by
+    /// <see cref="Restart"/> and <see cref="EnterBattle"/>.
     /// </summary>
     private bool _battleEnding;
 
@@ -157,9 +165,10 @@ public sealed class StoryController
             case StoryScene.Battle:
                 if (!_battleEnding)
                     return _sceneSeconds >= BattleRoundSeconds ? BattleRoundTick() : default;
-                // The ending beat: one full round later, the switch to the walk carries the
-                // music change and NO cue - and like every beat, it cannot be skipped.
-                if (_sceneSeconds >= BattleRoundSeconds)
+                // The ending beat: the KO hit finishes naturally on the battle screen, and only
+                // then does the switch carry the music change and NO cue - like every beat,
+                // it cannot be skipped.
+                if (_sceneSeconds >= BattleEndingSeconds)
                     return EnterWalkFromBattle();
                 return default;
 
@@ -215,8 +224,9 @@ public sealed class StoryController
     }
 
     /// <summary>
-    /// The notice cue fires ON the walk screen (frozen at the NPC); the clean switch to the
-    /// notice screen lands <see cref="NoticeCueBeatSeconds"/> later.
+    /// The notice cue fires ON the walk screen (frozen at the NPC) and finishes there; the
+    /// clean switch to the notice screen lands <see cref="NoticeCueBeatSeconds"/> later -
+    /// sized to the shipped notice cue so nothing is clipped (no truncation on switches).
     /// </summary>
     private StoryFrame BeginNoticeCueBeat()
     {
@@ -266,8 +276,9 @@ public sealed class StoryController
 
     /// <summary>
     /// The battle-start sting fires ON the dialog screen (starting the battle-music crossfade
-    /// in the heads, which key on the cue); the clean switch to the intro screen lands
-    /// <see cref="StingBeatSeconds"/> later.
+    /// in the heads, which key on the cue) and finishes there; the clean switch to the intro
+    /// screen lands <see cref="StingBeatSeconds"/> later - sized to the shipped sting so its
+    /// tail is never clipped at the switch.
     /// </summary>
     private StoryFrame BeginStingBeat()
     {
@@ -321,7 +332,7 @@ public sealed class StoryController
 
     /// <summary>
     /// The clean switch to the walk after the battle-ending beat: overworld music, scene change,
-    /// and NO sfx - the fainting blow already sounded on the battle screen a round tick ago.
+    /// and NO sfx - the fainting blow already FINISHED on the battle screen one ending beat ago.
     /// </summary>
     private StoryFrame EnterWalkFromBattle()
     {

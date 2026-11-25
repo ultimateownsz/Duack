@@ -51,8 +51,9 @@ public class StoryControllerTests
         Assert.False(notice.SceneChanged);                 // switch comes a beat later
         Assert.Equal(StoryScene.Walk, story.Scene);
 
-        // One beat later, the clean switch: scene change carries NO cue.
-        var switchFrame = story.Update(1f);
+        // One beat later (>= the full 1.08 s notice cue plus its tail), the clean switch:
+        // scene change carries NO cue.
+        var switchFrame = story.Update(1.5f);
         Assert.True(switchFrame.SceneChanged);
         Assert.Null(switchFrame.Sfx);
         Assert.Equal(StoryScene.Notice, story.Scene);
@@ -200,8 +201,9 @@ public class StoryControllerTests
         Assert.False(ko.SceneChanged);            // still the battle scene when it lands.
         Assert.Equal(StoryScene.Battle, story.Scene);
 
-        // The next tick (~BattleRoundSeconds later) switches to the walk, clean.
-        var walk = story.Update(1.5f);
+        // The next tick - the ending beat, sized so even a drawn hit-2 finishes (>= 1.73 s)
+        // before the walk loads - switches to the walk, clean.
+        var walk = story.Update(2f);
 
         Assert.Equal(StoryScene.Walk, story.Scene);
         Assert.Equal("overworld", walk.Music);
@@ -317,4 +319,71 @@ public class StoryControllerTests
 
         Assert.True(backToWalk, "the loop never returned to the walk after the battle");
     }
+    [Fact]
+    public void Every_beat_outlasts_its_cue_so_no_sound_is_clipped_at_the_switch()
+    {
+        // Maintainer clarification (Nov 25, round 4): D27/D28 mean "no lingering sound reaches
+        // the next screen", NOT truncation - each beat's cue must finish naturally on its
+        // screen before the switch loads. ISfxBackend exposes no completion telemetry, so the
+        // beat constants are sized from the shipped WAV assets plus the tail margin below.
+        // Reading sibling-sample content is a filesystem read, not a project reference.
+        var sfx = FindShippedSfxDirectory();
+        const float tail = StoryController.BeatTailSeconds;
+        const float floatEpsilon = 0.005f; // float representation headroom; the invariant allows nothing else
+
+        Assert.True(
+            StoryController.NoticeCueBeatSeconds + floatEpsilon >=
+            WavDurationSeconds(Path.Combine(sfx, "notice-video-game-sfx.wav")) + tail,
+            $"notice beat {StoryController.NoticeCueBeatSeconds}s must outlast the notice cue");
+        Assert.True(
+            StoryController.StingBeatSeconds + floatEpsilon >=
+            WavDurationSeconds(Path.Combine(sfx, "battle-start.wav")) + tail,
+            $"sting beat {StoryController.StingBeatSeconds}s must outlast the battle-start cue");
+        Assert.True(
+            StoryController.BattleEndingSeconds + floatEpsilon >= LongestHitSeconds(sfx) + tail,
+            $"battle-ending beat {StoryController.BattleEndingSeconds}s must outlast the longest hit draw");
+    }
+
+    /// <summary>
+    /// Walks up from the test assembly to the repository root and into the desktop sample's
+    /// shipped SFX directory (tolerates running from bin).
+    /// </summary>
+    private static string FindShippedSfxDirectory()
+    {
+        var probe = Path.Combine("samples", "Duack.Sample.Desktop", "Content", "Audio", "SFX", "battle-start.wav");
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir is not null && !File.Exists(Path.Combine(dir.FullName, probe)))
+            dir = dir.Parent!;
+        Assert.True(dir is not null, "repository root (with the desktop sample's SFX content) not found");
+        return Path.Combine(dir.FullName, "samples", "Duack.Sample.Desktop", "Content", "Audio", "SFX");
+    }
+
+    /// <summary>16-bit PCM WAV duration in seconds (RIFF/WAVE chunks walked for the data block).</summary>
+    private static float WavDurationSeconds(string path)
+    {
+        var bytes = File.ReadAllBytes(path);
+        Assert.True(bytes.AsSpan(0, 4).SequenceEqual("RIFF"u8) && bytes.AsSpan(8, 4).SequenceEqual("WAVE"u8));
+
+        var channels = BitConverter.ToInt16(bytes, 22);
+        var sampleRate = BitConverter.ToInt32(bytes, 24);
+        var bitsPerSample = BitConverter.ToInt16(bytes, 34);
+
+        var offset = 12;
+        while (offset + 8 <= bytes.Length && !bytes.AsSpan(offset, 4).SequenceEqual("data"u8))
+        {
+            var size = BitConverter.ToInt32(bytes, offset + 4);
+            offset += 8 + size + (size & 1);
+        }
+        Assert.True(offset + 8 <= bytes.Length, $"no data chunk in {path}");
+
+        var dataSize = BitConverter.ToInt32(bytes, offset + 4);
+        return dataSize / (float)(sampleRate * channels * (bitsPerSample / 8));
+    }
+
+    /// <summary>The longest hit variant the KO draw can pull from the sample's bag.</summary>
+    private static float LongestHitSeconds(string sfxDirectory) =>
+        Directory.GetFiles(sfxDirectory, "hit*.wav")
+            .Select(WavDurationSeconds)
+            .DefaultIfEmpty(0f)
+            .Max();
 }

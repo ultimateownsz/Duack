@@ -15,12 +15,12 @@ none are discovered.
 ## Try it
 
 - **PLAY** — fires a single cue through the shuffle bag (no immediate repeats).
-- **BURST** — fires 50 overlapping cues; the manager is capped at 8 voices with
+- **MANY** — fires 50 overlapping cues; the manager is capped at 8 voices with
   oldest-voice stealing, so the on-screen counter must never exceed 08 and the
   oldest sounding voices are cut off as new ones start.
 - **STOP** — silences everything and clears the reserved slots (the counter and
   slot bars reset).
-- `Space`/`T` mirror PLAY/BURST; `Escape` exits.
+- `Space`/`T` mirror PLAY/MANY; `Escape` exits.
 
 ## What proves the behavior
 

@@ -14,7 +14,7 @@ public static class Program
 
 /// <summary>
 /// Dedicated voice-concurrency example: SFX voice limiting. Click PLAY to fire a single cue,
-/// BURST to fire 50 overlapping cues through a manager capped at 8 voices (oldest-voice stealing),
+/// MANY to fire 50 overlapping cues through a manager capped at 8 voices (oldest-voice stealing),
 /// and STOP to silence everything mid-listen; Space/T/Escape mirror the buttons from the keyboard.
 /// The two-digit readout is the limiter's ActiveVoiceCount and must never exceed 08 during the
 /// burst. The limiter is pure core; the only adapter wiring here is the MonoGame clip library and
@@ -162,7 +162,7 @@ public class Game1 : Game
 
         LayoutButtons();
         DrawButton(_singleButton, "PLAY", Color.White);
-        DrawButton(_burstButton, "BURST", Color.White);
+        DrawButton(_burstButton, "MANY", Color.White);
         DrawButton(_stopButton, "STOP", Color.OrangeRed);
 
         // A bar per reserved slot makes the cap visible even without listening.
@@ -214,6 +214,7 @@ public class Game1 : Game
     {
         // 5 rows, bit 2 = leftmost column of the 3-wide glyph.
         ['O'] = new byte[] { 0b111, 0b101, 0b101, 0b101, 0b111 },
+        ['M'] = new byte[] { 0b101, 0b111, 0b111, 0b101, 0b101 },
         ['N'] = new byte[] { 0b101, 0b111, 0b111, 0b111, 0b101 },
         ['A'] = new byte[] { 0b111, 0b101, 0b111, 0b101, 0b101 },
         ['Y'] = new byte[] { 0b101, 0b101, 0b010, 0b010, 0b010 },

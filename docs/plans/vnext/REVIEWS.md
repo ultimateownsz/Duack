@@ -301,7 +301,7 @@ cannot catch, and the browser listening check remains the real verification.
 
 ### Still open (unchanged, maintainer-owned)
 
-- Human listening: `Duack.Sample.Concurrency` (PLAY/BURST/STOP; now also judging that stolen
+- Human listening: `Duack.Sample.Concurrency` (PLAY/MANY/STOP; now also judging that stolen
   voices audibly stop) and the browser check of the wired web head.
 - Ruling wanted: `PlayDetailed` reports zero-gain plays as `Played` (master semantics).
 

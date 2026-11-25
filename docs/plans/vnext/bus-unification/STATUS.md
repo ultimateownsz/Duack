@@ -14,13 +14,22 @@ Started: Nov 24, 2026. Tracking issue: #36.
 
 ## Open questions
 
-- Gate M: nothing user-facing moves; `music` is a table entry for storage uniformity only.
-- Gate D: the `"sfx"` duck-fold default (fold) is implemented and pinned both ways in tests;
-  it resolves only by human listening on both backends — the slice box cannot tick before it.
-- Bus-targeted ducks stay out of the sample until a real project proves the scenario
-  (maintainer call, Nov 22, 2026, user-buses/slice.md) — unchanged by this slice.
+- (none — closed Nov 25, 2026. Record of the closes:
+  - Gate M held: `music` is a storage/resolution table entry only; contexts/crossfades stayed
+    music-only through the whole slice (pinned, regression green).
+  - Gate D resolved by the maintainer's listening (fold kept; five rounds covered the desk and
+    web mixes unchanged, no cue bleed into any screen, no cue truncation, and the warm web
+    start - confirmed "this fixes it"). Five rulings recorded as D27-D31 in slice.md; the
+    audibles are the sample's; the fold's own semantics are pinned both ways in core tests.
+  - The per-bus player-settings default held: music/SFX slider pair only.)
 
 ## Known limitations
 
 - Per-bus active-voice counts remain unexposed (`ISfxBackend` completion telemetry gap,
   user-buses/STATUS.md) — unchanged by this slice.
+- The web backend's per-user-bus gain nodes stay unrouted until a bus name crosses the core
+  seam (`ISfxBackend` carries only the composed volume); user-bus nodes are created on demand
+  by `setBusVolume` but nothing routes into them (D18/D21). Not a regression - recorded when
+  shipped (work item 4).
+- Bus-targeted ducks remain carried unvalidated (the maintainer's standing call from slice C
+  stands; nothing in this slice's sample demos them).

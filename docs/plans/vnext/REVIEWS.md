@@ -170,3 +170,40 @@ Fourth observation (slice decisions recorded in preceding `docs(plans)` commits 
 inside each work-item commit) left as-is: it matches master's established practice
 (d547980, 78195d8) and each decision names its work-item commit explicitly.
 
+## 2026-11-25 — slice F phase-gate re-review of the grown diff (`8facac5..5a9592e`): good
+
+Re-review before the slice F checkbox tick, after five maintainer listening rounds and the
+fixes they demanded (D27–D31: no-bleed KO, entry cues on old screens, non-interactive heads,
+asset-sized beats, web warm-up). Reviewer: same `qa` session as the phase-gate review
+(full prior context); delta scope deep-checked, full-diff gates re-verified.
+
+Evidence run independently: `dotnet test Duack.slnx` **427/427 green** (329+21+34+43);
+`samples/Duack.Sample.Web` builds with 0 warnings (the two earlier CS8602 are gone);
+`python tools/plan_check.py` → `pass`; keyboard remnant grep clean on both story heads
+(`Advance`/`Restart` called by no head, matching the D29 changelog claim).
+
+Verdict **good** — no blocking findings: the delta adds no unplanned library scope
+(`src/Duack` changes are BOM-strip only; behavior change confined to the sample core,
+the KNI adapter seam, and changelog, exactly what the listening rounds demanded); the
+beat machine is coherent (all four flags reset on `Restart`/`EnterBattle`, beats unskippable,
+full-loop pin asserts no frame mixes a cue with a scene or music switch); `IWebAudioNative`
+growth (`WarmHttpCache`, `ReleaseAllBuffers`) is changelogged per the D20 pattern with
+dispose semantics pinned; every delta surface has a dated `(#36)` changelog entry that
+matches the mechanics; customer docs carry no planning vocabulary and their examples compile
+against the current API; commit discipline holds (one change per commit, `Refs: #36`, cliff
+types parse); the earlier non-blocking findings (BOM, newlines, CS8602, implicit Linq) all
+addressed.
+
+Non-blocking observations from this round, applied (`d5a273d`) or recorded: the
+`STATUS.md` open-questions closure and this record ride the tick commit; the one-line
+brace/attribute pair in `WebAudioSfxBackendTests` and the web README's "Start story"
+naming fixed beforehand; the WAV-header pin's location-sensitive lookup recorded as the
+accepted tradeoff of sizing beats from the actual assets (D30).
+
+Ruling: the slice F checkbox may tick — all agent-verifiable acceptance criteria green
+(427 tests incl. wrapper-equivalence and both-way fold pins), deferrals honestly recorded
+(per-bus voice counts, bus-targeted-duck validation), and the human listening obligations
+met and decisioned by the maintainer across five rounds. The tick, the README row flip
+to landed, and `STATUS.md` closure land as one commit with this record, per the plan-phase
+gate; nothing in it is code, so no changelog entry attaches.
+

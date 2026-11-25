@@ -30,6 +30,11 @@ public sealed class SfxManager
     private readonly BusMixer _buses;
     private readonly MarbleBag<string> _bag;
     private readonly Random _random;
+    private readonly ISfxVoiceControlBackend? _control;
+    private readonly Dictionary<long, object> _handles = new();
+
+    /// <summary>Handle marker for a successful play on a backend without voice control.</summary>
+    private static readonly object NoHandle = new();
 
     /// <param name="library">Discovered cues; only names in <see cref="AudioLibrary.Sfx"/> are playable.</param>
     /// <param name="backend">Engine playback adapter.</param>
@@ -61,6 +66,7 @@ public sealed class SfxManager
         _buses = new BusMixer(sfxConfig?.Buses, target => _music.DuckRatioFor(target));
         var limits = voiceLimits ?? sfxConfig?.VoiceLimits;
         _voices = limits is null ? null : new VoiceLimiter(limits);
+        _control = _backend as ISfxVoiceControlBackend;
         _random = random ?? Random.Shared;
         MasterVolume = masterVolume;
         SfxBusVolume = sfxBusVolume;
@@ -163,11 +169,23 @@ public sealed class SfxManager
         if (admission is { } attempt && attempt.Outcome != VoicePlayOutcome.Played)
             return Record(SfxPlayResult.RejectedBelowPriority);
 
-        if (!_backend.Play(cueName, finalPitch, finalVolume))
+        // Make stealing audible when the backend can stop one voice (D-A4 follow-up): the stolen
+        // bookkeeping slot already freed; silence the victim before the new voice starts. On a
+        // plain backend the map is empty and stealing stays slot-only (the documented fallback).
+        if (admission is { } stolenTry && stolenTry.StoleSequence != 0 &&
+            _control is not null && _handles.Remove(stolenTry.StoleSequence, out var victim))
+            _control.StopVoice(victim);
+
+        var handle = _control?.PlayTracked(cueName, finalPitch, finalVolume)
+                     ?? (_control is null && _backend.Play(cueName, finalPitch, finalVolume)
+                         ? NoHandle
+                         : null);
+        if (handle is null)
         {
             if (admission is { } reserved) _voices!.Release(reserved);
             return Record(SfxPlayResult.BackendRefused);
         }
+        if (admission is { } admitted) _handles[admitted.VoiceSequence] = handle;
 
         if (duck) _music.Pulse(_duckSource);
         return Record(SfxPlayResult.Played);
@@ -181,6 +199,7 @@ public sealed class SfxManager
     {
         _backend.Stop();
         _voices?.Clear();
+        _handles.Clear();
     }
 
     private SfxPlayResult Record(SfxPlayResult result)

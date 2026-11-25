@@ -115,6 +115,27 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 
 #### 2026-11-25
 
+- **Slice A follow-up: audible voice stealing and web voice aging (#38).** A stolen voice is
+  now silenced, not just unbookkept: the optional additive `ISfxVoiceControlBackend` seam
+  (`PlayTracked` returning a handle, `StopVoice`) is implemented by `SoundEffectSfxBackend`
+  (handle = the started instance) and by `WebAudioSfxBackend` (handle = the JS source id; the
+  WebAudio bridge gains `playSourceTracked`/`stopSource` and keeps a per-source registry, so
+  one voice can be stopped without `StopAll`). `SfxManager` stops a chosen victim through the
+  seam before starting the new voice and falls back to slot-only stealing when the backend
+  does not implement the seam — the observable config/result API is identical across backends
+  (ADR-8 pattern); only the acoustic result differs. Contract notes: `IWebAudioNative`
+  implementors must add `PlaySourceTracked(string, float, float): long` and
+  `StopSource(long)`; the per-source JS registry is cleaned on `onended`, `stopSource` and
+  `StopAll`, and stopping an already-finished or unknown handle is a no-op.
+  The web head (`Duack.Sample.Web`) now authors the voice limits (global cap 8, 1 s assumed
+  lifetime, oldest stealing) and ages them by calling `SfxManager.Update(unscaledDt)` every
+  frame — previously the web head never aged voices, so a sustained burst would have
+  saturated the cap forever. Real-browser listening check for the web head and the desktop
+  `Duack.Sample.Concurrency` stress example remain pending (human verification).
+
+#### 2026-11-25
+#### 2026-11-25
+
 - **Sample demo: the fixed sfx bus and the user buses through one mixer path.** The demo
   heads now surface the bus unification through the shared storyline: both heads' HUD/debug
   line prints one `SampleAudio.DescribeBuses(_sfx.Buses)` readback (pinned in

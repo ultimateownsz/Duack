@@ -34,6 +34,60 @@ public class SfxManagerVoiceLimitTests
         public void Update(float deltaSeconds) { }
     }
 
+    private sealed class FakeVoiceControlBackend : ISfxBackend, ISfxVoiceControlBackend
+    {
+        public List<(string Cue, float Pitch, float Volume)> Played { get; } = new();
+        public List<object> StoppedVoices { get; } = new();
+        public bool Result { get; set; } = true;
+
+        public bool Play(string cueName, float pitch, float volume)
+        {
+            Played.Add((cueName, pitch, volume));
+            return Result;
+        }
+
+        public object? PlayTracked(string cueName, float pitch, float volume)
+        {
+            Played.Add((cueName, pitch, volume));
+            return Result ? new object() : null;
+        }
+
+        public void StopVoice(object handle) => StoppedVoices.Add(handle);
+
+        public void Stop() { }
+    }
+
+    [Fact]
+    public void A_stolen_voice_is_stopped_through_the_voice_control_seam()
+    {
+        var backend = new FakeVoiceControlBackend();
+        var sfx = new SfxManager(Library, backend,
+            new MusicManager(new FakeMusicBackend(),
+                new MusicPlaylistController(new PlaylistConfigBuilder().Build(), new Random(1)),
+                new MusicConfig()),
+            voiceLimits: new VoiceLimitConfig { GlobalMaxVoices = 1, DefaultVoiceSeconds = 10f });
+
+        Assert.Equal(SfxPlayResult.Played, sfx.PlayDetailed("hit"));
+        Assert.Equal(SfxPlayResult.Played, sfx.PlayDetailed("dialog"));
+
+        Assert.Equal(2, backend.Played.Count);
+        var stolen = Assert.Single(backend.StoppedVoices);
+        Assert.Equal(1, sfx.ActiveVoiceCount); // the steal freed the victim's slot, then re-reserved it with the new voice
+    }
+
+    [Fact]
+    public void A_slot_only_stealing_fallback_reports_the_steal_without_stopping_anything()
+    {
+        var backend = new FakeSfxBackend(); // does not implement the control seam
+        var sfx = CreateManager(backend, new VoiceLimitConfig { GlobalMaxVoices = 1, DefaultVoiceSeconds = 10f });
+
+        Assert.Equal(SfxPlayResult.Played, sfx.PlayDetailed("hit"));
+        Assert.Equal(SfxPlayResult.Played, sfx.PlayDetailed("dialog"));
+
+        Assert.Equal(2, backend.Played.Count); // fallback keeps one backend call per play
+        Assert.Equal(1, sfx.ActiveVoiceCount);
+    }
+
     private static readonly AudioLibrary Library = AudioLibrary.FromFiles(new[] { "SFX/hit.wav", "SFX/dialog.wav" });
 
     private static SfxManager CreateManager(ISfxBackend backend, VoiceLimitConfig? limits = null) =>

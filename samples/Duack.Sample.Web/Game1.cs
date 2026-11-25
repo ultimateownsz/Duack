@@ -37,6 +37,9 @@ public class Game1 : Game, IDisposable
     private float _duckPeakHold = 1f;
 
     private bool _musicStarted;
+    private bool _ambienceMuted; // M-key toggle of the demo's ambience bus
+    private bool _sfxBusMuted; // N-key toggle of the fixed sfx bus (same mixer path as M)
+    private WebAudioSfxBackend? _sfxBackend; // web seam: per-bus JS gain nodes
 
     public Game1()
     {
@@ -99,6 +102,7 @@ public class Game1 : Game, IDisposable
         var sfxUrls = _library.Sfx.Select(cue => new KeyValuePair<string, string>(
             cue, $"Content/Audio/SFX/{cue}.wav"));
         var sfxBackend = new WebAudioSfxBackend(new WebAudioNative(), sfxUrls);
+        _sfxBackend = sfxBackend; // hot bus volume also reaches the per-bus JS gain nodes
         _sfx = new SfxManager(_library, sfxBackend, _manager, "sfx", masterVolume: config.Buses[BusNames.Master].Volume, sfxBusVolume: config.Buses[BusNames.Sfx].Volume, sfxConfig: config.Sfx);
 
         _manager.TrackCompleted += finished =>
@@ -138,6 +142,27 @@ public class Game1 : Game, IDisposable
             ApplyFrame(_story.Advance());
         else if (WasKeyPressed(keyboard, _previousKeyboard, Keys.R))
             ApplyFrame(_story.Restart());
+        else if (WasKeyPressed(keyboard, _previousKeyboard, Keys.M))
+        {
+            // Hot mute of the ambience bus through the bus mixer, same path as the desktop M key.
+            // No backend push: the ambience node carries no audio on this seam yet (the core
+            // hands the backend no bus name), so muting the mixer is what changes the mix.
+            _ambienceMuted = !_ambienceMuted;
+            _sfx.Buses.SetMute(SampleAudio.AmbienceBus, _ambienceMuted);
+            System.Diagnostics.Debug.WriteLine(
+                $"[Sample] ambience bus muted: {_ambienceMuted} views: [{SampleAudio.DescribeBuses(_sfx.Buses)}]");
+        }
+        else if (WasKeyPressed(keyboard, _previousKeyboard, Keys.N))
+        {
+            // Hot mute of the FIXED sfx bus - the same mixer path as the ambience user bus -
+            // plus the web seam: the sfx gain node moves, so CURRENTLY PLAYING one-shots
+            // dip live too (desktop is arithmetic-only and applies on the next play).
+            _sfxBusMuted = !_sfxBusMuted;
+            _sfx.Buses.SetMute(BusNames.Sfx, _sfxBusMuted);
+            _sfxBackend?.SetBusVolume(BusNames.Sfx, _sfxBusMuted ? 0f : _sfx.SfxBusVolume);
+            System.Diagnostics.Debug.WriteLine(
+                $"[Sample] sfx bus muted: {_sfxBusMuted} views: [{SampleAudio.DescribeBuses(_sfx.Buses)}]");
+        }
         else
             ApplyFrame(_story.Update(dt));
 

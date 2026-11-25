@@ -47,6 +47,7 @@ public class Game1 : Game
     private int _hitSide; // -1 none, 0 player, 1 foe
     private float _duckPeakHold = 1f; // lowest duck ratio seen, decays toward 1.0
     private bool _ambienceMuted; // M-key toggle of the demo's ambience bus
+    private bool _sfxBusMuted; // N-key toggle of the fixed sfx bus (same mixer path as M)
 
     public Game1()
     {
@@ -139,11 +140,20 @@ public class Game1 : Game
         }
         else if (WasKeyPressed(keyboard, _previousKeyboard, Keys.M))
         {
-            // Hot mute of the ambience bus; music and SFX-path cues are untouched.
+            // Hot mute of the ambience bus through the bus mixer; music and SFX-path cues stay.
             _ambienceMuted = !_ambienceMuted;
             _sfx.Buses.SetMute(SampleAudio.AmbienceBus, _ambienceMuted);
             Console.WriteLine($"[Sample] ambience bus muted: {_ambienceMuted}" +
-                              $" views: [{string.Join(", ", _sfx.Buses.Views.Select(v => $"{v.Name}:{v.EffectiveGain}"))}]");
+                              $" views: [{SampleAudio.DescribeBuses(_sfx.Buses)}]");
+        }
+        else if (WasKeyPressed(keyboard, _previousKeyboard, Keys.N))
+        {
+            // Hot mute of the FIXED sfx bus - the same mixer path as the ambience user bus
+            // above: the unified table makes them one machinery (Views readback, SetMute).
+            _sfxBusMuted = !_sfxBusMuted;
+            _sfx.Buses.SetMute(BusNames.Sfx, _sfxBusMuted);
+            Console.WriteLine($"[Sample] sfx bus muted: {_sfxBusMuted}" +
+                              $" views: [{SampleAudio.DescribeBuses(_sfx.Buses)}]");
         }
         else
         {

@@ -96,6 +96,21 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 
 #### 2026-11-25
 
+- **Sample demo: the fixed sfx bus and the user buses through one mixer path.** The demo
+  heads now surface the bus unification through the shared storyline: both heads' HUD/debug
+  line prints one `SampleAudio.DescribeBuses(_sfx.Buses)` readback (pinned in
+  `Duack.Sample.Tests`) listing every bus of the resolved table — `master`, `music`, the
+  fixed `sfx` and the user `ambience` bus — with live effective gain and duck contribution,
+  so the fixed bus and the user bus are shown through the same `BusMixer.Views` machinery.
+  Hot mute got the same treatment: the desktop head keeps `M` (ambience) and gains `N`
+  (fixed sfx bus) through the identical `_sfx.Buses.SetMute` path, and the web head mirrors
+  both keys — with `N` also pushing the bus volume into the WebAudio seam
+  (`WebAudioSfxBackend.SetBusVolume`), so currently playing one-shots dip live in the
+  browser while the desktop stays arithmetic-only (applies from the next play), the
+  documented cross-backend difference. Bus-targeted ducks stay out of the sample per the
+  Nov 22 maintainer call; the `sfx` fold stays pinned in core tests only. (#36)
+#### 2026-11-25
+
 - **Per-bus gain nodes on the web SFX head.** The WebAudio JS bridge now keeps one
   persistent gain node per bus of the playing chain — the fixed `sfx` node every play's
   per-source gain routes through into the `master` node, then the destination — instead of

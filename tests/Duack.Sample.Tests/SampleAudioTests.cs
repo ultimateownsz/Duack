@@ -99,4 +99,19 @@ public class SampleAudioTests
         // sample until a real project proves it. The mechanism keeps its core unit tests.
         Assert.DoesNotContain(config.Music.DuckSources.Values, d => d.Target != "music");
     }
+    [Fact]
+    public void DescribeBuses_lists_the_fixed_sfx_bus_and_the_user_bus_through_one_readback()
+    {
+        // Bus unification surfaced in the demo: one readback line for every bus of the resolved
+        // table - the fixed sfx bus is the same machinery as the user ambience bus, gain and
+        // live duck contribution per bus. Both heads print exactly this string.
+        var mixer = new BusMixer(SampleAudio.BuildConfig().Buses);
+
+        var line = SampleAudio.DescribeBuses(mixer);
+
+        Assert.Contains("master: gain=", line);
+        Assert.Contains("music: gain=", line);
+        Assert.Contains("sfx: gain=1, duck=1", line);
+        Assert.Contains("ambience: gain=0.55, duck=1", line);
+    }
 }

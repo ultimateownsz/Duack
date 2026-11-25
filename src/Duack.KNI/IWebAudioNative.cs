@@ -14,6 +14,18 @@ public interface IWebAudioNative
     void PreloadBuffers(string[] urls);
     bool HasBuffer(string url);
     void PlaySource(string bufferUrl, float pitch, float volume);
+
+    /// <summary>
+    /// Plays a one-shot source and returns the JS-side id tracking it, so a single playing voice
+    /// can be stopped later (voice stealing); <see cref="WebAudioSfxBackend"/> surfaces this as
+    /// its <see cref="ISfxVoiceControlBackend"/> implementation. Returns 0 when the JS side could
+    /// not start the source (the backend maps that to a refused play).
+    /// </summary>
+    long PlaySourceTracked(string bufferUrl, float pitch, float volume);
+
+    /// <summary>Stops the playing source with the given id; a no-op for unknown or finished ids.</summary>
+    void StopSource(long id);
+
     void StopAll();
 
     /// <summary>
@@ -56,6 +68,13 @@ public sealed partial class WebAudioNative : IWebAudioNative
     [JSImport("globalThis.DuackWebAudio.playSource")]
     private static partial void PlaySourceImpl(string bufferUrl, float pitch, float volume);
 
+    [JSImport("globalThis.DuackWebAudio.playSourceTracked")]
+    [return: JSMarshalAs<JSType.Number>]
+    private static partial long PlaySourceTrackedImpl(string bufferUrl, float pitch, float volume);
+
+    [JSImport("globalThis.DuackWebAudio.stopSource")]
+    private static partial void StopSourceImpl([JSMarshalAs<JSType.Number>] long id);
+
     [JSImport("globalThis.DuackWebAudio.stopAll")]
     private static partial void StopAllImpl();
 
@@ -72,6 +91,8 @@ public sealed partial class WebAudioNative : IWebAudioNative
     public void PreloadBuffers(string[] urls) => PreloadBuffersImpl(urls);
     public bool HasBuffer(string url) => HasBufferImpl(url);
     public void PlaySource(string bufferUrl, float pitch, float volume) => PlaySourceImpl(bufferUrl, pitch, volume);
+    public long PlaySourceTracked(string bufferUrl, float pitch, float volume) => PlaySourceTrackedImpl(bufferUrl, pitch, volume);
+    public void StopSource(long id) => StopSourceImpl(id);
     public void StopAll() => StopAllImpl();
     public void SetBusVolume(string bus, float volume) => SetBusVolumeImpl(bus, volume);
     public void WarmHttpCache(string[] urls) => WarmHttpCacheImpl(urls);

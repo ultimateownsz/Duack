@@ -97,7 +97,19 @@ public class Game1 : Game, IDisposable
         var sfxUrls = _library.Sfx.Select(cue => new KeyValuePair<string, string>(
             cue, $"Content/Audio/SFX/{cue}.wav"));
         var sfxBackend = new WebAudioSfxBackend(new WebAudioNative(), sfxUrls);
-        _sfx = new SfxManager(_library, sfxBackend, _manager, "sfx", masterVolume: config.Buses[BusNames.Master].Volume, sfxBusVolume: config.Buses[BusNames.Sfx].Volume, sfxConfig: config.Sfx);
+        // Voice limits on the web head too (#38): same cap as the desktop stress
+        // example, so a heavy page burst cannot saturate WebAudio. DefaultVoiceSeconds is the
+        // authored lifetime; aged by SfxManager.Update every frame below.
+        _sfx = new SfxManager(_library, sfxBackend, _manager, "sfx",
+            masterVolume: config.Buses[BusNames.Master].Volume,
+            sfxBusVolume: config.Buses[BusNames.Sfx].Volume,
+            sfxConfig: config.Sfx,
+            voiceLimits: new VoiceLimitConfig
+            {
+                GlobalMaxVoices = 8,
+                DefaultVoiceSeconds = 1.0f,
+                DefaultStealingPolicy = VoiceStealingPolicy.Oldest,
+            });
 
         // First-track latency (maintainer ruling, Nov 25 round 5): the platform <audio>
         // fetches its OGG on first play - warm the browser HTTP cache for every track URL
@@ -126,6 +138,9 @@ public class Game1 : Game, IDisposable
         var dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
         _manager.Update(dt);
+        // Voice lifetimes must age on the same unscaled dt: the authored limits never expire
+        // otherwise, and one sustained burst would saturate the cap forever (#38).
+        _sfx?.Update(dt);
 
         if (_flash > 0f) _flash = Math.Max(0f, _flash - dt);
         if (_hitFlash > 0f) _hitFlash = Math.Max(0f, _hitFlash - dt);

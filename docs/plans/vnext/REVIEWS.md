@@ -207,3 +207,141 @@ met and decisioned by the maintainer across five rounds. The tick, the README ro
 to landed, and `STATUS.md` closure land as one commit with this record, per the plan-phase
 gate; nothing in it is code, so no changelog entry attaches.
 
+
+## feat/voice-concurrency — Slice A — voice concurrency limiting (resumed 2026-11-25)
+
+- Reviewed: 2026-11-25
+- Head at review: the branch rebased onto `master` this session (`06a67fa`…`3a2a0ba`, plus the
+  fixes below)
+- Base: `master` (`9029c12` — the bus-unification fold, #37)
+- Verdict: **good** — after in-session fixes; Slice A remains unmerged pending the human
+  listening check (#38)
+- Reviewer: agent (`/pr-review` gate run without the OpenCode harness; qa criteria applied
+  from AGENTS.md — the diff against the slice PLAN is the contract)
+
+### In-session fixes (blocking findings, all verified)
+
+**F1 — Branch conflicts with the landed bus unification (#37).** `git merge-tree` reported
+content conflicts in `CHANGELOG.md`, `src/Duack/AudioConfig.cs` and `src/Duack/SfxManager.cs`;
+the branch predated #37 (old `Dictionary<string, float>` user buses vs the flat
+`BusConfig` table). Rebased onto `master`; in `PlayDetailed` the bus-unified composition
+(`_buses.Resolve(BusNames.Master).Gain * resolution.Gain * _music.DuckRatioFor(...)`) is kept
+and the limiter admission, zero-gain short-circuit (before the limiter — a mute/zero play
+consumes no slot, reporting `Played` + `ZeroEffectiveGain` exactly as master does) and the
+additive `PlayDetailed`/`LastPlayResult` API sit on top. Suite green after the rebase
+(440 tests: 342 + 34 + 21 + 43).
+
+**F2 — Stale pre-split slice doc.** The branch still carried
+`docs/plans/vnext/slices/A-concurrency.md`, referencing the deleted
+`docs/plans/vnext/PLAN.md §4`; it duplicated `voice-concurrency/` (removed in `ff47a4f`).
+
+**F3 — Missing override pins.** The limiter honored per-cue `DurationSeconds`/`StealingPolicy`
+but no test pinned either at the limiter level. Added
+`Per_cue_lifetime_and_policy_overrides_win_over_the_defaults` (passes; coverage pin, no
+production change).
+
+### Verified against the slice PLAN acceptance
+
+Caps enforced at exact boundaries with the victim sequence asserted (oldest default, quietest
+with oldest tiebreak, priority refuse/steal at `<=` the weakest); per-cue cap override over
+global; every refusal reported (`UnknownCue`/`RejectedBelowPriority`/`BackendRefused`) with
+`LastPlayResult` readable for plain `Play` callers and `ActiveVoiceCount` for HUD readback;
+backend refusal releases the reserved slot; unknown cues never touch the limiter; CHANGELOG
+entry, `duack-skills/concurrency/SKILL.md` and the dedicated desktop example present.
+
+### Non-blocking / still open
+
+- The human listening check on `Duack.Sample.Concurrency` (maintainer; #38 criterion).
+- `PlayDetailed` collapses a zero-gain play into `Played` (master's inherited semantics —
+  reported via `ZeroEffectiveGain`); a distinct outcome member would be more honest in the
+  detailed API if the maintainer wants it.
+- The cross-platform follow-up (web `Update(dt)` wiring, audible-stealing seam) landed on this
+  branch in the follow-up commit of 2026-11-25 (#38): additive `ISfxVoiceControlBackend` seam,
+  desktop/web implementations, web-head limits + `Update(unscaledDt)`. Web audible verification
+  remains a browser-listening obligation; the JS audio graph is pinned at bridge-call level only.
+
+
+## feat/voice-concurrency — full re-review after follow-up + rebase (2026-11-25, second pass)
+
+- Reviewed: 2026-11-25
+- Head at review: `28dee53` (branch fully rebased onto `origin/master@7b56ce7` — bus unification
+  #37 and changelog-convention #39 both in; the audible-stealing follow-up, clickable buttons,
+  docs-writer rounds and de-slicing all landed)
+- Base: `origin/master`
+- Verdict: **good** — one real defect found and fixed in this pass; analytics below re-verified
+  against the live head
+
+### Defect found and fixed this pass
+
+**JS bridge id-map corruption (fixed in `webaudio-sfx.js`).** `playSource`'s `onended` closure
+deleted `nextSourceId` (the mutable module counter), not the id of the source that ended:
+after any voice ended naturally, the latest source's mapping was deleted, so a later
+`StopVoice(handle)` for a still-playing voice could no-op — audible stealing silently failing
+on the web head. Fixed by capturing `const id = nextSourceId++` at creation. The C# seam tests
+pin the bridge call contract but cannot exercise the JS graph (the honest-subset limitation
+already recorded for the web backend); this defect is exactly the class of bug that pattern
+cannot catch, and the browser listening check remains the real verification.
+
+### Re-verified in this pass
+
+- Diff-vs-contract: the branch implements the slice PLAN (caps, policies, per-cue overrides,
+  observable results, dedicated example) plus the recorded cross-platform follow-up (seam, web
+  wiring); no unplanned scope. Merged `PlayDetailed` flow verified end-to-end: bus composition
+  (master→bus→mute/pause→duck) → final clamp → zero-gain short-circuit (event + `Played`, no
+  backend call, no slot) → limiter acquire (refusals reported) → steal-stop via the seam →
+  tracked/plain play → slot release on backend refusal → duck pulse.
+- Consumer-surface hygiene per the #39 rule: no slice/phase/ADR/decision identifiers remain in
+  `src/`, `tests/`, `samples/`, `duack-skills/` or this branch's changelog entries
+  (case-insensitive scan). Master's own "D5"/"Gate D fold" comment in `SfxManager.PlayDetailed`
+  predates this branch and was left untouched.
+- Changelog claims match the code, including "registry cleaned on onended/stopSource/StopAll"
+  (true after the JS fix above) and the `IWebAudioNative` implementor contract note.
+- Green: build 0 errors, 450 tests (348+38+21+43), both sample projects build (web explicitly,
+  it is out of the solution), `python tools/plan_check.py` → `pass`.
+
+### Still open (unchanged, maintainer-owned)
+
+- Human listening: `Duack.Sample.Concurrency` (PLAY/MANY/STOP; now also judging that stolen
+  voices audibly stop) and the browser check of the wired web head.
+- Ruling wanted: `PlayDetailed` reports zero-gain plays as `Played` (master semantics).
+
+
+## feat/voice-concurrency — final PR-review gate (2026-11-25, third pass)
+
+- Reviewed: 2026-11-25
+- Head at review: reviewed at `1a5ed3a8` with the AGENTS.md/web-comment fixes in the working
+  tree; those fixes (plus this record) land in the follow-up commit, so the verdict's head is
+  the commit carrying this entry. 20 commits over `origin/master` `7b56ce78`; 29 files,
+  +1489/−59
+- Base: `origin/master`
+- Verdict: **good — PR-ready.** All agent-verifiable slice criteria and follow-up items pass;
+  the two human checks remain maintainer obligations and are not ticked.
+
+### Checks in this pass
+
+- Sweep of the full tracked diff (all 29 files) against the slice PLAN and the recorded
+  follow-up: caps, policies, per-cue overrides, observable results, dedicated example, seam,
+  web wiring, docs, changelog — no unplanned scope, nothing incomplete in the diff itself.
+- Hygiene scan forced over every git-tracked file (previous scans accidentally included
+  build-output directories and missed bare "slice" in three comments): zero planning-vocabulary
+  or conflict-marker hits outside the planning workspace, the plan-tooling docs, and master's
+  pre-existing changelog lines — all of which are the vocabulary's legitimate home per #39's
+  own text. Found and fixed in this pass: "Slice A" in AGENTS.md's sample listing and two
+  "(PLAN addendum)" references in the web-head comments (now `#38`).
+- Consumer-facing surfaces (docs-writer rules): README sample table now lists the demo;
+  config skill's See-also now routes to `buses` and `concurrency`; button labels are the
+  vocabulary-free PLAY/MANY/STOP; the skill doc claims only numeric observable behavior
+  (counter never exceeds 08) and explicitly defers the audible verdict to the human check.
+- JS bridge re-read after the id-capture fix: sourcesById is keyed by the captured per-source
+  id, cleaned on natural end, stopSource, and stopAll; StopVoice no-ops on unknown/stale ids.
+- Verification: solution build 0 errors/0 warnings; 450 tests green (348 + 38 + 21 + 43);
+  web sample builds explicitly (solution-excluded by design); plan_check → pass; plan tool
+  unittests → OK.
+
+### Maintainer obligations before merge
+
+- Human listening: `Duack.Sample.Concurrency` (PLAY fires one cue; MANY fires 50 overlapping
+  cues against the cap — judge whether stolen voices audibly stop; STOP resets); browser check
+  of the wired web head (user-gesture start, worst-moment standard).
+- Optional ruling: `PlayDetailed` reports zero-gain plays as `Played` (inherited master
+  semantics; `ZeroEffectiveGain` is the report channel).

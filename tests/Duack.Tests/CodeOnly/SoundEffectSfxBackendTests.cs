@@ -88,4 +88,51 @@ public class SoundEffectSfxBackendTests
     {
         Assert.Throws<ArgumentNullException>(() => new SoundEffectSfxBackend(null!));
     }
+
+    [Fact]
+    public void PlayTracked_returns_a_handle_that_stops_exactly_that_instance()
+    {
+        var clips = new FakeAudioClipLibrary();
+        var clip = clips.Add("hit");
+        var backend = new SoundEffectSfxBackend(clips);
+
+        var first = backend.PlayTracked("hit");
+        var second = backend.PlayTracked("hit");
+
+        Assert.NotNull(first);
+        Assert.NotNull(second);
+        Assert.NotSame(first, second);
+
+        backend.StopVoice(second!);
+
+        var instances = clip.Instances;
+        Assert.Equal(2, instances.Count);
+        Assert.Equal(0, instances[0].StopCount);
+        Assert.False(instances[0].Disposed);
+        Assert.Equal(1, instances[1].StopCount);
+        Assert.True(instances[1].Disposed);
+    }
+
+    [Fact]
+    public void StopVoice_is_a_no_op_for_a_finished_or_unknown_handle()
+    {
+        var clips = new FakeAudioClipLibrary();
+        var clip = clips.Add("hit");
+        var backend = new SoundEffectSfxBackend(clips);
+
+        backend.PlayTracked("hit");
+        Assert.Single(clip.Instances);
+        clip.Instances[0].SimulateNaturalEnd(); // finished on its own: no audible voice to stop
+        backend.StopVoice(new object()); // stale handle from another backend lifetime
+        backend.StopVoice(clip.Instances[0]); // already long-finished instance
+        Assert.Equal(0, clip.Instances[0].StopCount);
+    }
+
+    [Fact]
+    public void PlayTracked_returns_null_when_the_clip_cannot_be_loaded()
+    {
+        var backend = new SoundEffectSfxBackend(new FakeAudioClipLibrary());
+
+        Assert.Null(backend.PlayTracked("missing"));
+    }
 }

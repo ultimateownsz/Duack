@@ -25,10 +25,16 @@ public sealed class SfxManager
     private readonly ISfxBackend _backend;
     private readonly MusicManager _music;
     private readonly SfxConfig? _sfxConfig;
+    private readonly VoiceLimiter? _voices;
     private readonly string _duckSource;
     private readonly BusMixer _buses;
     private readonly MarbleBag<string> _bag;
     private readonly Random _random;
+    private readonly ISfxVoiceControlBackend? _control;
+    private readonly Dictionary<long, object> _handles = new();
+
+    /// <summary>Handle marker for a successful play on a backend without voice control.</summary>
+    private static readonly object NoHandle = new();
 
     /// <param name="library">Discovered cues; only names in <see cref="AudioLibrary.Sfx"/> are playable.</param>
     /// <param name="backend">Engine playback adapter.</param>
@@ -37,7 +43,8 @@ public sealed class SfxManager
     /// <param name="random">Randomness source for <see cref="PlayNext"/> and cue variation; defaults to <see cref="Random.Shared"/>.</param>
     /// <param name="masterVolume">Master bus volume (scales music and SFX alike); defaults to full volume.</param>
     /// <param name="sfxBusVolume">SFX bus volume; defaults to full volume.</param>
-    /// <param name="sfxConfig">SFX mix settings; carries the optional <see cref="SfxConfig.CueVariation"/> jitter applied per play.</param>
+    /// <param name="sfxConfig">SFX mix settings; carries the optional <see cref="SfxConfig.CueVariation"/> jitter applied per play and the authored voice limits.</param>
+    /// <param name="voiceLimits">Explicit voice limits; falls back to <see cref="SfxConfig.VoiceLimits"/> when omitted.</param>
     public SfxManager(
         AudioLibrary library,
         ISfxBackend backend,
@@ -46,7 +53,8 @@ public sealed class SfxManager
         Random? random = null,
         float masterVolume = 1f,
         float sfxBusVolume = 1f,
-        SfxConfig? sfxConfig = null)
+        SfxConfig? sfxConfig = null,
+        VoiceLimitConfig? voiceLimits = null)
     {
         _library = library ?? throw new ArgumentNullException(nameof(library));
         _backend = backend ?? throw new ArgumentNullException(nameof(backend));
@@ -56,6 +64,9 @@ public sealed class SfxManager
         // One resolver for every bus: the mixer owns the whole table (master/music/sfx plus the
         // user buses) and the Views readback reads the duck system live (D4).
         _buses = new BusMixer(sfxConfig?.Buses, target => _music.DuckRatioFor(target));
+        var limits = voiceLimits ?? sfxConfig?.VoiceLimits;
+        _voices = limits is null ? null : new VoiceLimiter(limits);
+        _control = _backend as ISfxVoiceControlBackend;
         _random = random ?? Random.Shared;
         MasterVolume = masterVolume;
         SfxBusVolume = sfxBusVolume;
@@ -102,14 +113,33 @@ public sealed class SfxManager
     public IReadOnlyList<string> Names => _library.Sfx;
 
     /// <summary>
+    /// Outcome of the most recent <see cref="Play"/> or <see cref="PlayDetailed"/> call, so a
+    /// caller that only needs a bool can still report why a cue did not speak.
+    /// </summary>
+    public SfxPlayResult LastPlayResult { get; private set; } = SfxPlayResult.UnknownCue;
+
+    /// <summary>Number of SFX voices currently reserved by the limiter (0 when no limits are authored).</summary>
+    public int ActiveVoiceCount => _voices?.ActiveVoiceCount ?? 0;
+
+    /// <summary>
     /// Plays <paramref name="cueName"/> and ducks the music for the configured hold while it
     /// speaks. Returns false — without touching the backend and without ducking — when the cue is
-    /// not in the library or the backend refuses to play it. Pass <paramref name="duck"/> = false
-    /// to play the cue without ducking the music (e.g. a cue that accompanies a scene switch).
+    /// not in the library, a voice slot is refused, or the backend refuses to play it. Pass
+    /// <paramref name="duck"/> = false to play without ducking the music.
     /// </summary>
-    public bool Play(string cueName, float pitch = 0f, float volume = 1f, bool duck = true, string? bus = null)
+    public bool Play(string cueName, float pitch = 0f, float volume = 1f, bool duck = true, string? bus = null) =>
+        PlayDetailed(cueName, pitch, volume, duck, bus) == SfxPlayResult.Played;
+
+    /// <summary>
+    /// As <see cref="Play"/>, but reports the specific reason for a refusal (unknown cue, priority
+    /// rejection, backend refusal) instead of collapsing every failure into false. A successful
+    /// play may steal an active voice, which is reported by the limiter's readback.
+    /// </summary>
+    public SfxPlayResult PlayDetailed(
+        string cueName, float pitch = 0f, float volume = 1f, bool duck = true, string? bus = null, int priority = 0)
     {
-        if (!_library.IsSfx(cueName)) return false;
+        if (!_library.IsSfx(cueName)) return Record(SfxPlayResult.UnknownCue);
+
         // Per-play jitter from the authored cue variation, resolved fresh on every play so a live
         // settings change applies without rebuilding the manager; added on top of the caller's
         // pitch and scaling the caller's volume, then composed with the buses.
@@ -124,28 +154,64 @@ public sealed class SfxManager
         var finalVolume = Math.Clamp(volume * cuePlay.VolumeScale, 0f, 1f)
                           * _buses.Resolve(BusNames.Master).Gain * resolution.Gain
                           * _music.DuckRatioFor(resolution.Bus);
+        finalVolume = Math.Clamp(finalVolume, 0f, 1f);
 
         // A play that resolves to zero gain reports its cause instead of staying silent: no
-        // backend call, no music duck, nothing audible to duck for.
+        // backend call, no music duck, no voice slot consumed, nothing audible to duck for.
         if (finalVolume <= 0f)
         {
             ZeroEffectiveGain?.Invoke(cueName);
-            return true;
+            return Record(SfxPlayResult.Played);
         }
 
-        if (!_backend.Play(cueName, finalPitch, Math.Clamp(finalVolume, 0f, 1f))) return false;
+
+        var admission = _voices?.Acquire(cueName, finalVolume, priority: priority);
+        if (admission is { } attempt && attempt.Outcome != VoicePlayOutcome.Played)
+            return Record(SfxPlayResult.RejectedBelowPriority);
+
+        // Make stealing audible when the backend can stop one voice (#38): the stolen
+        // bookkeeping slot already freed; silence the victim before the new voice starts. On a
+        // plain backend the map is empty and stealing stays slot-only (the documented fallback).
+        if (admission is { } stolenTry && stolenTry.StoleSequence != 0 &&
+            _control is not null && _handles.Remove(stolenTry.StoleSequence, out var victim))
+            _control.StopVoice(victim);
+
+        var handle = _control?.PlayTracked(cueName, finalPitch, finalVolume)
+                     ?? (_control is null && _backend.Play(cueName, finalPitch, finalVolume)
+                         ? NoHandle
+                         : null);
+        if (handle is null)
+        {
+            if (admission is { } reserved) _voices!.Release(reserved);
+            return Record(SfxPlayResult.BackendRefused);
+        }
+        if (admission is { } admitted) _handles[admitted.VoiceSequence] = handle;
 
         if (duck) _music.Pulse(_duckSource);
-        return true;
+        return Record(SfxPlayResult.Played);
     }
 
-    /// <summary>Stops every one-shot this manager's backend is currently playing.</summary>
-    public void Stop() => _backend.Stop();
+    /// <summary>Ages reserved voices so their slots are released when the assumed lifetime elapses.</summary>
+    public void Update(float deltaSeconds) => _voices?.Update(deltaSeconds);
+
+    /// <summary>Stops every one-shot this manager's backend is currently playing and clears reserved voices.</summary>
+    public void Stop()
+    {
+        _backend.Stop();
+        _voices?.Clear();
+        _handles.Clear();
+    }
+
+    private SfxPlayResult Record(SfxPlayResult result)
+    {
+        LastPlayResult = result;
+        return result;
+    }
 
     /// <summary>
     /// Draws the next cue from the shuffle bag (no immediate repeats) and plays it. Returns false
     /// when the library discovered no sfx at all.
     /// </summary>
-    public bool PlayNext(float pitch = 0f, float volume = 1f) =>
-        _bag.TryDraw(out var cue) && Play(cue, pitch, volume);
+    public bool PlayNext(float pitch = 0f, float volume = 1f, bool duck = true) =>
+        _bag.TryDraw(out var cue) && Play(cue, pitch, volume, duck);
 }

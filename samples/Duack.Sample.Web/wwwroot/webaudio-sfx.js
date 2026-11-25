@@ -5,6 +5,8 @@
     let audioContext = null;
     const buffers = new Map();          // url -> AudioBuffer
     const playingSources = [];          // { source, gain }
+    const sourcesById = new Map();      // id -> { source, gain } (voice-stealing handles)
+    let nextSourceId = 1;
 
     function initAudioContext() {
         if (audioContext) return;
@@ -68,13 +70,30 @@
 
         const handle = { source: source, gain: gain };
         playingSources.push(handle);
+        // Capture the id now: the onended closure must delete THIS source's mapping, not
+        // whatever id the counter holds when the source happens to end.
+        const id = nextSourceId++;
+        sourcesById.set(id, handle);
 
         source.onended = function () {
             const idx = playingSources.indexOf(handle);
             if (idx >= 0) playingSources.splice(idx, 1);
+            sourcesById.delete(id);
             try { gain.disconnect(); } catch (e) {}
             try { source.disconnect(); } catch (e) {}
         };
+
+        return id;
+    }
+
+    // Stops one tracked voice by id (voice stealing); no-op for unknown or finished ids.
+    function stopSource(id) {
+        const handle = sourcesById.get(id);
+        if (!handle) return;
+        sourcesById.delete(id);
+        try { handle.source.stop(); } catch (e) {}
+        try { handle.gain.disconnect(); } catch (e) {}
+        try { handle.source.disconnect(); } catch (e) {}
     }
 
     function stopAll() {
@@ -87,6 +106,7 @@
             try { handle.source.disconnect(); } catch (e) {}
         }
         playingSources.length = 0;
+        sourcesById.clear();
     }
 
     window.DuackWebAudio = {
@@ -94,6 +114,8 @@
         hasBuffer,
         preloadBuffers,
         playSource,
+        playSourceTracked: playSource, // same path; the tracked alias documents the return contract
+        stopSource,
         stopAll,
     };
 })();

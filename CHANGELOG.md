@@ -115,6 +115,38 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 
 #### 2026-11-25
 
+- **The concurrency example is clickable (#38).** `Duack.Sample.Concurrency` grew three
+  on-screen buttons — **ONE** (single cue), **BURST** (the 50-cue stress burst), **STOP**
+  (silence everything mid-listen) — so the human listening check no longer requires knowing
+  the keyboard bindings; Space/T/Escape keep working and Escape still exits. Labels use the
+  same no-asset 3x5 pixel-glyph approach as the seven-segment counter (the project
+  deliberately has no content pipeline). Sample-only: no library behavior change, and the
+  sample has no headless test surface (MonoGame `Game` needs a real window) — the click path
+  is verified by the human listening check itself.
+
+#### 2026-11-25
+- **Audible voice stealing and web voice aging (#38).** A stolen voice is
+  now silenced, not just unbookkept: the optional additive `ISfxVoiceControlBackend` seam
+  (`PlayTracked` returning a handle, `StopVoice`) is implemented by `SoundEffectSfxBackend`
+  (handle = the started instance) and by `WebAudioSfxBackend` (handle = the JS source id; the
+  WebAudio bridge gains `playSourceTracked`/`stopSource` and keeps a per-source registry, so
+  one voice can be stopped without `StopAll`). `SfxManager` stops a chosen victim through the
+  seam before starting the new voice and falls back to slot-only stealing when the backend
+  does not implement the seam — the observable config/result API is identical across backends
+  (the same additive-capability pattern as the bus-volume work, #32/#36); only the acoustic
+  result differs. Contract notes: `IWebAudioNative`
+  implementors must add `PlaySourceTracked(string, float, float): long` and
+  `StopSource(long)`; the per-source JS registry is cleaned on `onended`, `stopSource` and
+  `StopAll`, and stopping an already-finished or unknown handle is a no-op.
+  The web head (`Duack.Sample.Web`) now authors the voice limits (global cap 8, 1 s assumed
+  lifetime, oldest stealing) and ages them by calling `SfxManager.Update(unscaledDt)` every
+  frame — previously the web head never aged voices, so a sustained burst would have
+  saturated the cap forever. Real-browser listening check for the web head and the desktop
+  `Duack.Sample.Concurrency` stress example remain pending (human verification).
+
+#### 2026-11-25
+#### 2026-11-25
+
 - **Sample demo: the fixed sfx bus and the user buses through one mixer path.** The demo
   heads now surface the bus unification through the shared storyline: both heads' HUD/debug
   line prints one `SampleAudio.DescribeBuses(_sfx.Buses)` readback (pinned in
@@ -202,6 +234,17 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 
 #### 2026-11-22
 - **Plan splitter, per-slice vNext workspace, and PR-review loop.** `tools/plan_split.py` turns a monolithic markdown plan into `README.md`, `SHARED.md` and one `<slug>/PLAN.md` per slice, with 12 stdlib tests under `tools/tests/`. `docs/plans/vnext/` is now in that shape. `AGENTS.md` documents the splitter and the new `/pr-review <number>` OpenCode command, which launches the `qa` agent, verifies blocking findings and records a dated verdict in `docs/plans/vnext/REVIEWS.md` — the first entry covers this PR. Python bytecode is gitignored. (#22)
+
+#### 2026-11-19
+- SFX voice concurrency limiting. `AudioConfigBuilder.WithVoiceLimit(...)` and
+  `WithCueVoiceLimit(...)` author global/per-cue caps, stealing policies (oldest, quietest, priority),
+  and assumed voice lifetimes. `SfxManager.PlayDetailed(...)` and `LastPlayResult` report why a cue
+  was refused (unknown cue, priority rejection, backend refusal); `Play(...)` keeps its `bool`
+  contract. `SfxManager.Update(unscaledDt)` ages reserved voices; a backend refusal releases its slot.
+  A dedicated `Duack.Sample.Concurrency` example fires 50 overlapping cues at cap 8 (T key) with
+  an on-screen active-voice counter; the existing storyline samples are untouched. Known
+  limitation: backends are unchanged, so lifetimes are authored, not observed. Tests pin cap
+  boundaries, victim selection, policy overrides, refusal results, and lifetime release. (#38)
 
 #### 2026-10-31
 - `MusicManager.CurrentTrackElapsedSeconds` reports elapsed playback time for the current track on both backends; `CurrentTrackDurationSeconds` is nullable for consumer-provided resolvers.

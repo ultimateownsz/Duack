@@ -11,7 +11,7 @@ namespace Duack;
 /// All mixing decisions (including WHEN the music ducks) stay in the core <see cref="SfxManager"/>;
 /// this adapter only plays one cue now.
 /// </summary>
-public sealed class SoundEffectSfxBackend : ISfxBackend, IDisposable
+public sealed class SoundEffectSfxBackend : ISfxBackend, ISfxVoiceControlBackend, IDisposable
 {
     private readonly IAudioClipLibrary _clips;
     private readonly List<IAudioInstance> _playing = new();
@@ -22,13 +22,17 @@ public sealed class SoundEffectSfxBackend : ISfxBackend, IDisposable
 
     /// <inheritdoc />
     /// <remarks>Defaults mirror <see cref="SfxManager.Play"/>: natural pitch, full volume.</remarks>
-    public bool Play(string cueName, float pitch = 0f, float volume = 1f)
+    public bool Play(string cueName, float pitch = 0f, float volume = 1f) =>
+        PlayTracked(cueName, pitch, volume) is not null;
+
+    /// <inheritdoc />
+    public object? PlayTracked(string cueName, float pitch = 0f, float volume = 1f)
     {
         ReapFinished();
 
         var clip = _clips.Get(cueName);
         if (clip is null)
-            return false; // missing clip: SfxManager turns this into "no duck"
+            return null; // missing clip: SfxManager turns this into "no duck"
 
         var instance = clip.CreateInstance();
         instance.IsLooped = false;
@@ -36,7 +40,25 @@ public sealed class SoundEffectSfxBackend : ISfxBackend, IDisposable
         instance.Pitch = Math.Clamp(pitch, -1f, 1f);
         instance.Play();
         _playing.Add(instance);
-        return true;
+        return instance; // the started voice's own handle
+    }
+
+    /// <inheritdoc />
+    public void StopVoice(object handle)
+    {
+        // Handle identity: the instance itself. Untracked or stale handles (other backends,
+        // already-reaped instances) simply do not match _playing.
+        for (var i = _playing.Count - 1; i >= 0; i--)
+        {
+            if (!ReferenceEquals(_playing[i], handle)) continue;
+            if (_playing[i].IsPlaying)
+            {
+                _playing[i].Stop();
+                _playing[i].Dispose();
+            }
+            _playing.RemoveAt(i);
+            return;
+        }
     }
 
     /// <summary>Stops and disposes every instance this backend started (a hard cut, not a fade).</summary>

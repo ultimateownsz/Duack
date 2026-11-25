@@ -32,6 +32,19 @@ internal sealed class FakeWebAudioNative : IWebAudioNative
         Calls.Add($"PlaySource({bufferUrl}, pitch={pitch}, volume={volume})");
     }
 
+    public long NextSourceId { get; set; } = 1;
+
+    public long PlaySourceTracked(string bufferUrl, float pitch, float volume)
+    {
+        Calls.Add($"PlaySourceTracked({bufferUrl}, pitch={pitch}, volume={volume})");
+        return HasBuffer(bufferUrl) ? NextSourceId++ : 0;
+    }
+
+    public void StopSource(long id)
+    {
+        Calls.Add($"StopSource({id})");
+    }
+
     public void SetBusVolume(string bus, float volume)
     {
         Calls.Add($"SetBusVolume({bus}, {volume})");
@@ -75,7 +88,7 @@ public class WebAudioSfxBackendTests
         var result = backend.Play("hit", 0f, 1f);
 
         Assert.True(result);
-        Assert.Contains(js.Calls, c => c.StartsWith("PlaySource(hit.wav"));
+        Assert.Contains(js.Calls, c => c.StartsWith("PlaySourceTracked(hit.wav"));
     }
 
     [Fact]
@@ -221,5 +234,55 @@ public class WebAudioSfxBackendTests
         Assert.Equal(
             "PreloadBuffers(Content/Audio/SFX/hit-1.wav,Content/Audio/SFX/notice-video-game-sfx.wav,Content/Audio/SFX/battle-start.wav)",
             js.Calls.Single(c => c.StartsWith("PreloadBuffers")));
+    }
+}
+public class WebAudioSfxVoiceControlTests
+{
+    [Fact]
+    public void PlayTracked_LoadedCue_ReturnsTheTrackedIdAndCallsTheBridge()
+    {
+        var js = new FakeWebAudioNative();
+        js.Buffers["hit.wav"] = true;
+        var backend = new WebAudioSfxBackend(js, new[] { new KeyValuePair<string, string>("hit", "hit.wav") });
+
+        var handle = backend.PlayTracked("hit", 0.25f, 0.8f);
+
+        Assert.NotNull(handle);
+        Assert.Contains(js.Calls, c => c.StartsWith("PlaySourceTracked(hit.wav") && c.Contains("pitch=0.25"));
+    }
+
+    [Fact]
+    public void PlayTracked_UnloadedCue_ReturnsNullWithoutTouchingTheBridge()
+    {
+        var js = new FakeWebAudioNative(); // no buffers loaded
+        var backend = new WebAudioSfxBackend(js, new[] { new KeyValuePair<string, string>("hit", "hit.wav") });
+
+        Assert.Null(backend.PlayTracked("hit"));
+        Assert.DoesNotContain(js.Calls, c => c.StartsWith("PlaySourceTracked"));
+    }
+
+    [Fact]
+    public void StopVoice_ForwardsTheHandleIdToStopSource()
+    {
+        var js = new FakeWebAudioNative();
+        js.Buffers["hit.wav"] = true;
+        var backend = new WebAudioSfxBackend(js, new[] { new KeyValuePair<string, string>("hit", "hit.wav") });
+
+        var handle = backend.PlayTracked("hit");
+        backend.StopVoice(handle!);
+
+        Assert.Contains(js.Calls, c => c == $"StopSource({handle})");
+    }
+
+    [Fact]
+    public void StopVoice_IgnoresForeignHandleTypes()
+    {
+        var js = new FakeWebAudioNative();
+        var backend = new WebAudioSfxBackend(js, new[] { new KeyValuePair<string, string>("hit", "hit.wav") });
+
+        backend.StopVoice("not-a-web-handle");
+        backend.StopVoice(42);
+
+        Assert.DoesNotContain(js.Calls, c => c.StartsWith("StopSource"));
     }
 }

@@ -28,7 +28,7 @@ namespace Duack.KNI;
 /// resolved bus (a core contract change, out of this adapter's scope).
 /// </para>
 /// </summary>
-public sealed class WebAudioSfxBackend : ISfxBackend, IDisposable
+public sealed class WebAudioSfxBackend : ISfxBackend, ISfxVoiceControlBackend, IDisposable
 {
     private readonly IWebAudioNative _js;
     private readonly Dictionary<string, string> _cueUrls = new(StringComparer.Ordinal);
@@ -54,23 +54,43 @@ public sealed class WebAudioSfxBackend : ISfxBackend, IDisposable
     }
 
     /// <inheritdoc />
-    public bool Play(string cueName, float pitch, float volume)
+    public bool Play(string cueName, float pitch, float volume) =>
+        PlayTracked(cueName, pitch, volume) is not null;
+
+    /// <inheritdoc />
+    /// <remarks>Tracks the started source's JS-side id so <see cref="StopVoice"/> can stop it.</remarks>
+    public object? PlayTracked(string cueName, float pitch = 0f, float volume = 1f)
     {
-        if (_disposed) return false;
-        if (!_cueUrls.TryGetValue(cueName, out var url)) return false;
-        if (!_js.HasBuffer(url)) return false; // not loaded yet
+        if (_disposed) return null;
+        if (!_cueUrls.TryGetValue(cueName, out var url)) return null;
+        if (!_js.HasBuffer(url)) return null; // not loaded yet
 
         try
         {
             var pitchClamped = Math.Clamp(pitch, -1f, 1f);
             var volumeClamped = Math.Clamp(volume, 0f, 1f);
-            _js.PlaySource(url, pitchClamped, volumeClamped);
-            return true;
+            var id = _js.PlaySourceTracked(url, pitchClamped, volumeClamped);
+            return id != 0 ? id : null;
         }
         catch (Exception ex)
         {
             Console.WriteLine($"[WebAudioSfxBackend] Play failed for '{cueName}': {ex.Message}");
-            return false;
+            return null;
+        }
+    }
+
+    /// <inheritdoc />
+    public void StopVoice(object handle)
+    {
+        if (_disposed) return;
+        if (handle is not long id || id <= 0) return;
+        try
+        {
+            _js.StopSource(id);
+        }
+        catch
+        {
+            // Swallow: stopping should never crash the frame.
         }
     }
 

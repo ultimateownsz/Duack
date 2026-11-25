@@ -30,10 +30,10 @@ var config = new AudioConfigBuilder()
 
 ## Sanitize() clamping
 
-- MasterVolume, Music.MasterVolume, Sfx.MasterVolume → [0,1].
+- Every bus's `Volume` in `AudioConfig.Buses` (the one flat table: master/music/sfx plus user
+  buses) → [0,1].
 - Music.CrossfadeSeconds → [0.1, 10].
 - Contexts → [0,1].
-- Sfx.Buses → [0,1] per bus.
 - Duck sources: Ratio [0,1], Attack/Hold/Release >= 0; `Target` names what the source ducks ("music" default, or a user bus).
 - CueVariation rebuilt (ranges normalized).
 - SchemaVersion normalized.
@@ -72,4 +72,4 @@ sources with `MusicManager.ReloadDuckSources()` (duck state is preserved; existi
 swap params in place). Duack has **no built-in file watching** — file monitoring is the
 host's responsibility (and varies by engine; not standard in MonoGame/KNI).
 
-See also: `cli`, `player-settings`, `audio-core`.
+See also: `buses` (the full bus surface), `concurrency` (voice limits), `cli`, `player-settings`, `audio-core`.

@@ -13,23 +13,31 @@ questions are in [`STATUS.md`](STATUS.md).
 - **D-A3 — Backend refusal releases the slot.** If `ISfxBackend.Play` returns false (missing clip or
   unloaded web buffer), the reserved slot is released so a failed play cannot saturate the cap.
   This also covers the web async-preload path.
-- **D-A4 — Slot-only stealing for now.** A stolen voice loses its bookkeeping slot but keeps
-  sounding; making the steal audible needs an optional handle/stop-or-fade seam on the backends.
-  Recorded as a cross-platform follow-up in [`PLAN.md`](PLAN.md), not part of this slice.
+- **D-A4 — Slot-only stealing, then audible via the voice-control seam.** Initially a stolen
+  voice lost only its bookkeeping slot and kept sounding. The #38 follow-up (2026-11-25) added
+  the additive optional `ISfxVoiceControlBackend` seam (`PlayTracked`/`StopVoice`): `SfxManager`
+  stops the chosen victim before the new voice starts; desktop maps handles to
+  `IAudioInstance`s, web to JS source ids (`playSourceTracked`/`stopSource`, per-source registry
+  cleaned on `onended`/`stopSource`/`StopAll`). `ISfxBackend.Play` is untouched; backends without
+  the seam (test fakes, custom hosts) fall back to slot-only stealing — the observable
+  config/result API is identical across backends (ADR-8 pattern), only the acoustic result
+  differs. Real-browser audible verification remains a human check.
 - **D-A5 — Dedicated desktop example.** The stress demo lives in `samples/Duack.Sample.Concurrency`,
   not in the existing storyline samples. Verification on web uses the existing `Duack.Sample.Web`
   head; no new web example project.
 
 ## Work list (non-exhaustive) — cross-platform follow-up
 
-Recorded 2026-11-20 in the [`PLAN.md`](PLAN.md) addendum; not scheduled with this slice.
+Recorded 2026-11-20 in the [`PLAN.md`](PLAN.md) addendum; landed 2026-11-25 (#38).
 
-- [ ] Web sample: author the limits and call `SfxManager.Update(unscaledDt)` every frame — the web
-      head currently never ages voices, so a burst would saturate the cap permanently.
-- [ ] Add an optional, additive voice-control seam (handle → stop/fade) so a stolen voice is
-      actually silenced: desktop maps to `IAudioInstance`; KNI needs a JS bridge method beyond
-      `StopAll()`. `ISfxBackend.Play` stays unchanged; fall back to slot-only stealing when absent.
+- [x] Web sample: author the limits and call `SfxManager.Update(unscaledDt)` every frame — the web
+      head previously never aged voices, so a burst would saturate the cap permanently.
+- [x] Add an optional, additive voice-control seam (handle → stop/fade) so a stolen voice is
+      actually silenced: desktop maps to `IAudioInstance`; KNI gained `playSourceTracked`/
+      `stopSource` (per-source registry beyond `StopAll()`). `ISfxBackend.Play` stays unchanged;
+      falls back to slot-only stealing when absent.
 - [ ] Optional, later: report real source end (`onended`) through the bridge to release slots at
       the true lifetime instead of the authored one; `[Experimental]` per `SHARED.md` §13.
-- [ ] Wire the limits into the existing `Duack.Sample.Web` head and browser-listen there with a
-      user-gesture start (worst-moment standard). No additional web sample project.
+- [x] Wire the limits into the existing `Duack.Sample.Web` head (authored in the head; browser
+      listening with a user-gesture start still pending — worst-moment standard). No additional
+      web sample project.

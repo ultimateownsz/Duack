@@ -60,12 +60,12 @@ var clips     = new SoundEffectClipLibrary(library);
 var music = new MusicManager(
     new SoundEffectMusicBackend(clips),
     new MusicPlaylistController(playlists),
-    config.Music, masterVolume: config.MasterVolume);
+    config.Music, masterVolume: config.Buses[BusNames.Master].Volume);
 
 var sfx = new SfxManager(library,
     new SoundEffectSfxBackend(clips), music,
-    masterVolume: config.MasterVolume,
-    sfxBusVolume: config.Sfx.MasterVolume,
+    masterVolume: config.Buses[BusNames.Master].Volume,
+    sfxBusVolume: config.Buses[BusNames.Sfx].Volume,
     sfxConfig: config.Sfx);
 
 music.Play("overworld");          // playlist lookup: BuildPlaylists() named this single-track playlist after the track
@@ -89,13 +89,13 @@ var music = new MusicManager(
     // two-directory convention and 404s under the standard layout.
     new MediaPlayerMusicBackend(new KniMediaPlayerHost(), contentRoot: "Content/Audio/Tracks"),
     new MusicPlaylistController(playlists),
-    config.Music, masterVolume: config.MasterVolume);
+    config.Music, masterVolume: config.Buses[BusNames.Master].Volume);
 
 // One-shot cues: WebAudio, URLs relative to the app root.
 var sfxUrls = library.Sfx.Select(cue => new KeyValuePair<string, string>(cue, $"Content/Audio/SFX/{cue}.wav"));
 var sfx = new SfxManager(library, new WebAudioSfxBackend(new WebAudioNative(), sfxUrls), music,
-    masterVolume: config.MasterVolume,
-    sfxBusVolume: config.Sfx.MasterVolume,
+    masterVolume: config.Buses[BusNames.Master].Volume,
+    sfxBusVolume: config.Buses[BusNames.Sfx].Volume,
     sfxConfig: config.Sfx);
 
 // music.Update(dt) once per frame, as on desktop.

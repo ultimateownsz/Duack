@@ -20,6 +20,11 @@ there are no bus effects.
 
 ## Setup (authoring)
 
+Define your own bus by calling `WithBus` with any lowercase name and a volume — that is
+the whole step: no registration, no config file, no route table. From that point the name
+is a mixing surface you can route plays to, hot-update, mute, pause, and read back exactly
+like `music` and `sfx`.
+
 ```csharp
 var config = new AudioConfigBuilder()
     .WithMasterVolume(0.8f)               // thin table write: Buses["master"].Volume

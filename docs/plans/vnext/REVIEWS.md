@@ -260,3 +260,48 @@ entry, `duack-skills/concurrency/SKILL.md` and the dedicated desktop example pre
   desktop/web implementations, web-head limits + `Update(unscaledDt)`. Web audible verification
   remains a browser-listening obligation; the JS audio graph is pinned at bridge-call level only.
 
+
+## feat/voice-concurrency — full re-review after follow-up + rebase (2026-11-25, second pass)
+
+- Reviewed: 2026-11-25
+- Head at review: `28dee53` (branch fully rebased onto `origin/master@7b56ce7` — bus unification
+  #37 and changelog-convention #39 both in; the audible-stealing follow-up, clickable buttons,
+  docs-writer rounds and de-slicing all landed)
+- Base: `origin/master`
+- Verdict: **good** — one real defect found and fixed in this pass; analytics below re-verified
+  against the live head
+
+### Defect found and fixed this pass
+
+**JS bridge id-map corruption (fixed in `webaudio-sfx.js`).** `playSource`'s `onended` closure
+deleted `nextSourceId` (the mutable module counter), not the id of the source that ended:
+after any voice ended naturally, the latest source's mapping was deleted, so a later
+`StopVoice(handle)` for a still-playing voice could no-op — audible stealing silently failing
+on the web head. Fixed by capturing `const id = nextSourceId++` at creation. The C# seam tests
+pin the bridge call contract but cannot exercise the JS graph (the honest-subset limitation
+already recorded for the web backend); this defect is exactly the class of bug that pattern
+cannot catch, and the browser listening check remains the real verification.
+
+### Re-verified in this pass
+
+- Diff-vs-contract: the branch implements the slice PLAN (caps, policies, per-cue overrides,
+  observable results, dedicated example) plus the recorded cross-platform follow-up (seam, web
+  wiring); no unplanned scope. Merged `PlayDetailed` flow verified end-to-end: bus composition
+  (master→bus→mute/pause→duck) → final clamp → zero-gain short-circuit (event + `Played`, no
+  backend call, no slot) → limiter acquire (refusals reported) → steal-stop via the seam →
+  tracked/plain play → slot release on backend refusal → duck pulse.
+- Consumer-surface hygiene per the #39 rule: no slice/phase/ADR/decision identifiers remain in
+  `src/`, `tests/`, `samples/`, `duack-skills/` or this branch's changelog entries
+  (case-insensitive scan). Master's own "D5"/"Gate D fold" comment in `SfxManager.PlayDetailed`
+  predates this branch and was left untouched.
+- Changelog claims match the code, including "registry cleaned on onended/stopSource/StopAll"
+  (true after the JS fix above) and the `IWebAudioNative` implementor contract note.
+- Green: build 0 errors, 450 tests (348+38+21+43), both sample projects build (web explicitly,
+  it is out of the solution), `python tools/plan_check.py` → `pass`.
+
+### Still open (unchanged, maintainer-owned)
+
+- Human listening: `Duack.Sample.Concurrency` (ONE/BURST/STOP; now also judging that stolen
+  voices audibly stop) and the browser check of the wired web head.
+- Ruling wanted: `PlayDetailed` reports zero-gain plays as `Played` (master semantics).
+

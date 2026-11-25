@@ -5,6 +5,31 @@ using System.Text.Json.Serialization;
 
 namespace Duack;
 
+/// <summary>
+/// The well-known bus names pre-registered in every <see cref="AudioConfig.Buses"/> table:
+/// lowercase, compared <see cref="StringComparer.Ordinal"/> (see
+/// <see cref="BusMixer.SfxBusName"/> for the runtime's fixed SFX bus, which matches
+/// <see cref="Sfx"/>).
+/// </summary>
+public static class BusNames
+{
+    /// <summary>The global output bus (scales music and SFX alike).</summary>
+    public const string Master = "master";
+
+    /// <summary>The music bus.</summary>
+    public const string Music = "music";
+
+    /// <summary>The fixed sound-effect bus.</summary>
+    public const string Sfx = "sfx";
+}
+
+/// <summary>One bus in the flat bus table (see <see cref="AudioConfig.Buses"/>).</summary>
+public class BusConfig
+{
+    /// <summary>Bus volume in [0, 1]; clamped there by <see cref="AudioConfig.Sanitize"/>.</summary>
+    public float Volume { get; set; } = 1f;
+}
+
 /// <summary>Per-source ducking parameters: how far the music dips and how fast.</summary>
 public class DuckSourceConfig
 {
@@ -27,13 +52,17 @@ public class DuckSourceConfig
     public string Target { get; set; } = "music";
 }
 
-/// <summary>Music mix: master volume, per-context scale, crossfade, and duck sources.</summary>
+/// <summary>Music mix: crossfade, per-context scales, and duck sources.</summary>
 public class MusicConfig
 {
     /// <summary>
-    /// Master volume for music in the range [0, 1]. Default is 1.
+    /// Reference to the flat bus table this config belongs to (see
+    /// <see cref="AudioConfig.Buses"/>); the music bus entry is the music master volume.
+    /// Wired by <see cref="AudioConfig"/>, so within a config graph it is the very same
+    /// dictionary instance, never a copy. Null when a <see cref="MusicConfig"/> is constructed
+    /// standalone; the music bus volume then resolves to full volume.
     /// </summary>
-    public float MasterVolume { get; set; } = 1f;
+    public Dictionary<string, BusConfig>? Buses { get; set; }
 
     /// <summary>Fade time when switching between tracks.</summary>
     public float CrossfadeSeconds { get; set; } = 1.2f;
@@ -55,9 +84,14 @@ public class MusicConfig
 public class SfxConfig
 {
     /// <summary>
-    /// Master volume for sound effects in the range [0, 1]. Default is 1.
+    /// Reference to the flat bus table this config belongs to (see
+    /// <see cref="AudioConfig.Buses"/>), and the transport the runtime reads: the pre-registered
+    /// <c>sfx</c> entry is the SFX master volume and the remaining entries are the user buses
+    /// <see cref="SfxManager"/> seeds its <see cref="BusMixer"/> from. Wired by
+    /// <see cref="AudioConfig"/>, so within a config graph it is the very same dictionary
+    /// instance, never a copy. Null when an <see cref="SfxConfig"/> is constructed standalone.
     /// </summary>
-    public float MasterVolume { get; set; } = 1f;
+    public Dictionary<string, BusConfig>? Buses { get; set; }
 
     /// <summary>
     /// Optional per-play pitch/volume jitter for sound-effect cues (footsteps, hits). Null (omitted
@@ -65,43 +99,78 @@ public class SfxConfig
     /// </summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public CueVariation? CueVariation { get; set; }
-
-    /// <summary>
-    /// User-defined buses: a name and volume per bus. Composed below master alongside the fixed
-    /// music/SFX pair; cues routed to a bus scale by its effective gain (see
-    /// <see cref="BusMixer"/>). The fixed SFX bus itself is not listed here.
-    /// </summary>
-    public Dictionary<string, float> Buses { get; set; } = new();
 }
 
 /// <summary>
 /// The audio mix configuration, authored in code (see <see cref="AudioConfigBuilder"/>).
-/// The mix (masters, per-context scales, crossfade, duck sources, and cue variation) is a plain
-/// object graph.
+/// The mix (the flat bus table, per-context scales, crossfade, duck sources, and cue variation)
+/// is a plain object graph.
 /// </summary>
 public class AudioConfig
 {
-    /// <summary>Global output master volume applied to both music and sound effects.</summary>
-    public float MasterVolume { get; set; } = 1f;
+    private Dictionary<string, BusConfig> _buses = CreateDefaultBuses();
+    private MusicConfig _music = new();
+    private SfxConfig _sfx = new();
+
+    /// <summary>Wires the section configs onto the one bus table (see <see cref="Buses"/>).</summary>
+    public AudioConfig()
+    {
+        _music.Buses = _buses;
+        _sfx.Buses = _buses;
+    }
+
+    /// <summary>
+    /// THE flat bus table: one <see cref="BusConfig"/> entry per bus — the pre-registered
+    /// <see cref="BusNames.Master"/>/<see cref="BusNames.Music"/>/<see cref="BusNames.Sfx"/>
+    /// entries plus the user buses authored via
+    /// <see cref="AudioConfigBuilder.WithBus(string, float)"/>. Names are lowercase and compared
+    /// <see cref="StringComparer.Ordinal"/>; volumes are clamped to [0, 1] by
+    /// <see cref="Sanitize"/>. Replacing the dictionary rewires <see cref="Music"/> and
+    /// <see cref="Sfx"/> onto it so the graph keeps exactly one table.
+    /// </summary>
+    public Dictionary<string, BusConfig> Buses
+    {
+        get => _buses;
+        set
+        {
+            _buses = value;
+            _music.Buses = value;
+            _sfx.Buses = value;
+        }
+    }
 
     /// <summary>
     /// Music configuration.
     /// </summary>
-    public MusicConfig Music { get; set; } = new();
+    public MusicConfig Music
+    {
+        get => _music;
+        set { _music = value; value.Buses = _buses; }
+    }
+
     /// <summary>
     /// Sound effects configuration.
     /// </summary>
-    public SfxConfig Sfx { get; set; } = new();
+    public SfxConfig Sfx
+    {
+        get => _sfx;
+        set { _sfx = value; value.Buses = _buses; }
+    }
+
+    /// <summary>Creates the table pre-registered with master/music/sfx at full volume.</summary>
+    public static Dictionary<string, BusConfig> CreateDefaultBuses() => new(StringComparer.Ordinal)
+    {
+        [BusNames.Master] = new BusConfig(),
+        [BusNames.Music] = new BusConfig(),
+        [BusNames.Sfx] = new BusConfig(),
+    };
 
     /// <summary>Clamps values to safe ranges.</summary>
     public void Sanitize()
     {
-        MasterVolume = System.Math.Clamp(MasterVolume, 0f, 1f);
-        Music.MasterVolume = System.Math.Clamp(Music.MasterVolume, 0f, 1f);
-        Sfx.MasterVolume = System.Math.Clamp(Sfx.MasterVolume, 0f, 1f);
+        foreach (var bus in _buses.Values)
+            bus.Volume = System.Math.Clamp(bus.Volume, 0f, 1f);
 
-        foreach (var bus in Sfx.Buses.Keys.ToList())
-            Sfx.Buses[bus] = System.Math.Clamp(Sfx.Buses[bus], 0f, 1f);
         Music.CrossfadeSeconds = System.Math.Clamp(Music.CrossfadeSeconds, 0.1f, 10f);
 
         foreach (var context in Music.Contexts.Keys.ToList())

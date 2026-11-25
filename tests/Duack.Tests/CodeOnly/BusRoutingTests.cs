@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace Duack.Tests.CodeOnly;
@@ -71,12 +71,10 @@ public class BusRoutingTests
         return sfx;
     }
 
-    private static SfxConfig ConfigBus(string name, float volume)
+    private static SfxConfig ConfigBus(string name, float volume) => new()
     {
-        var sfx = new SfxConfig();
-        sfx.Buses[name] = volume;
-        return sfx;
-    }
+        Buses = new Dictionary<string, BusConfig> { [name] = new BusConfig { Volume = volume } }
+    };
 
     [Fact]
     public void Play_BusVolume_ComposesAfterMasterAndSfxBus()

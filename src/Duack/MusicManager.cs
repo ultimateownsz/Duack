@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace Duack;
@@ -473,7 +473,13 @@ public class MusicManager
         if (!string.IsNullOrEmpty(context) && _music.Contexts.TryGetValue(context, out var authored))
             scale = authored;
 
-        return MusicVolumeMath.Effective(MasterVolume * _music.MasterVolume, scale, _duck.EffectiveRatio, fade);
+        // Mechanically adapted for the flat bus table (the music bus entry is the music master
+        // volume now); a standalone MusicConfig without a table resolves to full volume.
+        var musicBusVolume = _music.Buses is not null
+            && _music.Buses.TryGetValue(BusNames.Music, out var musicBus)
+            ? musicBus.Volume
+            : 1f;
+        return MusicVolumeMath.Effective(MasterVolume * musicBusVolume, scale, _duck.EffectiveRatio, fade);
     }
 
     private float NextCuePitch() => _music.CueVariation?.Resolve(_random).Pitch ?? 0f;

@@ -11,6 +11,28 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 
 ### Changed
 
+#### 2026-11-25
+- **Preview breaking: volumes now live in one flat bus table.**
+  `AudioConfig.Buses` (a `Dictionary<string, BusConfig>` with lowercase, Ordinal-compared
+  names) is THE one storage for every bus volume: it comes pre-registered with the
+  `master`/`music`/`sfx` entries, and user buses authored via
+  `AudioConfigBuilder.WithBus(name, volume)` land in the same table
+  (`BusConfig { Volume }`; `Sanitize`/`Build` clamp every table volume to [0, 1] as before).
+  What breaks for consumers: the dedicated `AudioConfig.MasterVolume`,
+  `MusicConfig.MasterVolume` and `SfxConfig.MasterVolume` properties are **removed** — read
+  and write `config.Buses[BusNames.Master/Music/Sfx].Volume` instead;
+  `SfxConfig.Buses` is **re-typed** from `Dictionary<string, float>` (its own storage) to
+  `Dictionary<string, BusConfig>` (a reference to the same one table, wired by `AudioConfig`,
+  null when a `SfxConfig` is constructed standalone) — `sfx.Buses["ambience"] = 0.4f` no
+  longer compiles; use `buses["ambience"].Volume = 0.4f` on the shared table; and
+  `MusicConfig` gains the same `Buses` table reference so `MusicManager` construction is
+  unchanged. Symptom of staying on the old members: `CS0117`/`CS1061` compile errors on
+  `MasterVolume` and `CS0029`/`CS1503` on the old side-dictionary writes. No audible
+  behavior change: `WithMasterVolume`/`WithMusicMasterVolume`/`WithSfxMasterVolume`/`WithBus`
+  keep their exact signatures as thin writes into the one
+  table (`WithBus("master", v)` replaces the same single entry), and the runtime still
+  composes the fixed fields from the table values exactly as before. (#36)
+
 #### 2026-11-22
 - `BusMixer.SetBus` change detection compares volumes bit-exactly
   (`BitConverter.SingleToInt32Bits`) instead of `==`: no behavior change (both values pass

@@ -1,4 +1,4 @@
-using Duack;
+﻿using Duack;
 using Duack.MonoGame;
 using Duack.Sample.Core;
 using Microsoft.Xna.Framework;
@@ -81,8 +81,8 @@ public class Game1 : Game
         // --- Wire the desktop adapters: music + one-shot sfx over one clip library ---
         _clips = new SoundEffectClipLibrary(_library);
         _controller = new MusicPlaylistController(playlists);
-        _manager = new MusicManager(new SoundEffectMusicBackend(_clips), _controller, config.Music, masterVolume: config.MasterVolume);
-        _sfx = new SfxManager(_library, new SoundEffectSfxBackend(_clips), _manager, masterVolume: config.MasterVolume, sfxBusVolume: config.Sfx.MasterVolume, sfxConfig: config.Sfx);
+        _manager = new MusicManager(new SoundEffectMusicBackend(_clips), _controller, config.Music, masterVolume: config.Buses[BusNames.Master].Volume);
+        _sfx = new SfxManager(_library, new SoundEffectSfxBackend(_clips), _manager, masterVolume: config.Buses[BusNames.Master].Volume, sfxBusVolume: config.Buses[BusNames.Sfx].Volume, sfxConfig: config.Sfx);
 
         _manager.TrackCompleted += finished =>
             Console.WriteLine($"[Sample] track finished: {finished.Name} ({finished.Context})");

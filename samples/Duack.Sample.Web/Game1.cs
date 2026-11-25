@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -92,14 +92,14 @@ public class Game1 : Game, IDisposable
         var backend = new MediaPlayerMusicBackend(
             new KniMediaPlayerHost(), contentRoot: "Content/Audio/Tracks", extension: ".ogg");
         _controller = new MusicPlaylistController(playlists);
-        _manager = new MusicManager(backend, _controller, config.Music, masterVolume: config.MasterVolume);
+        _manager = new MusicManager(backend, _controller, config.Music, masterVolume: config.Buses[BusNames.Master].Volume);
 
         // WebAudio SFX backend: one-shots overlap the music track while DuckMixer dips music.
         // Cue URLs are relative to the app root; WAV files live in wwwroot/Content/Audio/SFX/.
         var sfxUrls = _library.Sfx.Select(cue => new KeyValuePair<string, string>(
             cue, $"Content/Audio/SFX/{cue}.wav"));
         var sfxBackend = new WebAudioSfxBackend(new WebAudioNative(), sfxUrls);
-        _sfx = new SfxManager(_library, sfxBackend, _manager, "sfx", masterVolume: config.MasterVolume, sfxBusVolume: config.Sfx.MasterVolume, sfxConfig: config.Sfx);
+        _sfx = new SfxManager(_library, sfxBackend, _manager, "sfx", masterVolume: config.Buses[BusNames.Master].Volume, sfxBusVolume: config.Buses[BusNames.Sfx].Volume, sfxConfig: config.Sfx);
 
         _manager.TrackCompleted += finished =>
             System.Diagnostics.Debug.WriteLine($"[Sample] track finished: {finished.Name} ({finished.Context})");

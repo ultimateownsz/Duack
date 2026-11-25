@@ -1,4 +1,4 @@
-using Duack;
+﻿using Duack;
 using Xunit;
 
 namespace Duack.Tests.CodeOnly;
@@ -10,21 +10,24 @@ namespace Duack.Tests.CodeOnly;
 /// </summary>
 public class PlayerSettingsTests
 {
-    private static AudioConfig Defaults() => new()
+    private static AudioConfig Defaults()
     {
-        MasterVolume = 1f,
-        Music = new MusicConfig
+        var config = new AudioConfig
         {
-            MasterVolume = 0.8f,
-            CrossfadeSeconds = 1.2f,
-            Contexts = new Dictionary<string, float> { ["Overworld"] = 0.5f },
-            DuckSources = new Dictionary<string, DuckSourceConfig>
+            Music = new MusicConfig
             {
-                ["sfx"] = new() { Ratio = 0.3f }
+                CrossfadeSeconds = 1.2f,
+                Contexts = new Dictionary<string, float> { ["Overworld"] = 0.5f },
+                DuckSources = new Dictionary<string, DuckSourceConfig>
+                {
+                    ["sfx"] = new() { Ratio = 0.3f }
+                }
             }
-        },
-        Sfx = new SfxConfig { MasterVolume = 0.9f }
-    };
+        };
+        config.Buses[BusNames.Music].Volume = 0.8f;
+        config.Buses[BusNames.Sfx].Volume = 0.9f;
+        return config;
+    }
 
     [Fact]
     public void ApplyOverrides_keeps_authored_values_when_nothing_is_saved()
@@ -32,8 +35,8 @@ public class PlayerSettingsTests
         var defaults = Defaults();
         var effective = PlayerSettings.ApplyOverrides(defaults, new InMemoryPlayerSettingsStore());
 
-        Assert.Equal(0.8f, effective.Music.MasterVolume);
-        Assert.Equal(0.9f, effective.Sfx.MasterVolume);
+        Assert.Equal(0.8f, effective.Buses[BusNames.Music].Volume);
+        Assert.Equal(0.9f, effective.Buses[BusNames.Sfx].Volume);
         Assert.Equal(1.2f, effective.Music.CrossfadeSeconds);
     }
 
@@ -50,8 +53,8 @@ public class PlayerSettingsTests
 
         var effective = PlayerSettings.ApplyOverrides(Defaults(), store);
 
-        Assert.Equal(0.25f, effective.Music.MasterVolume);
-        Assert.Equal(0.5f, effective.Sfx.MasterVolume);
+        Assert.Equal(0.25f, effective.Buses[BusNames.Music].Volume);
+        Assert.Equal(0.5f, effective.Buses[BusNames.Sfx].Volume);
         Assert.Equal(3f, effective.Music.CrossfadeSeconds);
     }
 
@@ -63,7 +66,7 @@ public class PlayerSettingsTests
 
         var effective = PlayerSettings.ApplyOverrides(Defaults(), store);
 
-        Assert.Equal(0.4f, effective.MasterVolume);
+        Assert.Equal(0.4f, effective.Buses[BusNames.Master].Volume);
     }
 
     [Fact]
@@ -76,7 +79,7 @@ public class PlayerSettingsTests
 
         var effective = PlayerSettings.ApplyOverrides(Defaults(), store);
 
-        Assert.Equal(1f, effective.MasterVolume);
+        Assert.Equal(1f, effective.Buses[BusNames.Master].Volume);
     }
 
     [Fact]
@@ -87,7 +90,7 @@ public class PlayerSettingsTests
 
         var effective = PlayerSettings.ApplyOverrides(Defaults(), store);
 
-        Assert.Equal(1f, effective.MasterVolume);
+        Assert.Equal(1f, effective.Buses[BusNames.Master].Volume);
     }
 
     [Fact]
@@ -99,7 +102,7 @@ public class PlayerSettingsTests
 
         PlayerSettings.ApplyOverrides(defaults, store);
 
-        Assert.Equal(0.8f, defaults.Music.MasterVolume);
+        Assert.Equal(0.8f, defaults.Buses[BusNames.Music].Volume);
     }
 
     [Fact]
@@ -162,8 +165,8 @@ public class PlayerSettingsTests
 
         var effective = PlayerSettings.ApplyOverrides(Defaults(), store);
 
-        Assert.Equal(1f, effective.Music.MasterVolume);
-        Assert.Equal(0f, effective.Sfx.MasterVolume);
+        Assert.Equal(1f, effective.Buses[BusNames.Music].Volume);
+        Assert.Equal(0f, effective.Buses[BusNames.Sfx].Volume);
         Assert.Equal(10f, effective.Music.CrossfadeSeconds);
     }
 
@@ -190,7 +193,7 @@ public class PlayerSettingsTests
     public void SaveOverrides_clamps_before_persisting()
     {
         var config = Defaults();
-        config.Music.MasterVolume = 7f;
+        config.Buses[BusNames.Music].Volume = 7f;
         var store = new InMemoryPlayerSettingsStore();
 
         Assert.True(PlayerSettings.SaveOverrides(config, store));
@@ -202,7 +205,7 @@ public class PlayerSettingsTests
     public void SaveOverrides_stores_the_master_bus_volume()
     {
         var config = Defaults();
-        config.MasterVolume = 0.3f;
+        config.Buses[BusNames.Master].Volume = 0.3f;
         var store = new InMemoryPlayerSettingsStore();
 
         PlayerSettings.SaveOverrides(config, store);
@@ -215,7 +218,7 @@ public class PlayerSettingsTests
     public void SaveOverrides_stores_only_player_tunable_fields()
     {
         var config = Defaults();
-        config.Music.MasterVolume = 0.4f;
+        config.Buses[BusNames.Music].Volume = 0.4f;
         var store = new InMemoryPlayerSettingsStore();
 
         PlayerSettings.SaveOverrides(config, store);
@@ -235,7 +238,7 @@ public class PlayerSettingsTests
         store.Clear();
 
         var effective = PlayerSettings.ApplyOverrides(Defaults(), store);
-        Assert.Equal(0.8f, effective.Music.MasterVolume);
+        Assert.Equal(0.8f, effective.Buses[BusNames.Music].Volume);
     }
 
     [Fact]

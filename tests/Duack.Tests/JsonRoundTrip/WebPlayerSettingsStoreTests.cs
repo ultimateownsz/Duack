@@ -1,4 +1,4 @@
-using Duack;
+﻿using Duack;
 using Xunit;
 
 namespace Duack.Tests.JsonRoundTrip;
@@ -287,16 +287,18 @@ public class WebPlayerSettingsStoreTests
         var store = new WebPlayerSettingsStore(storage);
         var authored = new AudioConfig
         {
-            Music = new MusicConfig { MasterVolume = 0.8f, CrossfadeSeconds = 1.2f },
-            Sfx = new SfxConfig { MasterVolume = 0.9f }
+            Music = new MusicConfig { CrossfadeSeconds = 1.2f },
+            Sfx = new SfxConfig()
         };
+        authored.Buses[BusNames.Music].Volume = 0.8f;
+        authored.Buses[BusNames.Sfx].Volume = 0.9f;
 
         var fresh = PlayerSettings.ApplyOverrides(authored, store);
-        Assert.Equal(0.8f, fresh.Music.MasterVolume);
+        Assert.Equal(0.8f, fresh.Buses[BusNames.Music].Volume);
 
         store.Save(new PlayerAudioSettings { MusicMasterVolume = 0.2f, SfxMasterVolume = 0.4f });
         var saved = PlayerSettings.ApplyOverrides(authored, store);
-        Assert.Equal(0.2f, saved.Music.MasterVolume, 3);
-        Assert.Equal(0.4f, saved.Sfx.MasterVolume, 3);
+        Assert.Equal(0.2f, saved.Buses[BusNames.Music].Volume, 3);
+        Assert.Equal(0.4f, saved.Buses[BusNames.Sfx].Volume, 3);
     }
 }

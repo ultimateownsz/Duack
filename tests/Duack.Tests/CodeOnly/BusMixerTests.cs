@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -13,35 +13,28 @@ namespace Duack.Tests.CodeOnly;
 public class BusMixerTests
 {
 
-    private static SfxConfig ConfigBus(string name, float volume)
-    {
-        var sfx = new SfxConfig();
-        sfx.Buses[name] = volume;
-        return sfx;
-    }
+    private static Dictionary<string, float> ConfigBus(string name, float volume) => new() { [name] = volume };
 
     [Fact]
     public void Builder_WithBus_SetsConfiguredBusVolume()
     {
         var config = new AudioConfigBuilder().WithBus("ambience", 0.4f).WithBus("ui", 0.9f).Build();
-        Assert.Equal(0.4f, config.Sfx.Buses["ambience"]);
-        Assert.Equal(0.9f, config.Sfx.Buses["ui"]);
+        Assert.Equal(0.4f, config.Buses["ambience"].Volume);
+        Assert.Equal(0.9f, config.Buses["ui"].Volume);
     }
 
     [Fact]
     public void Sanitize_ClampsBusVolumes()
     {
-        var sfx = ConfigBus("ambience", 2f);
-        sfx.Buses["ui"] = -0.5f;
-        new AudioConfig { Sfx = sfx }.Sanitize();
-        Assert.Equal(1f, sfx.Buses["ambience"]);
-        Assert.Equal(0f, sfx.Buses["ui"]);
+        var config = new AudioConfigBuilder().WithBus("ambience", 2f).WithBus("ui", -0.5f).Build();
+        Assert.Equal(1f, config.Buses["ambience"].Volume);
+        Assert.Equal(0f, config.Buses["ui"].Volume);
     }
 
     [Fact]
     public void Resolve_NullRequest_RoutesToSfxBusWithoutFallback()
     {
-        var mixer = new BusMixer(ConfigBus("ambience", 0.4f).Buses);
+        var mixer = new BusMixer(ConfigBus("ambience", 0.4f));
         var r = mixer.Resolve(null);
         Assert.Equal("sfx", r.Bus);
         Assert.False(r.FellBack);
@@ -50,14 +43,14 @@ public class BusMixerTests
     [Fact]
     public void Resolve_KnownBus_UsesItsVolume()
     {
-        var mixer = new BusMixer(ConfigBus("ambience", 0.4f).Buses);
+        var mixer = new BusMixer(ConfigBus("ambience", 0.4f));
         Assert.Equal(0.4f, mixer.Resolve("ambience").Gain, 4);
     }
 
     [Fact]
     public void Resolve_UnknownBus_FallsBackToSfxAndReports()
     {
-        var mixer = new BusMixer(ConfigBus("ambience", 0.4f).Buses);
+        var mixer = new BusMixer(ConfigBus("ambience", 0.4f));
         string? reported = null;
         mixer.BusFellBack += bus => reported = bus;
 
@@ -71,7 +64,7 @@ public class BusMixerTests
     [Fact]
     public void Mute_And_Pause_ZeroTheGain()
     {
-        var mixer = new BusMixer(ConfigBus("ambience", 0.4f).Buses);
+        var mixer = new BusMixer(ConfigBus("ambience", 0.4f));
 
         mixer.SetMute("ambience", true);
         Assert.Equal(0f, mixer.Resolve("ambience").Gain);
@@ -87,7 +80,7 @@ public class BusMixerTests
     [Fact]
     public void MasterMute_ZeroesEveryBus()
     {
-        var mixer = new BusMixer(ConfigBus("ambience", 0.4f).Buses);
+        var mixer = new BusMixer(ConfigBus("ambience", 0.4f));
         mixer.MasterMuted = true;
         Assert.Equal(0f, mixer.Resolve("ambience").Gain);
         Assert.Equal(0f, mixer.Resolve("sfx").Gain);
@@ -98,7 +91,7 @@ public class BusMixerTests
     [Fact]
     public void HotVolumeUpdate_AppliesImmediately_AndRaisesChanged()
     {
-        var mixer = new BusMixer(ConfigBus("ambience", 0.4f).Buses);
+        var mixer = new BusMixer(ConfigBus("ambience", 0.4f));
         var changed = 0;
         mixer.Changed += () => changed++;
 
@@ -111,7 +104,7 @@ public class BusMixerTests
     [Fact]
     public void SetBus_SameValueOnKnownBus_SecondCallDoesNotRaiseChanged()
     {
-        var mixer = new BusMixer(ConfigBus("ambience", 0.4f).Buses);
+        var mixer = new BusMixer(ConfigBus("ambience", 0.4f));
         var changed = 0;
         mixer.Changed += () => changed++;
 
@@ -143,8 +136,11 @@ public class BusMixerTests
     [Fact]
     public void Views_ExposeVolumeMutePauseAndEffectiveGain()
     {
-        var buses = new AudioConfigBuilder().WithBus("ambience", 0.4f).WithBus("ui", 0.9f).Build().Sfx.Buses;
-        var mixer = new BusMixer(buses);
+        var config = new AudioConfigBuilder().WithBus("ambience", 0.4f).WithBus("ui", 0.9f).Build();
+        // Same user-bus projection the runtime seed applies (work item 3 owns the unified resolve).
+        var mixer = new BusMixer(config.Buses
+            .Where(bus => bus.Key != BusNames.Master && bus.Key != BusNames.Music && bus.Key != BusNames.Sfx)
+            .Select(bus => new KeyValuePair<string, float>(bus.Key, bus.Value.Volume)));
         mixer.SetMute("ui", true);
 
         var view = mixer.Views.Single(v => v.Name == "ambience");

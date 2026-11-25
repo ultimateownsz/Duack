@@ -1,4 +1,4 @@
-using Duack.Sample.Core;
+﻿using Duack.Sample.Core;
 
 namespace Duack.Sample.Tests;
 
@@ -74,8 +74,8 @@ public class SampleAudioTests
 
         var config = SampleAudio.BuildConfig();
 
-        Assert.Equal(0.8f, config.MasterVolume);
-        Assert.Equal(0.8f, config.Music.MasterVolume);
+        Assert.Equal(0.8f, config.Buses[BusNames.Master].Volume);
+        Assert.Equal(0.8f, config.Buses[BusNames.Music].Volume);
         Assert.Equal(1.2f, config.Music.CrossfadeSeconds);
         Assert.Equal(1f, config.Music.Contexts["Overworld"]);
         Assert.Equal(0.9f, config.Music.Contexts["Battle"]);
@@ -92,7 +92,7 @@ public class SampleAudioTests
     {
         var config = SampleAudio.BuildConfig();
 
-        Assert.Equal(0.55f, config.Sfx.Buses[SampleAudio.AmbienceBus]);
+        Assert.Equal(0.55f, config.Buses[SampleAudio.AmbienceBus].Volume);
         Assert.Equal("music", config.Music.DuckSources[SampleAudio.SfxDuckSource].Target);
 
         // No bus-targeted duck: the scenario (e.g. dialogue ducking a bus) stays out of the

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -101,7 +101,7 @@ public class Game1 : Game, IDisposable
 
         var backend = new MediaPlayerMusicBackend(new KniMediaPlayerHost(), contentRoot: "Content/Audio/Tracks", extension: ".ogg");
         _controller = new MusicPlaylistController(playlists);
-        _manager = new MusicManager(backend, _controller, _config.Music, masterVolume: _config.MasterVolume);
+        _manager = new MusicManager(backend, _controller, _config.Music, masterVolume: _config.Buses[BusNames.Master].Volume);
     }
 
     protected override void LoadContent()

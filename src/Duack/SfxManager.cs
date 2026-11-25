@@ -1,5 +1,6 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Duack;
 
@@ -52,7 +53,14 @@ public sealed class SfxManager
         _music = music ?? throw new ArgumentNullException(nameof(music));
         _duckSource = duckSource ?? throw new ArgumentNullException(nameof(duckSource));
         _sfxConfig = sfxConfig;
-        _buses = new BusMixer(sfxConfig?.Buses);
+        // Mechanically adapted for the flat bus table (the transport is unchanged): the runtime
+        // mixer still seeds only the user buses — the pre-registered master/music entries are
+        // storage-only in this step, and the fixed sfx entry is applied via `sfxBusVolume`.
+        _buses = new BusMixer(
+            sfxConfig?.Buses is null ? null :
+            sfxConfig.Buses
+                .Where(bus => bus.Key != BusNames.Master && bus.Key != BusNames.Music && bus.Key != BusNames.Sfx)
+                .Select(bus => new KeyValuePair<string, float>(bus.Key, bus.Value.Volume)));
         _random = random ?? Random.Shared;
         MasterVolume = masterVolume;
         SfxBusVolume = sfxBusVolume;

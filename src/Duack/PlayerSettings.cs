@@ -38,10 +38,8 @@ public static class PlayerSettings
 
         var effective = new AudioConfig
         {
-            MasterVolume = saved.MasterVolume,
             Music = new MusicConfig
             {
-                MasterVolume = saved.MusicMasterVolume,
                 CrossfadeSeconds = saved.CrossfadeSeconds,
                 Contexts = new Dictionary<string, float>(authored.Music.Contexts),
                 DuckSources = CloneDuckSources(authored.Music.DuckSources),
@@ -49,10 +47,13 @@ public static class PlayerSettings
             },
             Sfx = new SfxConfig
             {
-                MasterVolume = saved.SfxMasterVolume,
                 CueVariation = authored.Sfx.CueVariation
             },
         };
+
+        effective.Buses[BusNames.Master].Volume = saved.MasterVolume;
+        effective.Buses[BusNames.Music].Volume = saved.MusicMasterVolume;
+        effective.Buses[BusNames.Sfx].Volume = saved.SfxMasterVolume;
 
         effective.Sanitize();
         return effective;

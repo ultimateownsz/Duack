@@ -29,7 +29,7 @@ If the built-in path were enough, you would not be reading this. Duack is for th
 | Crossfading                | Overlap two songs on desktop; on web, sequence fade-out → swap → fade-in. Also support standalone fade-in and fade-out.                                                                                        |
 | Runtime playlist control   | Provide a `MusicPlaylistController` with `Play`, `Next`, and `Stop`, repeat modes, and bag-style shuffle so tracks don’t repeat until the bag empties.                                                         |
 | Centralized volume chain   | Compose volume deterministically from Master → music/SFX buses, per-context scales, and player settings. User buses (ambience, UI...) add one more named factor, routed per cue.                              |
-| User-defined buses         | Name buses in code (`AudioConfigBuilder.WithBus`), route cues with a per-play `bus` argument, and control each at runtime with volume, mute, pause, a global master mute, and ref-counted duck holds. Buses are arithmetic on the same chain — no mixer graph.  |
+| User-defined buses         | Name buses in code (`AudioConfigBuilder.WithBus`) alongside the pre-registered master/music/sfx entries of one flat table (`AudioConfig.Buses`), route cues with a per-play `bus` argument, and control each at runtime with volume, mute, pause, a global master mute, and ref-counted duck holds, with a unified per-bus readback (`Views`). Buses are volume arithmetic — no mixer graph.  |
 | Music [ducking](https://en.wikipedia.org/wiki/Ducking)              | Duck music under sound effects. Declare duck sources with ratio, attack, hold, and release; trigger them by cue, meter live gain, and support hot updates with `ReloadDuckSources()` if available.             |
 | Cue variation              | Offer [XACT](https://en.wikipedia.org/wiki/Cross-platform_Audio_Creation_Tool)-style via the `MarbleBag` class for variant selection and authored per-play jitter: pitch for music, and pitch plus volume for SFX. |
 | Persistent player settings | Support file, `localStorage`, and in-memory stores; sanitize settings and layer them over the authored mix.                                                                                                    |
@@ -108,12 +108,12 @@ var clips     = new SoundEffectClipLibrary(library);
 var music = new MusicManager(
     new SoundEffectMusicBackend(clips),
     new MusicPlaylistController(playlists),
-    config.Music, masterVolume: config.MasterVolume);
+    config.Music, masterVolume: config.Buses[BusNames.Master].Volume);
 
 var sfx = new SfxManager(library,
     new SoundEffectSfxBackend(clips), music,
-    masterVolume: config.MasterVolume,
-    sfxBusVolume: config.Sfx.MasterVolume,
+    masterVolume: config.Buses[BusNames.Master].Volume,
+    sfxBusVolume: config.Buses[BusNames.Sfx].Volume,
     sfxConfig: config.Sfx);
 
 music.Play("overworld");          // playlist lookup: BuildPlaylists() named this single-track playlist after the track
@@ -151,13 +151,13 @@ var playlists = library.BuildPlaylists();    // same auto playlists as desktop
 var music = new MusicManager(
     // contentRoot must point at Tracks/ — the backend default predates the two-directory convention and 404s under the standard layout
     new MediaPlayerMusicBackend(new KniMediaPlayerHost(), contentRoot: "Content/Audio/Tracks"),
-    new MusicPlaylistController(playlists), config.Music, config.MasterVolume);
+    new MusicPlaylistController(playlists), config.Music, config.Buses[BusNames.Master].Volume);
 
 // One-shot cues: WebAudio, URLs relative to the app root
 var sfxUrls = library.Sfx.Select(cue => new KeyValuePair<string, string>(cue, $"Content/Audio/SFX/{cue}.wav"));
 var sfx = new SfxManager(library, new WebAudioSfxBackend(new WebAudioNative(), sfxUrls), music,
-    masterVolume: config.MasterVolume,
-    sfxBusVolume: config.Sfx.MasterVolume,
+    masterVolume: config.Buses[BusNames.Master].Volume,
+    sfxBusVolume: config.Buses[BusNames.Sfx].Volume,
     sfxConfig: config.Sfx);
 music.Update(dt);                 // same update code as desktop
 ```

@@ -255,6 +255,8 @@ entry, `duack-skills/concurrency/SKILL.md` and the dedicated desktop example pre
 - `PlayDetailed` collapses a zero-gain play into `Played` (master's inherited semantics —
   reported via `ZeroEffectiveGain`); a distinct outcome member would be more honest in the
   detailed API if the maintainer wants it.
-- The cross-platform follow-up (web `Update(dt)` wiring, audible-stealing seam) is scheduled
-  under #38 and lands in this session; see the STATUS/slice docs after it lands.
+- The cross-platform follow-up (web `Update(dt)` wiring, audible-stealing seam) landed on this
+  branch in the follow-up commit of 2026-11-25 (#38): additive `ISfxVoiceControlBackend` seam,
+  desktop/web implementations, web-head limits + `Update(unscaledDt)`. Web audible verification
+  remains a browser-listening obligation; the JS audio graph is pinned at bridge-call level only.
 

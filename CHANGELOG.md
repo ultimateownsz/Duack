@@ -1,4 +1,4 @@
-﻿# Changelog
+# Changelog
 
 All notable changes to this project are documented in this file.
 
@@ -192,6 +192,13 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
   single large `Update()` can complete a multi-phase transition.
 
 ### Fixed
+
+#### 2026-11-25
+- The web sample's new hot bus mute keys (`M`/`N`) no longer rely on nullable-dereference
+  suppression of `CS8602` warnings: they use the same post-initialization idiom
+  (`_sfx!`) the story loop already uses, so the sample head builds warning-clean. Also makes
+  `SampleAudio`'s `System.Linq` usage explicit instead of implicit-usings-dependent. No
+  library behavior change; sample code only. (#36)
 
 #### 2026-11-22
 - `BusMixer.SetBus` no longer fires the `Changed` event when the volume value is unchanged -

@@ -1,4 +1,6 @@
-﻿namespace Duack.Sample.Core;
+using System.Linq;
+
+namespace Duack.Sample.Core;
 
 /// <summary>
 /// The demo configuration both samples share — this wiring used to be copy-pasted into the

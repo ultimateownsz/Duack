@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -148,7 +148,7 @@ public class Game1 : Game, IDisposable
             // No backend push: the ambience node carries no audio on this seam yet (the core
             // hands the backend no bus name), so muting the mixer is what changes the mix.
             _ambienceMuted = !_ambienceMuted;
-            _sfx.Buses.SetMute(SampleAudio.AmbienceBus, _ambienceMuted);
+            _sfx!.Buses.SetMute(SampleAudio.AmbienceBus, _ambienceMuted);
             System.Diagnostics.Debug.WriteLine(
                 $"[Sample] ambience bus muted: {_ambienceMuted} views: [{SampleAudio.DescribeBuses(_sfx.Buses)}]");
         }
@@ -158,7 +158,7 @@ public class Game1 : Game, IDisposable
             // plus the web seam: the sfx gain node moves, so CURRENTLY PLAYING one-shots
             // dip live too (desktop is arithmetic-only and applies on the next play).
             _sfxBusMuted = !_sfxBusMuted;
-            _sfx.Buses.SetMute(BusNames.Sfx, _sfxBusMuted);
+            _sfx!.Buses.SetMute(BusNames.Sfx, _sfxBusMuted);
             _sfxBackend?.SetBusVolume(BusNames.Sfx, _sfxBusMuted ? 0f : _sfx.SfxBusVolume);
             System.Diagnostics.Debug.WriteLine(
                 $"[Sample] sfx bus muted: {_sfxBusMuted} views: [{SampleAudio.DescribeBuses(_sfx.Buses)}]");

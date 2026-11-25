@@ -117,11 +117,13 @@ public sealed class SfxManager
         var cuePlay = variation?.Resolve(_random) ?? new CuePlay(0f, 1f);
         var finalPitch = variation is null ? pitch : Math.Clamp(pitch + cuePlay.Pitch, -1f, 1f);
         // One resolver: master -> bus volume -> mute/pause (all inside the mixer's effective
-        // gains) -> per-play volume, then the per-bus duck ratio (D5: resolved live per play).
+        // gains) -> per-play volume, then the resolved bus's live duck ratio (D5). The fixed
+        // (un-routed) path lands on the "sfx" bus, so a duck source targeting "sfx" dips it too
+        // — one semantic, one path (the Gate D fold).
         var resolution = _buses.Resolve(bus);
         var finalVolume = Math.Clamp(volume * cuePlay.VolumeScale, 0f, 1f)
                           * _buses.Resolve(BusNames.Master).Gain * resolution.Gain
-                          * (bus is null ? 1f : _music.DuckRatioFor(resolution.Bus));
+                          * _music.DuckRatioFor(resolution.Bus);
 
         // A play that resolves to zero gain reports its cause instead of staying silent: no
         // backend call, no music duck, nothing audible to duck for.

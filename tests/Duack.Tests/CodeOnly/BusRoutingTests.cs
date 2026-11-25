@@ -214,4 +214,60 @@ public class BusRoutingTests
         Assert.Equal(1f, views.Single(v => v.Name == BusNames.Master).DuckRatio, 2);
         Assert.Equal(1f, views.Single(v => v.Name == "ambience").DuckRatio, 2);
     }
+    [Fact]
+    public void SfxTargetedDuck_scales_the_fixed_unrouted_path()
+    {
+        // Gate D fold: a duck source aimed at the literal "sfx" bus dips the fixed (un-routed)
+        // path too - one semantic, one path - not only bus-routed plays.
+        var backend = new FakeSfxBackend();
+        var music = CreateMusicManager("d", new DuckSourceConfig
+        {
+            Ratio = 0.5f,
+            AttackSeconds = 0f,
+            HoldSeconds = 1f,
+            ReleaseSeconds = 0f,
+            Target = BusNames.Sfx,
+        });
+        var sfx = CreateSfx(backend, music);
+
+        sfx.Play("hit");
+        Assert.Equal(1f, backend.Played[0].Volume, 2);
+
+        music.SetDuck("d", true);
+        music.Update(1f);
+        sfx.Play("hit");
+        Assert.Equal(0.5f, backend.Played[1].Volume, 2);
+        sfx.Play("hit", duck: false);
+        Assert.Equal(0.5f, backend.Played[2].Volume, 2); // the duck is a bus ratio, not a per-play hold
+
+        music.SetDuck("d", false);
+        music.Update(1f);
+        sfx.Play("hit");
+        Assert.Equal(1f, backend.Played[3].Volume, 2);
+    }
+
+    [Fact]
+    public void OtherBusTargetedDuck_leaves_the_fixed_path_alone()
+    {
+        // The other way of the both-way pin: folding "sfx" in must not extend to buses a source
+        // does not target - a duck aimed at "ambience" scales only that bus, fixed path stays.
+        var backend = new FakeSfxBackend();
+        var music = CreateMusicManager("dialogue", new DuckSourceConfig
+        {
+            Ratio = 0.5f,
+            AttackSeconds = 0f,
+            HoldSeconds = 1f,
+            ReleaseSeconds = 0f,
+            Target = "ambience",
+        });
+        var sfx = CreateSfx(backend, music, ConfigBus("ambience", 1f));
+
+        sfx.Play("hit");
+        Assert.Equal(1f, backend.Played[0].Volume, 2);
+
+        music.SetDuck("dialogue", true);
+        music.Update(1f);
+        sfx.Play("hit");
+        Assert.Equal(1f, backend.Played[1].Volume, 2);
+    }
 }

@@ -1,4 +1,4 @@
-# Changelog
+﻿# Changelog
 
 All notable changes to this project are documented in this file.
 
@@ -10,6 +10,21 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 ## [Unreleased]
 
 ### Changed
+
+#### 2026-11-25
+- **Preview breaking (audible): a duck source targeting `"sfx"` now scales the fixed
+  (un-routed) SFX path too.** Symptom before: with a duck source authored as
+  `Target = "sfx"`, only bus-routed plays dipped; plain `SfxManager.Play(cue)` (the fixed
+  path, what every project without user buses uses) ignored the duck entirely — the same
+  authored config did different things depending on how a cue was routed. Now the fixed path
+  resolves on the `sfx` bus entry like any other bus, so the duck ratio applies to it
+  equally (Gate D fold: one semantic, one path). What breaks for consumers: existing mixes
+  whose duck sources name `"sfx`" get audibly quieter fixed-path cues while that duck is
+  active — no code change required, but re-listen to any `"sfx"`-targeted duck source; duck
+  sources targeting `music` (the default) or another bus are unaffected, pinned both ways in
+  tests. Zero-gain interplay: such a play can now compose to zero (e.g. ratio 0) and then
+  reports through `ZeroEffectiveGain` like every other silent play instead of playing
+  inaudibly. (#36)
 
 #### 2026-11-25
 - **Preview breaking: one resolver — `BusMixer` now owns the whole bus table.**

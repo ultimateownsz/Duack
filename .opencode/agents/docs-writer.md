@@ -29,9 +29,23 @@ write from the code and its tests, never from memory or intention.
   claim against the diff, not against the request that produced it.
 - One change per entry. No marketing tone. Wrap around 72 columns
   like the rest of the file.
+- Write in plain English: short sentences, common words, and no
+  invented names for concepts the code does not use. Audio-domain
+  vocabulary (ducking, bus, crossfade) is fine; planning jargon
+  ("slice", "phase", "workspace shape") in consumer-facing docs is not.
+- Identify changes by date and PR/issue number only, never by plan
+  slice or phase names ("slice F's readback" and the like). The slice
+  workspace owns that tracking; the changelog and docs identify the
+  change itself.
 - Preserve the preview framing: code-first configuration
   (AudioConfigBuilder, PlaylistConfigBuilder, model objects), no
   authored audio-config.json compatibility layer on master.
+- When documenting public API, state the XML doc contract as it must
+  be: every public type and member carries a `<summary>`, every
+  parameter a `<param>` saying what a good value looks like, returned
+  values a `<returns>`, thrown exceptions an `<exception>` naming the
+  condition. Flag any public surface that falls short of this instead
+  of documenting around it.
 - You cannot hear audio. Never write a claim about how something
   sounds; describe what the code guarantees numerically (durations,
   dB depths, curves, tick counts).

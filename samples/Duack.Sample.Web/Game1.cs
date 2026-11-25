@@ -147,8 +147,8 @@ public class Game1 : Game, IDisposable
 
     private void ApplyFrame(StoryFrame frame)
     {
-        // One readback line per scene switch, same as the desktop head: the non-interactive
-        // demo keeps slice F's one-mixer-path acceptance visible without interaction.
+        // One readback line per scene switch, same as the desktop head: it keeps the mixed
+        // bus readback visible in a non-interactive demo (unified mixer path, #36, Nov 2026).
         if (frame.SceneChanged)
             System.Diagnostics.Debug.WriteLine(
                 $"[Sample] scene: {_story.Scene} views: [{(_sfx is null ? "no sfx yet" : SampleAudio.DescribeBuses(_sfx.Buses))}]");

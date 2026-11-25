@@ -3,7 +3,7 @@
 namespace Duack;
 
 /// <summary>
-/// The player-tunable slice of the audio mix, stored per user in player settings. Authored defaults
+/// The part of the audio mix a player can tune themselves, stored per user in player settings. Authored defaults
 /// own everything else (per-context scales, duck sources, cue variation); this only carries what the
 /// settings overlay lets a player move.
 /// </summary>

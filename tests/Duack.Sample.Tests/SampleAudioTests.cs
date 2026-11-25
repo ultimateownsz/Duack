@@ -1,4 +1,4 @@
-﻿using Duack.Sample.Core;
+using Duack.Sample.Core;
 
 namespace Duack.Sample.Tests;
 

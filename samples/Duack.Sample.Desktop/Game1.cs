@@ -1,4 +1,4 @@
-﻿using Duack;
+using Duack;
 using Duack.MonoGame;
 using Duack.Sample.Core;
 using Microsoft.Xna.Framework;

@@ -1,4 +1,4 @@
-﻿namespace Duack;
+namespace Duack;
 
 /// <summary>
 /// Fluent helper for assembling an <see cref="AudioConfig"/> in code (tests, samples, first-run

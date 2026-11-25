@@ -1,4 +1,4 @@
-﻿using Duack;
+using Duack;
 
 namespace Duack.Tests.CodeOnly;
 

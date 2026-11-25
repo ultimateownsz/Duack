@@ -1,4 +1,4 @@
-﻿// Duack WebAudio SFX backend — plays one-shot cues over the music track using the
+// Duack WebAudio SFX backend — plays one-shot cues over the music track using the
 // browser WebAudio API. Attached to globalThis for synchronous [JSImport] calls from C#.
 
 (function () {

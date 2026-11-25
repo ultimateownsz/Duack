@@ -1,4 +1,4 @@
-﻿using Duack;
+using Duack;
 using Xunit;
 
 namespace Duack.Tests.JsonRoundTrip;

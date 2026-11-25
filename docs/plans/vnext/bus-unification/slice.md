@@ -117,7 +117,16 @@ Populated as implementation decisions land. ADR deviations belong in
   never skips a beat or the battle; `Restart`/`EnterBattle` clear all beat state. Crossfade
   starts with the sting on the dialog screen (heads key on the cue, not the flag). Loop pacing
   +~1.6 s (≈23 s total with D27's +1.2). A full-loop pin now asserts no frame ever mixes a cue
-  with a switch.
+  with a switch. (D29 supersedes the Space rule's observable side: with heads non-interactive,
+  no key fires exit cues; the rule lives in the controller and its pins only.)
+- **D29 — The demo heads are non-interactive** (listening round 3, `55b750c`): maintainer ruling —
+  the samples auto-play; the keyboard controls advertised an interaction that does not exist.
+  All key branches and their plumbing removed from both heads (Space/R/S/1-2/M/N, ESC exit);
+  the story advances purely on its timers; the unified readback prints one
+  `DescribeBuses` line per scene switch (slice F's one-mixer-path acceptance stays visible in
+  the console without interaction). Controller methods (`Advance`/`Restart`) stay public and
+  pinned in `Sample.Core`; the web `SetBusVolume` seam (work item 4) stays and keeps its
+  adapter tests. Full suite 423/423 green (phase-end check).
 
 Deviations from PLAN wording, all changelogged: "one resolver" landed as two mixer instances
 over one table (D13, forced by D7); `BusMixer` ctor signature and `BusView` shape changed

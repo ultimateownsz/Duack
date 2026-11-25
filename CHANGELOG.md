@@ -12,6 +12,30 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 ### Changed
 
 #### 2026-11-25
+- **Preview breaking: one resolver — `BusMixer` now owns the whole bus table.**
+  `SfxManager.Buses` (the `BusMixer`) seeds the fixed `master`/`music`/`sfx` entries from
+  the config table alongside the user buses, and both managers resolve every bus — fixed
+  three included — through that one mixer chain (master → bus volume → mute/pause): the SFX
+  path composes `master gain × bus gain` per play, `MusicManager` composes master × music
+  gain per frame. What breaks for consumers: `BusView` **gains a `DuckRatio` field** (any
+  code constructing, pattern-matching or deconstructing a `BusView` must add it), and
+  `SfxManager`'s `ZeroEffectiveGain` now also fires for the fixed (un-routed) SFX path when
+  it composes to zero — pinning the zero-fold that path already had via the fixed SFX bus.
+  The `SfxManager.MasterVolume`/`SfxBusVolume` and `MusicManager.MasterVolume` hot-update
+  properties keep compiling and behave the same, but are now thin delegating writers into
+  the mixer's `master`/`sfx` entries (`BusMixer.VolumeOf` is the new read side), so setting
+  e.g. `SfxBusVolume` and `Buses.SetBus("sfx", v)` touch the same single storage instead of
+  two parallel floats. Readback unification: `Buses.Views` carries, for every bus including
+  the fixed three, the effective gain and the live duck contribution (`DuckRatio`, read from
+  the duck system at snapshot time — duck ratios never embed in bus state);
+  `MusicManager.DuckRatioFor` stays and delegates unchanged. `MusicManager` keeps its own
+  mixer state seeded from the same table (constructor signatures are frozen), so per-bus
+  mute/pause state is per-manager and volumes are snapshotted from the table at
+  construction, as before. No audible change in this commit: duck sources still scale only
+  the buses they target; the `"sfx"` fold lands as its own preview-breaking note with the
+  next entry. (#36)
+
+#### 2026-11-25
 - **Preview breaking: volumes now live in one flat bus table.**
   `AudioConfig.Buses` (a `Dictionary<string, BusConfig>` with lowercase, Ordinal-compared
   names) is THE one storage for every bus volume: it comes pre-registered with the

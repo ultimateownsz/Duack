@@ -1,10 +1,12 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace Duack;
 
 /// <summary>
-/// Runtime state and routing for the user-defined buses authored in <see cref="SfxConfig.Buses"/>.
+/// Runtime state and routing for the one flat bus table (see <see cref="AudioConfig.Buses"/>):
+/// the pre-registered <see cref="BusNames.Master"/>/<see cref="BusNames.Music"/>/
+/// <see cref="BusNames.Sfx"/> entries plus the user buses, in one resolver.
 ///
 /// <para>
 /// Routing: a cue reaches a bus by its per-play <c>bus</c> argument. An un-routed cue stays on
@@ -42,15 +44,37 @@ public sealed class BusMixer
     }
     private bool _masterMuted;
 
-    /// <summary>Seeds the mixer from the authored bus volumes; the fixed SFX bus always exists.</summary>
-    public BusMixer(IEnumerable<KeyValuePair<string, float>>? buses = null)
+    private readonly Func<string, float>? _duckRatioFor;
+
+    /// <summary>
+    /// Seeds the mixer from the flat bus table's authored volumes. The fixed three
+    /// (<see cref="BusNames.Master"/>/<see cref="BusNames.Music"/>/<see cref="BusNames.Sfx"/>)
+    /// always exist: missing entries (e.g. a table-less config) start at full volume, table
+    /// entries override them, and user buses arrive alongside.
+    /// </summary>
+    /// <param name="buses">The authored bus table (see <see cref="AudioConfig.Buses"/>).</param>
+    /// <param name="duckRatioFor">
+    /// Live per-target duck ratio read at snapshot time (D4: duck never embeds in bus state);
+    /// <see cref="Views"/> reports it as the per-bus duck contribution. Null means no duck
+    /// system (every bus reports a contribution of 1).
+    /// </param>
+    public BusMixer(IEnumerable<KeyValuePair<string, BusConfig>>? buses = null, Func<string, float>? duckRatioFor = null)
     {
+        _duckRatioFor = duckRatioFor;
         _buses[SfxBusName] = new BusState(1f);
+        _buses[BusNames.Master] = new BusState(1f);
+        _buses[BusNames.Music] = new BusState(1f);
         if (buses is null) return;
-        foreach (var (name, volume) in buses)
-            if (name != SfxBusName)
-                _buses[name] = new BusState(volume);
+        foreach (var (name, config) in buses)
+            _buses[name] = new BusState(config.Volume);
     }
+
+    /// <summary>
+    /// The authored volume of the named bus (not the effective gain: mute/pause do not fold in).
+    /// Unknown names read 0; this is the hot-update read side of the managers' delegating
+    /// volume properties.
+    /// </summary>
+    public float VolumeOf(string name) => _buses.TryGetValue(name, out var state) ? state.Volume : 0f;
 
     /// <summary>
     /// Hot-updates a bus's authored volume (same clamp as <see cref="AudioConfig.Sanitize"/>).
@@ -132,7 +156,8 @@ public sealed class BusMixer
             foreach (var (name, state) in _buses)
                 list.Add(new BusView(
                     name, state.Volume, state.Muted, state.Paused,
-                    MasterMuted ? 0f : state.EffectiveGain));
+                    MasterMuted ? 0f : state.EffectiveGain,
+                    _duckRatioFor is null ? 1f : _duckRatioFor(name)));
             return list;
         }
     }
@@ -149,5 +174,9 @@ public sealed class BusMixer
 /// <summary>The outcome of resolving a play's bus: which bus it landed on, at what gain.</summary>
 public readonly record struct BusResolution(string Bus, float Gain, bool FellBack);
 
-/// <summary>Diagnostics view of one bus (as authored and as currently effective).</summary>
-public readonly record struct BusView(string Name, float Volume, bool Muted, bool Paused, float EffectiveGain);
+/// <summary>
+/// Diagnostics view of one bus: as authored (volume, mute, pause), as currently effective
+/// (gain), and the live duck contribution the duck system currently applies to it (1 = no
+/// ducking; D4: the ratio is read at snapshot time, never stored in bus state).
+/// </summary>
+public readonly record struct BusView(string Name, float Volume, bool Muted, bool Paused, float EffectiveGain, float DuckRatio);

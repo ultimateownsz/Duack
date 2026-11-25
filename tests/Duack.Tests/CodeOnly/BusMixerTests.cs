@@ -13,7 +13,8 @@ namespace Duack.Tests.CodeOnly;
 public class BusMixerTests
 {
 
-    private static Dictionary<string, float> ConfigBus(string name, float volume) => new() { [name] = volume };
+    private static Dictionary<string, BusConfig> ConfigBus(string name, float volume) =>
+        new() { [name] = new BusConfig { Volume = volume } };
 
     [Fact]
     public void Builder_WithBus_SetsConfiguredBusVolume()
@@ -137,10 +138,7 @@ public class BusMixerTests
     public void Views_ExposeVolumeMutePauseAndEffectiveGain()
     {
         var config = new AudioConfigBuilder().WithBus("ambience", 0.4f).WithBus("ui", 0.9f).Build();
-        // Same user-bus projection the runtime seed applies (work item 3 owns the unified resolve).
-        var mixer = new BusMixer(config.Buses
-            .Where(bus => bus.Key != BusNames.Master && bus.Key != BusNames.Music && bus.Key != BusNames.Sfx)
-            .Select(bus => new KeyValuePair<string, float>(bus.Key, bus.Value.Volume)));
+        var mixer = new BusMixer(config.Buses);
         mixer.SetMute("ui", true);
 
         var view = mixer.Views.Single(v => v.Name == "ambience");
@@ -152,5 +150,12 @@ public class BusMixerTests
         var ui = mixer.Views.Single(v => v.Name == "ui");
         Assert.True(ui.Muted);
         Assert.Equal(0f, ui.EffectiveGain);
+    }
+    [Fact]
+    public void BusMixer_always_carries_the_fixed_three()
+    {
+        var mixer = new BusMixer(null);
+        var names = mixer.Views.Select(v => v.Name).OrderBy(n => n, StringComparer.Ordinal);
+        Assert.Equal(new[] { BusNames.Master, BusNames.Music, BusMixer.SfxBusName }, names);
     }
 }

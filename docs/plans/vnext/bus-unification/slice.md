@@ -137,6 +137,14 @@ Populated as implementation decisions land. ADR deviations belong in
   headers). `DialogCue` has no asset on any head (pre-existing silent gap, confirmed, left
   as-is). Rationale recorded: `ISfxBackend` has no completion telemetry, so beats are
   asset-sized; event-driven switching needs the deferred per-playback-handles experiment.
+- **D31 — Warm the web head's audio at startup** (listening round 5, `d5c25b3`): the first
+  web track audibly waited on the network. Investigation: all SFX buffers were already decoded
+  at startup since slice C (pinned now; buffers previously leaked on Dispose — fixed via
+  `ReleaseAllBuffers`); the real gap was the music — `IMediaPlayerHost`/KNI `MediaPlayer` has
+  no preload seam (capability verdict recorded), so tracks are warmed by fetching every track
+  URL into the HTTP cache right after the start gesture (`WarmHttpCache` bridge member, D20
+  pattern changelog). Residual by platform design: the first track's one-time OGG decode, no
+  network. ~1.4 MB decoded SFX (disposed with the backend) + ~3.4 MB OGGs in the browser cache.
 
 Deviations from PLAN wording, all changelogged: "one resolver" landed as two mixer instances
 over one table (D13, forced by D7); `BusMixer` ctor signature and `BusView` shape changed

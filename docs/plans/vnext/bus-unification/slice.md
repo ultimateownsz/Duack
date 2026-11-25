@@ -83,13 +83,24 @@ Populated as implementation decisions land. ADR deviations belong in
   no invented routing.
 - **D22 — No `music` node in this backend:** it plays one-shots only; web music is the
   MediaPlayer `<audio>` host's own volume, outside this chain.
-- Browser-listening list (before the box may tick): identical playback through the new chain;
-  `setBusVolume` audibly moves currently playing voices without clicks; `stopAll`/`dispose`;
-  iOS suspended-context resume.
+### Sample decisions (work item 5a, `53fd0ae`)
 
-Resolver deviations from PLAN wording, all changelogged: "one resolver" landed as two mixer instances
+- **D23 — the "one mixer UI path" is the shared readback helper, not shared key handlers.**
+  `SampleAudio.DescribeBuses(BusMixer)` lives in the engine-free core; both heads print it
+  verbatim (pinned headlessly), fixed `sfx` and user `ambience` bus shown through one
+  `BusMixer.Views` path including `DuckRatio`. Key handling stays per-head (engine territory);
+  no adapter type check in `Sample.Core`.
+- **D24 — web seam wired at the `sfx` bus only**: `N` pushes the mixer mute plus
+  `WebAudioSfxBackend.SetBusVolume` so playing one-shots dip live; muting `ambience` pushes
+  nothing (its JS node is unrouted — pushing would be theater; comment in code).
+- **D25 — desktop `N` pushes nothing** (MonoGame path is arithmetic-only, applies from the
+  next play) — the documented cross-backend acoustic difference, ADR-8 pattern, changelogged.
+- **D26 — bus-targeted ducks stay out of the sample** (maintainer call stands); the `sfx` fold
+  is pinned in core tests only. Human-eyeball list for both heads recorded with D23-D26 in
+  the work item report; the checkbox cannot tick before it.
+
+Deviations from PLAN wording, all changelogged: "one resolver" landed as two mixer instances
 over one table (D13, forced by D7); `BusMixer` ctor signature and `BusView` shape changed
-(PLAN said "public surface unchanged") — forced by whole-table seeding and the readback field.
-WebAudio deviation from PLAN wording: "one gain node per bus" landed as one node per bus of
-the chain this adapter can actually resolve (`sfx`, `master`; user buses on demand, unrouted),
-reason D18.
+(PLAN said "public surface unchanged") — forced by whole-table seeding and the readback field;
+"one gain node per bus" landed as one node per bus of the chain this adapter can actually
+resolve (`sfx`, `master`; user buses on demand, unrouted), reason D18.

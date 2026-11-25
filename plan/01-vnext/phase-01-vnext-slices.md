@@ -28,7 +28,7 @@ state and open questions live in each slice's `STATUS.md`; the boxes here
 track slice completion only.
 
 - [ ] Slice A — voice concurrency (context: docs/plans/vnext/voice-concurrency/)
-- [ ] Slice B — 2D positional SFX
+- [ ] Slice B — 2D positional SFX (#34)
 - [x] Slice C — user-defined buses (#31)
 - [ ] Slice E — named mix states
 - [ ] Slice D — build-time effects experiment (dormant until Gate 0 evidence)

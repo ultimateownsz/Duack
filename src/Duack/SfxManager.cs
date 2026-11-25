@@ -31,6 +31,12 @@ public sealed class SfxManager
     private readonly MarbleBag<string> _bag;
     private readonly Random _random;
     private readonly ISfxVoiceControlBackend? _control;
+    private readonly ISfxPositionalBackend? _positional;
+    private readonly Dictionary<SfxSpatialVoice, SfxSpatialVoice> _positionalVoices = new();
+    private readonly SpatialConfig _spatial;
+    private readonly float _pruneAfterSeconds;
+    private float _listenerX;
+    private float _listenerY;
     private readonly Dictionary<long, object> _handles = new();
 
     /// <summary>Handle marker for a successful play on a backend without voice control.</summary>
@@ -67,6 +73,12 @@ public sealed class SfxManager
         var limits = voiceLimits ?? sfxConfig?.VoiceLimits;
         _voices = limits is null ? null : new VoiceLimiter(limits);
         _control = _backend as ISfxVoiceControlBackend;
+        _positional = _backend as ISfxPositionalBackend;
+        // A standalone SfxConfig never went through the builder: sanitize defensively so even
+        // a hand-broken config degrades to a centered, ordinary mix instead of NaN pan values.
+        _spatial = sfxConfig?.Spatial ?? new SpatialConfig();
+        _spatial.Sanitize();
+        _pruneAfterSeconds = Math.Max(0.1f, 2f * (sfxConfig?.VoiceLimits?.DefaultVoiceSeconds ?? 0.5f));
         _random = random ?? Random.Shared;
         MasterVolume = masterVolume;
         SfxBusVolume = sfxBusVolume;
@@ -136,9 +148,61 @@ public sealed class SfxManager
     /// play may steal an active voice, which is reported by the limiter's readback.
     /// </summary>
     public SfxPlayResult PlayDetailed(
-        string cueName, float pitch = 0f, float volume = 1f, bool duck = true, string? bus = null, int priority = 0)
+        string cueName, float pitch = 0f, float volume = 1f, bool duck = true, string? bus = null, int priority = 0) =>
+        StartVoice(cueName, pitch, volume, duck, bus, priority, positional: false, pan: 0f, distanceGain: 1f).Result;
+
+    /// <summary>
+    /// Plays one shot positioned in the world against the listener (see <see cref="SetListener"/>).
+    /// The core composes the whole chain in order: per-play variation, master gain, resolved bus
+    /// gain, live duck ratio, then the distance attenuation — so a positional play rides the same
+    /// unified bus path as everything else, and a play at or past the mute floor composes to zero:
+    /// reported through <see cref="ZeroEffectiveGain"/>, never heard, consuming no limiter slot.
+    /// Returns a <see cref="SfxSpatialVoice"/> to move the source while it sounds, or null when
+    /// the play did not start a remixable positional voice — refused, muted, or a backend without
+    /// the <see cref="ISfxPositionalBackend"/> seam (which still plays the composed volume, mono-
+    /// centered: the pan is dropped, the position is not).
+    /// </summary>
+    public SfxSpatialVoice? PlayAt(
+        string cueName, float sourceX, float sourceY, float pitch = 0f, float volume = 1f, bool duck = true, string? bus = null, int priority = 0)
     {
-        if (!_library.IsSfx(cueName)) return Record(SfxPlayResult.UnknownCue);
+        var (distanceGain, pan) = SpatialAt(sourceX, sourceY);
+        var (result, handle, baseVolume) = StartVoice(cueName, pitch, volume, duck, bus, priority, positional: true, pan, distanceGain);
+        if (result != SfxPlayResult.Played || handle is null || handle == NoHandle || _positional is null)
+            return null;
+
+        var (x, y) = SanitizeSourcePosition(sourceX, sourceY);
+        var voice = new SfxSpatialVoice(this, handle, bus, baseVolume, x, y);
+        _positionalVoices.Add(voice, voice);
+        return voice;
+    }
+
+    /// <summary>
+    /// Re-anchors every positional play: the listener is a primitive pair (ADR-11 — no engine
+    /// types; wiring stays engine-side). Live voices re-mix for the new position immediately.
+    /// Non-finite coordinates anchor at the origin.
+    /// </summary>
+    public void SetListener(float x, float y)
+    {
+        _listenerX = IsFinite(x) ? x : 0f;
+        _listenerY = IsFinite(y) ? y : 0f;
+        RemixAll();
+    }
+
+    /// <summary>Readback of the listener anchor the positional math last used.</summary>
+    public (float X, float Y) ListenerPosition => (_listenerX, _listenerY);
+
+    /// <summary>
+    /// One composition for every play: per-play variation -> clamp -> master gain -> resolved bus
+    /// gain -> live duck ratio -> (positional) distance attenuation -> clamp. A play whose total
+    /// gain composes to zero reports its cause instead of staying silent: no backend call, no
+    /// music duck, no voice slot consumed, nothing audible to duck for — which is how the
+    /// spatial mute floor releases, rather than reserves, its voice.
+    /// </summary>
+    private (SfxPlayResult Result, object? Handle, float BaseVolume) StartVoice(
+        string cueName, float pitch, float volume, bool duck, string? bus, int priority,
+        bool positional, float pan, float distanceGain)
+    {
+        if (!_library.IsSfx(cueName)) return (Record(SfxPlayResult.UnknownCue), null, 0f);
 
         // Per-play jitter from the authored cue variation, resolved fresh on every play so a live
         // settings change applies without rebuilding the manager; added on top of the caller's
@@ -146,28 +210,27 @@ public sealed class SfxManager
         var variation = _sfxConfig?.CueVariation;
         var cuePlay = variation?.Resolve(_random) ?? new CuePlay(0f, 1f);
         var finalPitch = variation is null ? pitch : Math.Clamp(pitch + cuePlay.Pitch, -1f, 1f);
+        var baseVolume = Math.Clamp(volume * cuePlay.VolumeScale, 0f, 1f);
         // One resolver: master -> bus volume -> mute/pause (all inside the mixer's effective
         // gains) -> per-play volume, then the resolved bus's live duck ratio (D5). The fixed
         // (un-routed) path lands on the "sfx" bus, so a duck source targeting "sfx" dips it too
-        // — one semantic, one path (the Gate D fold).
+        // — one semantic, one path (the Gate D fold). The positional distance gain multiplies
+        // the resolved gain — same chain, one more factor — never a side channel into "volume".
         var resolution = _buses.Resolve(bus);
-        var finalVolume = Math.Clamp(volume * cuePlay.VolumeScale, 0f, 1f)
-                          * _buses.Resolve(BusNames.Master).Gain * resolution.Gain
-                          * _music.DuckRatioFor(resolution.Bus);
-        finalVolume = Math.Clamp(finalVolume, 0f, 1f);
+        var finalVolume = Math.Clamp(baseVolume
+                                     * _buses.Resolve(BusNames.Master).Gain * resolution.Gain
+                                     * _music.DuckRatioFor(resolution.Bus)
+                                     * distanceGain, 0f, 1f);
 
-        // A play that resolves to zero gain reports its cause instead of staying silent: no
-        // backend call, no music duck, no voice slot consumed, nothing audible to duck for.
         if (finalVolume <= 0f)
         {
             ZeroEffectiveGain?.Invoke(cueName);
-            return Record(SfxPlayResult.Played);
+            return (Record(SfxPlayResult.Played), null, baseVolume);
         }
-
 
         var admission = _voices?.Acquire(cueName, finalVolume, priority: priority);
         if (admission is { } attempt && attempt.Outcome != VoicePlayOutcome.Played)
-            return Record(SfxPlayResult.RejectedBelowPriority);
+            return (Record(SfxPlayResult.RejectedBelowPriority), null, baseVolume);
 
         // Make stealing audible when the backend can stop one voice (#38): the stolen
         // bookkeeping slot already freed; silence the victim before the new voice starts. On a
@@ -176,23 +239,104 @@ public sealed class SfxManager
             _control is not null && _handles.Remove(stolenTry.StoleSequence, out var victim))
             _control.StopVoice(victim);
 
-        var handle = _control?.PlayTracked(cueName, finalPitch, finalVolume)
+        object? handle;
+        if (positional && _positional is not null)
+            handle = _positional.PlayTrackedAt(cueName, pan, finalPitch, finalVolume);
+        else
+            handle = _control?.PlayTracked(cueName, finalPitch, finalVolume)
                      ?? (_control is null && _backend.Play(cueName, finalPitch, finalVolume)
                          ? NoHandle
                          : null);
         if (handle is null)
         {
             if (admission is { } reserved) _voices!.Release(reserved);
-            return Record(SfxPlayResult.BackendRefused);
+            return (Record(SfxPlayResult.BackendRefused), null, baseVolume);
         }
         if (admission is { } admitted) _handles[admitted.VoiceSequence] = handle;
 
         if (duck) _music.Pulse(_duckSource);
-        return Record(SfxPlayResult.Played);
+        return (Record(SfxPlayResult.Played), handle, baseVolume);
     }
 
-    /// <summary>Ages reserved voices so their slots are released when the assumed lifetime elapses.</summary>
-    public void Update(float deltaSeconds) => _voices?.Update(deltaSeconds);
+    /// <summary>Distance gain and pan for a source position under the current listener and config.</summary>
+    private (float DistanceGain, float Pan) SpatialAt(float sourceX, float sourceY)
+    {
+        var (x, y) = SanitizeSourcePosition(sourceX, sourceY);
+        var dx = x - _listenerX;
+        var dy = y - _listenerY;
+        var distance = MathF.Sqrt(dx * dx + dy * dy);
+        return (SpatialMath.DistanceGain(distance, _spatial.ReferenceDistance, _spatial.MaxDistance, _spatial.Model, _spatial.Rolloff),
+                SpatialMath.Pan(dx, _spatial.PanDistance, _spatial.PanSaturation));
+    }
+
+    /// <summary>Any non-finite coordinate drops the source onto the listener (a caller bug is centered sound, never NaN pan).</summary>
+    private (float X, float Y) SanitizeSourcePosition(float sourceX, float sourceY) =>
+        IsFinite(sourceX) && IsFinite(sourceY) ? (sourceX, sourceY) : (_listenerX, _listenerY);
+
+    internal void RemixVoice(SfxSpatialVoice voice, float sourceX, float sourceY)
+    {
+        if (!_positionalVoices.ContainsKey(voice)) return; // stopped, pruned, or never followed
+        var (x, y) = SanitizeSourcePosition(sourceX, sourceY);
+        voice.SourceX = x;
+        voice.SourceY = y;
+        RemixVoiceNow(voice);
+    }
+
+    private void RemixAll()
+    {
+        foreach (var voice in _positionalVoices.Keys)
+            RemixVoiceNow(voice);
+    }
+
+    private void RemixVoiceNow(SfxSpatialVoice voice)
+    {
+        if (_positional is null) return;
+        var dx = voice.SourceX - _listenerX;
+        var dy = voice.SourceY - _listenerY;
+        var distance = MathF.Sqrt(dx * dx + dy * dy);
+        var gain = SpatialMath.DistanceGain(distance, _spatial.ReferenceDistance, _spatial.MaxDistance, _spatial.Model, _spatial.Rolloff);
+        var pan = SpatialMath.Pan(dx, _spatial.PanDistance, _spatial.PanSaturation);
+        var resolution = _buses.Resolve(voice.Bus);
+        var mixVolume = Math.Clamp(voice.BaseVolume
+                                   * _buses.Resolve(BusNames.Master).Gain * resolution.Gain
+                                   * _music.DuckRatioFor(resolution.Bus)
+                                   * gain, 0f, 1f);
+        _positional.SetVoiceMix(voice.BackendHandle, mixVolume, pan);
+    }
+
+    internal void StopSpatialVoice(SfxSpatialVoice voice)
+    {
+        _positionalVoices.Remove(voice);
+        _positional?.StopVoice(voice.BackendHandle);
+    }
+
+    private static bool IsFinite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
+
+    /// <summary>
+    /// Ages reserved voices so their slots are released when the assumed lifetime elapses, and
+    /// ages positional voices' remix records: a record outlives its one-shot twice the assumed
+    /// lifetime is dropped (a longer-than-assumed cue keeps sounding — it just stops following).
+    /// </summary>
+    public void Update(float deltaSeconds)
+    {
+        _voices?.Update(deltaSeconds);
+        PruneAgedSpatialVoices(deltaSeconds);
+    }
+
+    private void PruneAgedSpatialVoices(float deltaSeconds)
+    {
+        if (_positionalVoices.Count == 0 || deltaSeconds <= 0f) return;
+        List<SfxSpatialVoice>? stale = null;
+        foreach (var voice in _positionalVoices.Keys)
+        {
+            voice.AgeSeconds += deltaSeconds;
+            if (voice.AgeSeconds < _pruneAfterSeconds) continue;
+            stale ??= new List<SfxSpatialVoice>();
+            stale.Add(voice);
+        }
+        if (stale is null) return;
+        foreach (var voice in stale) _positionalVoices.Remove(voice);
+    }
 
     /// <summary>Stops every one-shot this manager's backend is currently playing and clears reserved voices.</summary>
     public void Stop()
@@ -200,6 +344,7 @@ public sealed class SfxManager
         _backend.Stop();
         _voices?.Clear();
         _handles.Clear();
+        _positionalVoices.Clear();
     }
 
     private SfxPlayResult Record(SfxPlayResult result)

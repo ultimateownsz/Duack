@@ -135,3 +135,38 @@ plus the slice F row in `docs/plans/vnext/README.md`. Docs only, no code, no pub
 The same follow-up commit adds the slice F checkbox (`(#36)`) to
 `plan/01-vnext/phase-01-vnext-slices.md`, which the review caught as missing from the
 original recording.
+
+## 2026-11-25 — slice F phase-gate review of `feat/bus-unification` (`c74d3c0..8facac5`): good
+
+Full plan-phase PR-gate `qa` on the whole slice F working diff (14 commits, 32 files,
++1127/−190 against `master`) before any PR opens. Contract: `bus-unification/PLAN.md`,
+constrained by issue #36, `user-buses/review-structure.md` D1–D5, and `slice.md` D6–D26.
+
+Evidence run independently by the reviewer: `dotnet test Duack.slnx` 420/420 green across
+all four test projects; `samples/Duack.Sample.Web` builds clean; `python tools/plan_check.py`
+→ `pass`.
+
+Verdict **good** — no blocking findings: every scope bullet implemented (config table,
+unified resolver, the `"sfx"` fold with `BREAKING CHANGE` footer as a single-line revert
+unit pinned both ways, `Views` duck readback, web per-bus gain nodes, routing unchanged);
+non-goals respected (no parent/solo/snapshots/effects, ctor signatures unchanged D7, no
+per-bus player settings); all slice C pins hold with equivalent coverage (W1/W2,
+`BusFellBack`, both `ZeroEffectiveGain` cases, ref-counted holds, composition order);
+changelog entries match behavior with dated `(#36)` refs; commit discipline clean;
+SKILL.md/README verified against the compiling API with no planning vocabulary leaked;
+core purity intact (empty-cache restore passes upstream); recorded deviations (D13, D18,
+surface re-types) properly decisioned and changelogged. Checkbox correctly unticked —
+pending the human Gate D listening on both backends.
+
+Non-blocking findings, applied in the follow-up commits carrying this record:
+- CS8602 null-deref in the web sample's new `M`/`N` handlers → fixed with the file's
+  existing `_sfx!` idiom; sample builds warning-clean.
+- BOM introduced in 20 diff files (three more carried it on master, left untouched) →
+  stripped; trailing newlines restored.
+- `SampleAudio`'s Linq usage was implicit-usings-dependent → explicit `using`.
+- `buses` SKILL.md stated custom-bus creation only via a code comment → an explicit
+  sentence added in Setup (maintainer feedback during review).
+Fourth observation (slice decisions recorded in preceding `docs(plans)` commits rather than
+inside each work-item commit) left as-is: it matches master's established practice
+(d547980, 78195d8) and each decision names its work-item commit explicitly.
+

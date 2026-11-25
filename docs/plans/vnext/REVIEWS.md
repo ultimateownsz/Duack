@@ -207,3 +207,54 @@ met and decisioned by the maintainer across five rounds. The tick, the README ro
 to landed, and `STATUS.md` closure land as one commit with this record, per the plan-phase
 gate; nothing in it is code, so no changelog entry attaches.
 
+
+## feat/voice-concurrency — Slice A — voice concurrency limiting (resumed 2026-11-25)
+
+- Reviewed: 2026-11-25
+- Head at review: the branch rebased onto `master` this session (`06a67fa`…`3a2a0ba`, plus the
+  fixes below)
+- Base: `master` (`9029c12` — the bus-unification fold, #37)
+- Verdict: **good** — after in-session fixes; Slice A remains unmerged pending the human
+  listening check (#38)
+- Reviewer: agent (`/pr-review` gate run without the OpenCode harness; qa criteria applied
+  from AGENTS.md — the diff against the slice PLAN is the contract)
+
+### In-session fixes (blocking findings, all verified)
+
+**F1 — Branch conflicts with the landed bus unification (#37).** `git merge-tree` reported
+content conflicts in `CHANGELOG.md`, `src/Duack/AudioConfig.cs` and `src/Duack/SfxManager.cs`;
+the branch predated #37 (old `Dictionary<string, float>` user buses vs the flat
+`BusConfig` table). Rebased onto `master`; in `PlayDetailed` the bus-unified composition
+(`_buses.Resolve(BusNames.Master).Gain * resolution.Gain * _music.DuckRatioFor(...)`) is kept
+and the limiter admission, zero-gain short-circuit (before the limiter — a mute/zero play
+consumes no slot, reporting `Played` + `ZeroEffectiveGain` exactly as master does) and the
+additive `PlayDetailed`/`LastPlayResult` API sit on top. Suite green after the rebase
+(440 tests: 342 + 34 + 21 + 43).
+
+**F2 — Stale pre-split slice doc.** The branch still carried
+`docs/plans/vnext/slices/A-concurrency.md`, referencing the deleted
+`docs/plans/vnext/PLAN.md §4`; it duplicated `voice-concurrency/` (removed in `ff47a4f`).
+
+**F3 — Missing override pins.** The limiter honored per-cue `DurationSeconds`/`StealingPolicy`
+but no test pinned either at the limiter level. Added
+`Per_cue_lifetime_and_policy_overrides_win_over_the_defaults` (passes; coverage pin, no
+production change).
+
+### Verified against the slice PLAN acceptance
+
+Caps enforced at exact boundaries with the victim sequence asserted (oldest default, quietest
+with oldest tiebreak, priority refuse/steal at `<=` the weakest); per-cue cap override over
+global; every refusal reported (`UnknownCue`/`RejectedBelowPriority`/`BackendRefused`) with
+`LastPlayResult` readable for plain `Play` callers and `ActiveVoiceCount` for HUD readback;
+backend refusal releases the reserved slot; unknown cues never touch the limiter; CHANGELOG
+entry, `duack-skills/concurrency/SKILL.md` and the dedicated desktop example present.
+
+### Non-blocking / still open
+
+- The human listening check on `Duack.Sample.Concurrency` (maintainer; #38 criterion).
+- `PlayDetailed` collapses a zero-gain play into `Played` (master's inherited semantics —
+  reported via `ZeroEffectiveGain`); a distinct outcome member would be more honest in the
+  detailed API if the maintainer wants it.
+- The cross-platform follow-up (web `Update(dt)` wiring, audible-stealing seam) is scheduled
+  under #38 and lands in this session; see the STATUS/slice docs after it lands.
+

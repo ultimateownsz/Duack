@@ -115,4 +115,36 @@ public class VoiceLimiterTests
         Assert.Equal(2, next.VoiceSequence);
         Assert.Equal(0, next.StoleSequence);
     }
+
+    [Fact]
+    public void Per_cue_lifetime_and_policy_overrides_win_over_the_defaults()
+    {
+        var config = new VoiceLimitConfig
+        {
+            GlobalMaxVoices = 2,
+            DefaultVoiceSeconds = 10f,
+            DefaultStealingPolicy = VoiceStealingPolicy.Oldest,
+        };
+        config.CueLimits["tick"] = new CueVoiceLimit
+        {
+            MaxVoices = 2,
+            DurationSeconds = 0.25f,
+            StealingPolicy = VoiceStealingPolicy.Quietest,
+        };
+        var limiter = new VoiceLimiter(config);
+
+        limiter.Acquire("tick", 0.9f, 1);
+        limiter.Acquire("tick", 0.2f, 2);
+
+        // Quietest override: the quiet voice is stolen, not the oldest (sequence 1).
+        var third = limiter.Acquire("tick", 0.5f, 3);
+        Assert.Equal(2L, third.StoleSequence);
+
+        // Lifetime override: the tick slots expire at 0.25 s while a default-lifetime cue persists.
+        limiter.Acquire("hold", 1f, 4);
+        limiter.Update(0.26f);
+
+        Assert.Empty(limiter.Active.Where(v => v.Cue == "tick"));
+        Assert.Single(limiter.Active.Where(v => v.Cue == "hold"));
+    }
 }

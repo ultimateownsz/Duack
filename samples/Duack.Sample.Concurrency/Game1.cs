@@ -13,10 +13,13 @@ public static class Program
 }
 
 /// <summary>
-/// Dedicated Slice A example: SFX voice concurrency limiting. Press Space to fire one cue, or T to
-/// fire 50 overlapping cues through a manager capped at 8 voices (oldest-voice stealing). The
-/// two-digit readout is the limiter's ActiveVoiceCount and must never exceed 08 during the burst.
-/// The limiter is pure core; the only adapter wiring here is the MonoGame clip library and backend.
+/// Dedicated Slice A example: SFX voice concurrency limiting. Click ONE to fire a single cue,
+/// BURST to fire 50 overlapping cues through a manager capped at 8 voices (oldest-voice stealing),
+/// and STOP to silence everything mid-listen; Space/T/Escape mirror the buttons from the keyboard.
+/// The two-digit readout is the limiter's ActiveVoiceCount and must never exceed 08 during the
+/// burst. The limiter is pure core; the only adapter wiring here is the MonoGame clip library and
+/// backend. Buttons and labels use the same no-asset pixel-glyph approach as the counter — this
+/// project deliberately has no content pipeline.
 /// </summary>
 public class Game1 : Game
 {
@@ -29,6 +32,10 @@ public class Game1 : Game
     private SfxManager _sfx = null!;
     private MarbleBag<string> _cues = null!;
     private KeyboardState _previousKeyboard;
+    private MouseState _previousMouse;
+    private Rectangle _singleButton;
+    private Rectangle _burstButton;
+    private Rectangle _stopButton;
 
     public Game1()
     {
@@ -81,23 +88,48 @@ public class Game1 : Game
     protected override void Update(GameTime gameTime)
     {
         var keyboard = Keyboard.GetState();
+        var mouse = Mouse.GetState();
         if (keyboard.IsKeyDown(Keys.Escape)) Exit();
 
         // Unscaled time: a voice slot must expire on wall-clock time, not gameplay time.
         _sfx.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
 
-        if (WasPressed(keyboard, Keys.Space))
+        LayoutButtons();
+
+        if (WasPressed(keyboard, Keys.Space) || WasClicked(mouse, _singleButton))
         {
             PlayOne();
         }
-        else if (WasPressed(keyboard, Keys.T))
+        else if (WasPressed(keyboard, Keys.T) || WasClicked(mouse, _burstButton))
         {
             for (var i = 0; i < BurstSize; i++) PlayOne();
             Console.WriteLine($"[Concurrency] fired {BurstSize} cues; active {_sfx.ActiveVoiceCount}; last {_sfx.LastPlayResult}");
         }
+        else if (WasClicked(mouse, _stopButton))
+        {
+            _sfx.Stop();
+            Console.WriteLine("[Concurrency] stop: all voices stopped and slots cleared");
+        }
 
         _previousKeyboard = keyboard;
+        _previousMouse = mouse;
         base.Update(gameTime);
+    }
+
+    /// <summary>Lays the three buttons out under the counter, above the slot bars.</summary>
+    private void LayoutButtons()
+    {
+        var viewport = GraphicsDevice.Viewport;
+        const int width = 150;
+        const int height = 44;
+        const int gap = 16;
+        var totalWidth = width * 3 + gap * 2;
+        var x = viewport.Width / 2 - totalWidth / 2;
+        var y = viewport.Height - 110;
+
+        _singleButton = new Rectangle(x, y, width, height);
+        _burstButton = new Rectangle(x + width + gap, y, width, height);
+        _stopButton = new Rectangle(x + (width + gap) * 2, y, width, height);
     }
 
     private void PlayOne()
@@ -107,6 +139,11 @@ public class Game1 : Game
 
     private bool WasPressed(KeyboardState current, Keys key) =>
         current.IsKeyDown(key) && _previousKeyboard.IsKeyUp(key);
+
+    private bool WasClicked(MouseState current, Rectangle button) =>
+        current.LeftButton == ButtonState.Pressed &&
+        _previousMouse.LeftButton == ButtonState.Released &&
+        button.Contains(current.Position);
 
     protected override void Draw(GameTime gameTime)
     {
@@ -123,6 +160,11 @@ public class Game1 : Game
         DrawDigit(x, y, digitSize, count / 10, Color.White);
         DrawDigit(x + digitSize + 8, y, digitSize, count % 10, Color.White);
 
+        LayoutButtons();
+        DrawButton(_singleButton, "ONE", Color.White);
+        DrawButton(_burstButton, "BURST", Color.White);
+        DrawButton(_stopButton, "STOP", Color.OrangeRed);
+
         // A bar per reserved slot makes the cap visible even without listening.
         var barWidth = Math.Max(4, (viewport.Width - 40) / GlobalCap - 4);
         for (var i = 0; i < GlobalCap; i++)
@@ -138,6 +180,49 @@ public class Game1 : Game
 
     private void DrawRect(Rectangle rect, Color color) =>
         _spriteBatch.Draw(_pixel, rect, color);
+
+    /// <summary>A filled button with a centered pixel-glyph label (no font asset needed).</summary>
+    private void DrawButton(Rectangle bounds, string label, Color color)
+    {
+        DrawRect(bounds, Color.Black * 0.6f);
+        const int glyphHeight = 5;
+        const int glyphWidth = 3;
+        const int scale = 3;
+        const int spacing = 1;
+        var textWidth = label.Length * (glyphWidth + spacing) * scale - spacing * scale;
+        var textHeight = glyphHeight * scale;
+        var x = bounds.Center.X - textWidth / 2;
+        var y = bounds.Center.Y - textHeight / 2;
+        foreach (var c in label) x = DrawGlyph(x, y, scale, c, color) + spacing * scale;
+    }
+
+    /// <summary>Draws one 3x5 pixel glyph scaled by <paramref name="scale"/>; returns the next x.</summary>
+    private int DrawGlyph(int x, int y, int scale, char c, Color color)
+    {
+        if (!Glyphs.TryGetValue(c, out var rows)) return x;
+        for (var row = 0; row < rows.Length; row++)
+        for (var col = 0; col < 3; col++)
+        {
+            if ((rows[row] & (1 << (2 - col))) == 0) continue;
+            DrawRect(new Rectangle(x + col * scale, y + row * scale, scale, scale), color);
+        }
+        return x + 3 * scale;
+    }
+
+    /// <summary>3x5 pixel glyphs (bit 2 = left column), enough for the button labels.</summary>
+    private static readonly IReadOnlyDictionary<char, byte[]> Glyphs = new Dictionary<char, byte[]>
+    {
+        // 5 rows, bit 2 = leftmost column of the 3-wide glyph.
+        ['O'] = new byte[] { 0b111, 0b101, 0b101, 0b101, 0b111 },
+        ['N'] = new byte[] { 0b101, 0b111, 0b111, 0b111, 0b101 },
+        ['E'] = new byte[] { 0b111, 0b100, 0b111, 0b100, 0b111 },
+        ['B'] = new byte[] { 0b111, 0b101, 0b110, 0b101, 0b111 },
+        ['U'] = new byte[] { 0b101, 0b101, 0b101, 0b101, 0b111 },
+        ['R'] = new byte[] { 0b111, 0b101, 0b110, 0b101, 0b101 },
+        ['S'] = new byte[] { 0b111, 0b100, 0b111, 0b001, 0b111 },
+        ['T'] = new byte[] { 0b111, 0b010, 0b010, 0b010, 0b010 },
+        ['P'] = new byte[] { 0b111, 0b101, 0b111, 0b100, 0b100 },
+    };
 
     /// <summary>Two-digit seven-segment readout, so no Content font asset is needed.</summary>
     private void DrawDigit(int x, int y, int size, int digit, Color color)

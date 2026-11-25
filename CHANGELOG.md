@@ -115,6 +115,16 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 
 #### 2026-11-25
 
+- **The concurrency example is clickable (#38).** `Duack.Sample.Concurrency` grew three
+  on-screen buttons — **ONE** (single cue), **BURST** (the 50-cue stress burst), **STOP**
+  (silence everything mid-listen) — so the human listening check no longer requires knowing
+  the keyboard bindings; Space/T/Escape keep working and Escape still exits. Labels use the
+  same no-asset 3x5 pixel-glyph approach as the seven-segment counter (the project
+  deliberately has no content pipeline). Sample-only: no library behavior change, and the
+  sample has no headless test surface (MonoGame `Game` needs a real window) — the click path
+  is verified by the human listening check itself.
+
+#### 2026-11-25
 - **Slice A follow-up: audible voice stealing and web voice aging (#38).** A stolen voice is
   now silenced, not just unbookkept: the optional additive `ISfxVoiceControlBackend` seam
   (`PlayTracked` returning a handle, `StopVoice`) is implemented by `SoundEffectSfxBackend`

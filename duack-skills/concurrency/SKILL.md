@@ -68,7 +68,8 @@ which are a deferred experiment.
 ## Concurrency example
 
 `samples/Duack.Sample.Concurrency` is the dedicated Slice A example — the storyline samples are
-deliberately left untouched. Press **T** to fire 50 overlapping cues through a manager capped at 8
-voices, or **Space** for a single cue. The two-digit readout and the eight slot bars show
+deliberately left untouched. Click **ONE** for a single cue, **BURST** for 50 overlapping cues
+through a manager capped at 8 voices, or **STOP** to silence everything mid-listen (Space/T and
+the keys mirror the buttons). The two-digit readout and the eight slot bars show
 `ActiveVoiceCount`; the count must never exceed 08 during the burst. A human listening check is
 still required before the slice is called done; the counter alone is not proof of audible quality.

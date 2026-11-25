@@ -309,7 +309,10 @@ cannot catch, and the browser listening check remains the real verification.
 ## feat/voice-concurrency — final PR-review gate (2026-11-25, third pass)
 
 - Reviewed: 2026-11-25
-- Head at review: `1a5ed3a8` (20 commits over `origin/master` `7b56ce78`; 29 files, +1489/−59)
+- Head at review: reviewed at `1a5ed3a8` with the AGENTS.md/web-comment fixes in the working
+  tree; those fixes (plus this record) land in the follow-up commit, so the verdict's head is
+  the commit carrying this entry. 20 commits over `origin/master` `7b56ce78`; 29 files,
+  +1489/−59
 - Base: `origin/master`
 - Verdict: **good — PR-ready.** All agent-verifiable slice criteria and follow-up items pass;
   the two human checks remain maintainer obligations and are not ticked.

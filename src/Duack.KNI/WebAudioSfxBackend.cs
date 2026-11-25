@@ -28,7 +28,7 @@ namespace Duack.KNI;
 /// resolved bus (a core contract change, out of this adapter's scope).
 /// </para>
 /// </summary>
-public sealed class WebAudioSfxBackend : ISfxBackend, ISfxVoiceControlBackend, IDisposable
+public sealed class WebAudioSfxBackend : ISfxBackend, ISfxVoiceControlBackend, ISfxPositionalBackend, IDisposable
 {
     private readonly IWebAudioNative _js;
     private readonly Dictionary<string, string> _cueUrls = new(StringComparer.Ordinal);
@@ -91,6 +91,51 @@ public sealed class WebAudioSfxBackend : ISfxBackend, ISfxVoiceControlBackend, I
         catch
         {
             // Swallow: stopping should never crash the frame.
+        }
+    }
+
+    /// <summary>
+    /// Plays a tracked voice carrying a pan the core already computed: routed through a
+    /// StereoPannerNode (constant-power — the desktop platform pan is a linear taper, the
+    /// ADR-8-style acoustic difference the slice records) into the same sfx bus chain.
+    /// Refusals match a plain play exactly: not loaded, unknown cue, or disposed means null.
+    /// </summary>
+    public object? PlayTrackedAt(string cueName, float pan, float pitch = 0f, float volume = 1f)
+    {
+        if (_disposed) return null;
+        if (!_cueUrls.TryGetValue(cueName, out var url)) return null;
+        if (!_js.HasBuffer(url)) return null;
+        try
+        {
+            var id = _js.PlaySourceTrackedAt(url,
+                Math.Clamp(pan, -1f, 1f),
+                Math.Clamp(pitch, -1f, 1f),
+                Math.Clamp(volume, 0f, 1f));
+            return id != 0 ? id : null;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[WebAudioSfxBackend] Panned play failed for '{cueName}': {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Re-mixes one live voice (a moving source, a moving listener): volume re-ramped and pan
+    /// moved on that voice's own nodes. Unknown, stale or invalid handles are silent no-ops.
+    /// </summary>
+    public void SetVoiceMix(object handle, float volume, float pan)
+    {
+        if (_disposed || handle is not long id || id <= 0) return;
+        try
+        {
+            _js.SetVoiceMix(id,
+                Math.Clamp(volume, 0f, 1f),
+                Math.Clamp(pan, -1f, 1f));
+        }
+        catch
+        {
+            // Swallow: a live re-mix should never crash the frame.
         }
     }
 

@@ -40,6 +40,17 @@ internal sealed class FakeWebAudioNative : IWebAudioNative
         return HasBuffer(bufferUrl) ? NextSourceId++ : 0;
     }
 
+    public long PlaySourceTrackedAt(string bufferUrl, float pan, float pitch, float volume)
+    {
+        Calls.Add($"PlaySourceTrackedAt({bufferUrl}, pan={pan}, pitch={pitch}, volume={volume})");
+        return HasBuffer(bufferUrl) ? NextSourceId++ : 0;
+    }
+
+    public void SetVoiceMix(long id, float volume, float pan)
+    {
+        Calls.Add($"SetVoiceMix({id}, volume={volume}, pan={pan})");
+    }
+
     public void StopSource(long id)
     {
         Calls.Add($"StopSource({id})");

@@ -23,6 +23,21 @@ public interface IWebAudioNative
     /// </summary>
     long PlaySourceTracked(string bufferUrl, float pitch, float volume);
 
+    /// <summary>
+    /// Plays a one-shot source with a pan in [-1, 1] (0 = centered) routed through a panner
+    /// node, and returns the JS-side id tracking it (the same id space PlaySourceTracked uses,
+    /// which is what keeps one bookkeeping map). Returns 0 when the JS side could not start the
+    /// source (refused play).
+    /// </summary>
+    long PlaySourceTrackedAt(string bufferUrl, float pan, float pitch, float volume);
+
+    /// <summary>
+    /// Re-mixes one tracked voice: the volume re-ramped on its gain node, the pan moved on its
+    /// panner (both clamped by the backend first). A no-op for unknown or finished ids — the
+    /// <see cref="StopSource(long)"/> contract.
+    /// </summary>
+    void SetVoiceMix(long id, float volume, float pan);
+
     /// <summary>Stops the playing source with the given id; a no-op for unknown or finished ids.</summary>
     void StopSource(long id);
 
@@ -72,6 +87,13 @@ public sealed partial class WebAudioNative : IWebAudioNative
     [return: JSMarshalAs<JSType.Number>]
     private static partial long PlaySourceTrackedImpl(string bufferUrl, float pitch, float volume);
 
+    [JSImport("globalThis.DuackWebAudio.playSourceTrackedAt")]
+    [return: JSMarshalAs<JSType.Number>]
+    private static partial long PlaySourceTrackedAtImpl(string bufferUrl, float pan, float pitch, float volume);
+
+    [JSImport("globalThis.DuackWebAudio.setVoiceMix")]
+    private static partial void SetVoiceMixImpl([JSMarshalAs<JSType.Number>] long id, float volume, float pan);
+
     [JSImport("globalThis.DuackWebAudio.stopSource")]
     private static partial void StopSourceImpl([JSMarshalAs<JSType.Number>] long id);
 
@@ -92,6 +114,8 @@ public sealed partial class WebAudioNative : IWebAudioNative
     public bool HasBuffer(string url) => HasBufferImpl(url);
     public void PlaySource(string bufferUrl, float pitch, float volume) => PlaySourceImpl(bufferUrl, pitch, volume);
     public long PlaySourceTracked(string bufferUrl, float pitch, float volume) => PlaySourceTrackedImpl(bufferUrl, pitch, volume);
+    public long PlaySourceTrackedAt(string bufferUrl, float pan, float pitch, float volume) => PlaySourceTrackedAtImpl(bufferUrl, pan, pitch, volume);
+    public void SetVoiceMix(long id, float volume, float pan) => SetVoiceMixImpl(id, volume, pan);
     public void StopSource(long id) => StopSourceImpl(id);
     public void StopAll() => StopAllImpl();
     public void SetBusVolume(string bus, float volume) => SetBusVolumeImpl(bus, volume);

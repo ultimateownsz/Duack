@@ -64,6 +64,32 @@ Populated as implementation decisions land. ADR deviations belong in
   fold (duck exemption for `bus is null` removed: `* _music.DuckRatioFor(resolution.Bus)`
   always) — each breaking surface has its own changelog entry and revert unit.
 
-Deviations from PLAN wording, all changelogged: "one resolver" landed as two mixer instances
+### WebAudio decisions (work item 4, `78fba13`)
+
+- **D18 — Honest subset; core seam is the blocker.** `ISfxBackend.Play` hands the adapter
+  only the fully composed final volume — no bus name crosses the seam. Full per-user-bus node
+  routing would change `ISfxBackend` (core contract) and either alter desktop audibly or drift
+  the cross-backend API (ADR-8); both out of scope. Blocker changelogged, not papered over.
+- **D19 — One persistent gain node per bus this adapter actually plays.** JS builds
+  `sfx → master → destination` at `initAudioContext`; every per-source gain routes through
+  `sfxNode` instead of ad-hoc connections to the destination. Zero math change, identical
+  audible output, `ISfxBackend` untouched.
+- **D20 — `SetBusVolume(bus, volume)` on three layers** (`IWebAudioNative` — contract change
+  for bridge implementors, changelogged; the `[JSImport]`; `WebAudioSfxBackend`, dispose-guarded
+  and clamped). Deliberately NOT on `ISfxBackend`: web-only surface until sample wiring (item 5).
+- **D21 — JS `setBusVolume` semantics:** clamp [0,1]; `cancelScheduledValues` + 3 ms
+  `linearRampToValueAtTime` (matches the onset ramp, no slider zipper); unknown bus names
+  become on-demand leaf nodes under master, unrouted until the core seam carries buses —
+  no invented routing.
+- **D22 — No `music` node in this backend:** it plays one-shots only; web music is the
+  MediaPlayer `<audio>` host's own volume, outside this chain.
+- Browser-listening list (before the box may tick): identical playback through the new chain;
+  `setBusVolume` audibly moves currently playing voices without clicks; `stopAll`/`dispose`;
+  iOS suspended-context resume.
+
+Resolver deviations from PLAN wording, all changelogged: "one resolver" landed as two mixer instances
 over one table (D13, forced by D7); `BusMixer` ctor signature and `BusView` shape changed
 (PLAN said "public surface unchanged") — forced by whole-table seeding and the readback field.
+WebAudio deviation from PLAN wording: "one gain node per bus" landed as one node per bus of
+the chain this adapter can actually resolve (`sfx`, `master`; user buses on demand, unrouted),
+reason D18.

@@ -127,6 +127,16 @@ Populated as implementation decisions land. ADR deviations belong in
   the console without interaction). Controller methods (`Advance`/`Restart`) stay public and
   pinned in `Sample.Core`; the web `SetBusVolume` seam (work item 4) stays and keeps its
   adapter tests. Full suite 423/423 green (phase-end check).
+- **D30 — No truncation either** (listening round 4, `c5d5c71`): the maintainer clarified D27's
+  intent — cues must play out naturally, not be clipped at the switch. Measured from the
+  shipped WAV headers: notice 1.08 s (beat was 0.5 — half-cut), battle-start 0.60 s (beat
+  0.6 — tail clipped), longest KO hit variant 1.73 s (ending beat was 1.2). Beats are now
+  sized asset + `BeatTailSeconds` (0.1 s): `NoticeCueBeatSeconds` 1.18, `StingBeatSeconds`
+  0.70, new `BattleEndingSeconds` 1.83 (no longer reusing `BattleRoundSeconds` for the
+  ending). Pinned red-first against the actual WAV durations (test reads the shipped
+  headers). `DialogCue` has no asset on any head (pre-existing silent gap, confirmed, left
+  as-is). Rationale recorded: `ISfxBackend` has no completion telemetry, so beats are
+  asset-sized; event-driven switching needs the deferred per-playback-handles experiment.
 
 Deviations from PLAN wording, all changelogged: "one resolver" landed as two mixer instances
 over one table (D13, forced by D7); `BusMixer` ctor signature and `BusView` shape changed

@@ -169,7 +169,7 @@ public sealed class SfxManager
         if (admission is { } attempt && attempt.Outcome != VoicePlayOutcome.Played)
             return Record(SfxPlayResult.RejectedBelowPriority);
 
-        // Make stealing audible when the backend can stop one voice (D-A4 follow-up): the stolen
+        // Make stealing audible when the backend can stop one voice (#38): the stolen
         // bookkeeping slot already freed; silence the victim before the new voice starts. On a
         // plain backend the map is empty and stealing stays slot-only (the documented fallback).
         if (admission is { } stolenTry && stolenTry.StoleSequence != 0 &&

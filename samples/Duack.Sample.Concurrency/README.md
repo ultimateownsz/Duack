@@ -1,6 +1,6 @@
 # Duack.Sample.Concurrency — SFX voice limiting stress example
 
-Standalone desktop example for Slice A (voice concurrency limiting). Unlike the
+Standalone desktop example for SFX voice-concurrency limiting. Unlike the
 storyline samples, it owns no storyline: it exists to make the cap observable and
 audible in isolation.
 

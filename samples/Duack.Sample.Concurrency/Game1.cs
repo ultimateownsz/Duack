@@ -13,7 +13,7 @@ public static class Program
 }
 
 /// <summary>
-/// Dedicated Slice A example: SFX voice concurrency limiting. Click ONE to fire a single cue,
+/// Dedicated voice-concurrency example: SFX voice limiting. Click ONE to fire a single cue,
 /// BURST to fire 50 overlapping cues through a manager capped at 8 voices (oldest-voice stealing),
 /// and STOP to silence everything mid-listen; Space/T/Escape mirror the buttons from the keyboard.
 /// The two-digit readout is the limiter's ActiveVoiceCount and must never exceed 08 during the

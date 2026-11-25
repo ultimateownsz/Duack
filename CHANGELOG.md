@@ -125,7 +125,7 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
   is verified by the human listening check itself.
 
 #### 2026-11-25
-- **Slice A follow-up: audible voice stealing and web voice aging (#38).** A stolen voice is
+- **Audible voice stealing and web voice aging (#38).** A stolen voice is
   now silenced, not just unbookkept: the optional additive `ISfxVoiceControlBackend` seam
   (`PlayTracked` returning a handle, `StopVoice`) is implemented by `SoundEffectSfxBackend`
   (handle = the started instance) and by `WebAudioSfxBackend` (handle = the JS source id; the
@@ -133,7 +133,8 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
   one voice can be stopped without `StopAll`). `SfxManager` stops a chosen victim through the
   seam before starting the new voice and falls back to slot-only stealing when the backend
   does not implement the seam — the observable config/result API is identical across backends
-  (ADR-8 pattern); only the acoustic result differs. Contract notes: `IWebAudioNative`
+  (the same additive-capability pattern as the bus-volume work, #32/#36); only the acoustic
+  result differs. Contract notes: `IWebAudioNative`
   implementors must add `PlaySourceTracked(string, float, float): long` and
   `StopSource(long)`; the per-source JS registry is cleaned on `onended`, `stopSource` and
   `StopAll`, and stopping an already-finished or unknown handle is a no-op.
@@ -235,15 +236,15 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 - **Plan splitter, per-slice vNext workspace, and PR-review loop.** `tools/plan_split.py` turns a monolithic markdown plan into `README.md`, `SHARED.md` and one `<slug>/PLAN.md` per slice, with 12 stdlib tests under `tools/tests/`. `docs/plans/vnext/` is now in that shape. `AGENTS.md` documents the splitter and the new `/pr-review <number>` OpenCode command, which launches the `qa` agent, verifies blocking findings and records a dated verdict in `docs/plans/vnext/REVIEWS.md` — the first entry covers this PR. Python bytecode is gitignored. (#22)
 
 #### 2026-11-19
-- Slice A of the vNext plan: SFX voice concurrency. `AudioConfigBuilder.WithVoiceLimit(...)` and
+- SFX voice concurrency limiting. `AudioConfigBuilder.WithVoiceLimit(...)` and
   `WithCueVoiceLimit(...)` author global/per-cue caps, stealing policies (oldest, quietest, priority),
   and assumed voice lifetimes. `SfxManager.PlayDetailed(...)` and `LastPlayResult` report why a cue
   was refused (unknown cue, priority rejection, backend refusal); `Play(...)` keeps its `bool`
   contract. `SfxManager.Update(unscaledDt)` ages reserved voices; a backend refusal releases its slot.
   A dedicated `Duack.Sample.Concurrency` example fires 50 overlapping cues at cap 8 (T key) with
-  an on-screen active-voice counter; the existing storyline samples are untouched. Backends are unchanged: lifetimes are authored, not observed (documented in
-  `docs/plans/vnext/voice-concurrency/PLAN.md`). Tests pin cap boundaries, victim selection, policy
-  overrides, refusal results, and lifetime release. (#38)
+  an on-screen active-voice counter; the existing storyline samples are untouched. Known
+  limitation: backends are unchanged, so lifetimes are authored, not observed. Tests pin cap
+  boundaries, victim selection, policy overrides, refusal results, and lifetime release. (#38)
 
 #### 2026-10-31
 - `MusicManager.CurrentTrackElapsedSeconds` reports elapsed playback time for the current track on both backends; `CurrentTrackDurationSeconds` is nullable for consumer-provided resolvers.

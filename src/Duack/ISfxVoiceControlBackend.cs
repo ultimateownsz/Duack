@@ -6,7 +6,8 @@ namespace Duack;
 /// a stolen voice only loses its bookkeeping slot and keeps sounding. The base
 /// <see cref="ISfxBackend.Play"/> contract stays unchanged, and a manager falls back to
 /// slot-only stealing when the backend does not implement this interface — only the acoustic
-/// result differs (ADR-8 pattern), not the observable config/result API.
+/// result differs (the same additive-capability pattern as the bus-volume work, #32/#36),
+/// not the observable config/result API.
 /// </summary>
 public interface ISfxVoiceControlBackend
 {

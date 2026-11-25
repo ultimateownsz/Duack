@@ -67,7 +67,7 @@ which are a deferred experiment.
 
 ## Concurrency example
 
-`samples/Duack.Sample.Concurrency` is the dedicated Slice A example — the storyline samples are
+`samples/Duack.Sample.Concurrency` is the dedicated concurrency example — the storyline samples are
 deliberately left untouched. Run it with
 `dotnet run --project samples/Duack.Sample.Concurrency` (it reuses the desktop sample's SFX
 assets via the project file). Click **ONE** for a single cue, **BURST** for 50 overlapping cues

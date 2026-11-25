@@ -1,4 +1,4 @@
-# Changelog
+﻿# Changelog
 
 All notable changes to this project are documented in this file.
 
@@ -194,7 +194,22 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 ### Fixed
 
 #### 2026-11-25
-- The web sample's new hot bus mute keys (`M`/`N`) no longer rely on nullable-dereference
+- **The KO hit no longer bleeds over the walk screen** (maintainer ruling from human
+  listening, Nov 25: no cue from a finished gameplay screen may survive into the next
+  screen). Symptom: play either sample head through a battle; on the KO, the fainting
+  "hit" cue played over the freshly loaded walk screen while the music crossfaded back to
+  the overworld — the classic XNA/MonoGame forum complaint about one-shots overlapping a
+  freshly loaded screen. Fix: `StoryController` gains a battle-ending beat — the fainting
+  tick returns the plain hit frame (the battle screen stays up and the music is still the
+  battle track, so the KO is heard on the battle screen), and only the NEXT round tick
+  (~1.2 s later) returns the walk-switch frame carrying the overworld music and NO sfx.
+  The ending beat resets on `Restart()` and `EnterBattle()` and, like the battle itself,
+  cannot be skipped by Space. Entry stings are untouched. The heads' dead
+  "duck only when no music switch" exception in `ApplyFrame` (no frame carries both an sfx
+  and a music switch anymore) was simplified away: every story cue now ducks. Pinned
+  headlessly in `Duack.Sample.Tests` (KO-on-battle-screen, clean walk switch, no skip,
+  mid-ending restart). (#36)
+- The web sample's (`M`/`N`) no longer rely on nullable-dereference
   suppression of `CS8602` warnings: they use the same post-initialization idiom
   (`_sfx!`) the story loop already uses, so the sample head builds warning-clean. Also makes
   `SampleAudio`'s `System.Linq` usage explicit instead of implicit-usings-dependent. No

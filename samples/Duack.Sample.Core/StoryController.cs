@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Duack;
 
@@ -27,8 +27,9 @@ public enum StoryScene
 /// What the frame should do with the audio system: play <see cref="Sfx"/> at <see cref="Pitch"/>
 /// (through the <see cref="SfxManager"/>, which ducks the music automatically), switch to the
 /// <see cref="Music"/> playlist when it differs from the current one, and treat <see cref="SceneChanged"/>
-/// as "redraw scene text". A frame can carry both an sfx and a music switch — the fainting blow
-/// plays its hit cue while the music fades back to the overworld.
+/// as "redraw scene text". A beat's cue never shares its frame with the SWITCH to the next
+/// screen (maintainer ruling, Nov 25): the fainting blow lands on the battle screen and only
+/// the tick after it returns the walk frame, so no cue survives into the next screen.
 /// </summary>
 public readonly record struct StoryFrame(
     string? Sfx = null,
@@ -73,6 +74,13 @@ public sealed class StoryController
     public const float BattleRoundSeconds = 1.2f; // one hit per round
 
     private float _sceneSeconds;
+
+    /// <summary>
+    /// The battle-ending beat: the KO hit has landed on the battle screen; the NEXT
+    /// <see cref="BattleRoundSeconds"/> tick switches to the walk clean. Only true inside the
+    /// Battle scene, reset by <see cref="Restart"/> and <see cref="EnterBattle"/>.
+    /// </summary>
+    private bool _battleEnding;
 
     public StoryController()
     {
@@ -119,7 +127,14 @@ public sealed class StoryController
                 return _sceneSeconds >= BattleIntroSeconds ? EnterBattle() : default;
 
             case StoryScene.Battle:
-                return _sceneSeconds >= BattleRoundSeconds ? BattleRoundTick() : default;
+                if (!_battleEnding)
+                    return _sceneSeconds >= BattleRoundSeconds ? BattleRoundTick() : default;
+                // The ending beat: one full round later, the switch to the walk carries the
+                // music change and NO cue - the beat cannot be skipped (Advance returns default
+                // for the battle scene) and stays unskippable exactly like the battle itself.
+                if (_sceneSeconds >= BattleRoundSeconds)
+                    return EnterWalkFromBattle();
+                return default;
 
             default:
                 return default;
@@ -156,6 +171,7 @@ public sealed class StoryController
         WalkProgress = 0f;
         DialogLine = 0;
         BattleRound = 0;
+        _battleEnding = false;
         PlayerHp = 1f;
         FoeHp = 1f;
         _sceneSeconds = 0f;
@@ -197,6 +213,7 @@ public sealed class StoryController
     private StoryFrame EnterBattle()
     {
         Scene = StoryScene.Battle;
+        _battleEnding = false;
         BattleRound = 0;
         PlayerHp = 1f;
         FoeHp = 1f;
@@ -219,11 +236,24 @@ public sealed class StoryController
         if (FoeHp > 0f && PlayerHp > 0f)
             return frame;
 
-        // Somebody fainted: the showcase loops back to the overworld walk, and the music fades
-        // back to the overworld track while the fainting blow still plays.
+        // Somebody fainted: the KO hit lands ON the battle screen with no switch attached
+        // (maintainer ruling: no cue survives into the next screen), and the ending beat holds
+        // the scene for one more round tick before the clean walk-switch frame.
+        _battleEnding = true;
+        _sceneSeconds = 0f;
+        return frame;
+    }
+
+    /// <summary>
+    /// The clean switch to the walk after the battle-ending beat: overworld music, scene change,
+    /// and NO sfx - the fainting blow already sounded on the battle screen a round tick ago.
+    /// </summary>
+    private StoryFrame EnterWalkFromBattle()
+    {
         Scene = StoryScene.Walk;
         WalkProgress = 0f;
+        _battleEnding = false;
         _sceneSeconds = 0f;
-        return frame with { Music = OverworldPlaylist, SceneChanged = true };
+        return new StoryFrame(Music: OverworldPlaylist, SceneChanged: true);
     }
 }

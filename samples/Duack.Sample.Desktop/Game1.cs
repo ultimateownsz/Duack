@@ -1,4 +1,4 @@
-using Duack;
+﻿using Duack;
 using Duack.MonoGame;
 using Duack.Sample.Core;
 using Microsoft.Xna.Framework;
@@ -202,17 +202,16 @@ public class Game1 : Game
             // Never let a previous one-shot (e.g. a long dialog cue) bleed into the next cue.
             _sfx.Stop();
 
-            // Duck only when no scene switch is happening: a cue that accompanies a switch
-            // (the fainting hit) must not suppress the crossfade back to the overworld track.
-            var duck = frame.Music is null;
-
+            // Every story cue ducks: no beat shares its frame with a music switch anymore
+            // (the fainting blow lands on the battle screen; the walk switch frame carries no
+            // sfx), so there is no "cue accompanying a switch" to exempt from ducking.
             // Hit cues draw from the MarbleBag so a battle never plays the same hit twice in a row
             // (the XACT-successor variation feature); with a single "hit" cue this is just "hit".
             var cueName = frame.Sfx;
             if (frame.Sfx == StoryController.HitCue && _hitBag is not null)
                 cueName = _hitBag.Draw();
 
-            if (_sfx.Play(cueName, frame.Pitch, duck: duck, bus: frame.Bus) &&
+            if (_sfx.Play(cueName, frame.Pitch, duck: true, bus: frame.Bus) &&
                 (frame.Sfx == StoryController.HitCue || frame.Sfx == StoryController.BattleStartCue))
             {
                 _flash = 0.12f;

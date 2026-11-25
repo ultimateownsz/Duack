@@ -1,4 +1,4 @@
-using Duack.Sample.Core;
+﻿using Duack.Sample.Core;
 
 namespace Duack.Sample.Tests;
 
@@ -166,20 +166,70 @@ public class StoryControllerTests
     }
 
     [Fact]
-    public void A_fainted_side_loops_the_story_back_to_the_walk_with_overworld_music()
+    public void The_ko_hit_lands_on_the_battle_screen_and_the_next_tick_switches_to_a_clean_walk()
     {
+        // Maintainer ruling (Nov 25): no cue from a finished gameplay screen survives into the
+        // next screen. The KO hit sounds ON the battle screen; only the tick AFTER it switches
+        // to the walk, carrying the overworld music switch and NO sfx.
         var story = new StoryController();
         ToBattle(story);
 
-        var frame = default(StoryFrame);
-        for (var i = 0; i < 20 && story.Scene == StoryScene.Battle; i++)
-            frame = story.Update(1.5f);
+        // Fight to the KO and grab the fainting blow's frame.
+        var ko = default(StoryFrame);
+        for (var i = 0; i < 20 && story.PlayerHp > 0f && story.FoeHp > 0f; i++)
+            ko = story.Update(1.5f);
+
+        Assert.Equal("hit", ko.Sfx);              // the KO hit still plays...
+        Assert.Null(ko.Music);                    // ...ON the battle screen: no switch yet,
+        Assert.False(ko.SceneChanged);            // still the battle scene when it lands.
+        Assert.Equal(StoryScene.Battle, story.Scene);
+
+        // The next tick (~BattleRoundSeconds later) switches to the walk, clean.
+        var walk = story.Update(1.5f);
 
         Assert.Equal(StoryScene.Walk, story.Scene);
-        Assert.Equal("hit", frame.Sfx);          // the fainting blow still plays
-        Assert.Equal("overworld", frame.Music);  // ...while the music fades back to the overworld
-        Assert.True(frame.SceneChanged);
+        Assert.Equal("overworld", walk.Music);
+        Assert.True(walk.SceneChanged);
+        Assert.Null(walk.Sfx);                    // no cue survives into the walk screen
         Assert.Equal(0f, story.WalkProgress);
+    }
+
+    [Fact]
+    public void The_battle_ending_beat_cannot_be_skipped_by_space()
+    {
+        var story = new StoryController();
+        ToBattle(story);
+        for (var i = 0; i < 20 && story.PlayerHp > 0f && story.FoeHp > 0f; i++)
+            story.Update(1.5f); // the KO has landed; the story is in the ending beat
+
+        var skipped = story.Advance();
+
+        Assert.Equal(default(StoryFrame), skipped); // same rule as the battle itself: no skip
+        Assert.Equal(StoryScene.Battle, story.Scene);
+    }
+
+    [Fact]
+    public void Restart_during_the_battle_ending_returns_to_the_walk_clean()
+    {
+        var story = new StoryController();
+        ToBattle(story);
+        for (var i = 0; i < 20 && story.PlayerHp > 0f && story.FoeHp > 0f; i++)
+            story.Update(1.5f); // mid-ending restart
+
+        var frame = story.Restart();
+
+        Assert.Equal(StoryScene.Walk, story.Scene);
+        Assert.Equal("overworld", frame.Music);
+        Assert.True(frame.SceneChanged);
+        Assert.Null(frame.Sfx);
+        Assert.Equal(0f, story.WalkProgress);
+        Assert.Equal(0, story.BattleRound);
+        Assert.Equal(1f, story.PlayerHp);
+        Assert.Equal(1f, story.FoeHp);
+
+        // The ending state is fully consumed: the restarted walk progresses into the notice.
+        var notice = story.Update(10f);
+        Assert.Equal("notice-video-game-sfx", notice.Sfx);
     }
 
     [Fact]

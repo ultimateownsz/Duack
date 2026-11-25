@@ -19,7 +19,7 @@ dotnet run --project samples/Duack.Sample.Web -c Release
 
 Then open the launched URL (e.g. https://localhost:5000) and click a button.
 
-> **Browser autoplay:** browsers suspend audio until a real user gesture. "Start story" is
+> **Browser autoplay:** browsers suspend audio until a real user gesture. "Start" is
 > that gesture — playback starts on the first click. This is documented, not worked around
 > silently.
 
@@ -27,7 +27,7 @@ Then open the launched URL (e.g. https://localhost:5000) and click a button.
 
 - **The same storyline as the desktop sample, from the same code**: the shared
   `StoryController` (walk → notice → dialog → battle → loop) auto-plays on its timers —
-  the demo is non-interactive, and the "Start story" click only satisfies the browser's
+  the demo is non-interactive, and the "Start" click only satisfies the browser's
   autoplay gesture. Scene music switches crossfade through the KNI backend exactly as
   desktop crossfades through the MonoGame one — one shared core, two playback adapters —
   and each scene switch writes one bus readback line to the debug stream.

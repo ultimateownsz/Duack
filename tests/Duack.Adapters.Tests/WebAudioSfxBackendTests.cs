@@ -180,7 +180,9 @@ public class WebAudioSfxBackendTests
         backend.SetBusVolume(BusNames.Sfx, 0.5f);
 
         Assert.DoesNotContain(js.Calls, c => c.StartsWith("SetBusVolume"));
-    }    [Fact]
+    }
+
+    [Fact]
     public void Dispose_releases_the_JS_side_prefetched_buffers()
     {
         var js = new FakeWebAudioNative();

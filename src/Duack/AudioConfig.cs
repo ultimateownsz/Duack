@@ -103,6 +103,14 @@ public class SfxConfig
     /// <summary>Optional limits on simultaneous SFX voices. Null means unlimited.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public VoiceLimitConfig? VoiceLimits { get; set; }
+
+    /// <summary>
+    /// Optional 2D spatial settings (pan saturation, distance fall-off), authored via
+    /// <see cref="AudioConfigBuilder.WithSpatial"/>. Null means positional plays use a fresh
+    /// default-constructed <see cref="SpatialConfig"/> rather than no spatial behavior.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public SpatialConfig? Spatial { get; set; }
 }
 
 /// <summary>
@@ -193,5 +201,6 @@ public class AudioConfig
         if (Sfx.CueVariation is { } sfxVariation)
             Sfx.CueVariation = new CueVariation(sfxVariation.PitchRange, sfxVariation.VolumeRange);
         Sfx.VoiceLimits?.Sanitize();
+        Sfx.Spatial?.Sanitize();
     }
 }

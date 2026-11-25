@@ -94,6 +94,26 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 
 ### Added
 
+#### 2026-11-25
+
+- **Per-bus gain nodes on the web SFX head.** The WebAudio JS bridge now keeps one
+  persistent gain node per bus of the playing chain — the fixed `sfx` node every play's
+  per-source gain routes through into the `master` node, then the destination — instead of
+  connecting each source straight to the destination, and gains a `setBusVolume(bus,
+  volume)` bridge call with a matching `WebAudioSfxBackend.SetBusVolume` (clamped to
+  [0, 1], 3 ms ramp inside JS) so a live bus volume change moves the currently playing
+  voices through that node, not only future plays. Contract change: `IWebAudioNative`
+  implementors (custom test fakes, alternative bridges) must add
+  `SetBusVolume(string, float)`; `ISfxBackend`/`ISfxBackend.Play` are unchanged and the
+  per-play volume the core hands the backend is applied exactly as before, so the
+  observable API is identical across backends. Honest subset (known limitation): the core
+  seam hands the adapter only the fully composed per-play volume — no bus name — so of the
+  flat table's buses only the fixed `sfx`/`master` chain carries audio today; user-bus
+  nodes are created on demand and ready to drive, but nothing routes into them until the
+  core seam passes the resolved bus per play (a core `ISfxBackend` contract change, out of
+  this adapter's scope). Real-browser listening still pending: the headless seam tests pin
+  the bridge calls, not the JS audio graph. (#36)
+
 #### 2026-11-22
 
 - **User-defined buses.** `AudioConfigBuilder.WithBus("ambience", volume)`

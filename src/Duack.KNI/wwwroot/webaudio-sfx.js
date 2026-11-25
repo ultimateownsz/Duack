@@ -1,10 +1,13 @@
-// Duack WebAudio SFX backend — plays one-shot cues over the music track using the
+﻿// Duack WebAudio SFX backend — plays one-shot cues over the music track using the
 // browser WebAudio API. Attached to globalThis for synchronous [JSImport] calls from C#.
 
 (function () {
     let audioContext = null;
     const buffers = new Map();          // url -> AudioBuffer
     const playingSources = [];          // { source, gain }
+    const busNodes = new Map();         // bus name -> persistent GainNode of the playing chain
+    let masterNode = null;
+    let sfxNode = null;
 
     function initAudioContext() {
         if (audioContext) return;
@@ -16,6 +19,15 @@
         if (audioContext.state === 'suspended') {
             audioContext.resume();
         }
+        // One persistent gain node per bus of the playing chain: the fixed sfx node every
+        // play's per-source gain routes through, into the master node, then the destination.
+        // Bus volume updates move these nodes, so currently playing voices move with them.
+        masterNode = audioContext.createGain();
+        sfxNode = audioContext.createGain();
+        sfxNode.connect(masterNode);
+        masterNode.connect(audioContext.destination);
+        busNodes.set('sfx', sfxNode);
+        busNodes.set('master', masterNode);
     }
 
     function hasBuffer(url) {
@@ -63,7 +75,9 @@
         gain.gain.linearRampToValueAtTime(volume, now + 0.003);
 
         source.connect(gain);
-        gain.connect(audioContext.destination);
+        // Route through the fixed sfx bus node into master (created on init); the per-source
+        // gain keeps the fully composed per-play volume the core handed the backend.
+        gain.connect(sfxNode);
         source.start();
 
         const handle = { source: source, gain: gain };
@@ -75,6 +89,25 @@
             try { gain.disconnect(); } catch (e) {}
             try { source.disconnect(); } catch (e) {}
         };
+    }
+
+    // Sets a bus node's live volume (clamped [0, 1]); the 3 ms ramp matches the onset ramp so
+    // a slider drag does not zipper. Unknown bus names are created as leaf nodes under master
+    // on demand, so a head that drives them has the node ready; nothing routes into them until
+    // the core seam carries the resolved bus per play.
+    function setBusVolume(bus, volume) {
+        initAudioContext();
+        let node = busNodes.get(bus);
+        if (!node) {
+            node = audioContext.createGain();
+            node.connect(masterNode);
+            busNodes.set(bus, node);
+        }
+        const clamped = Math.max(0, Math.min(1, volume));
+        const now = audioContext.currentTime;
+        node.gain.cancelScheduledValues(now);
+        node.gain.setValueAtTime(node.gain.value, now);
+        node.gain.linearRampToValueAtTime(clamped, now + 0.003);
     }
 
     function stopAll() {
@@ -94,6 +127,7 @@
         hasBuffer,
         preloadBuffers,
         playSource,
+        setBusVolume,
         stopAll,
     };
 })();

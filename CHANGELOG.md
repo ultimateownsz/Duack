@@ -1,4 +1,4 @@
-﻿# Changelog
+# Changelog
 
 All notable changes to this project are documented in this file.
 
@@ -81,7 +81,7 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
   plus all keyboard plumbing that served only them (`WasKeyPressed`, `_previousKeyboard`,
   `KeyboardState`, the XNA `Input` using). The story advances solely on its timers;
   `StoryController.Advance`/`Restart` stay public on the engine-free core (their semantics
-  are pinned headlessly; no head calls them). Slice F's one-mixer-path acceptance stays
+  are pinned headlessly; no head calls them). The unified one-mixer-path acceptance stays
   visible without interaction: each scene switch now prints ONE line combining the scene
   name with the shared bus readback
   (`SampleAudio.DescribeBuses`: master/music/sfx + ambience with live gains and duck
@@ -99,7 +99,7 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
   references to internal planning artifacts. Docs only; no behavior change. (#31)
 
 #### 2026-11-23
-- Removed `planner` skill from `duack-skills/` — planner is repo tooling for project-specific planning workflow, not marketplace content. Users keep local copy at `.vibe/skills/planner/` or equivalent. No behavior change.
+- Removed `planner` skill from `duack-skills/` — planner is repo tooling for project-specific planning workflow, not marketplace content. Users keep local copy at `.vibe/skills/planner/` or equivalent. No behavior change. (#35)
 
 #### 2026-11-01
 - Added a separate `.github/workflows/release-cli.yml` that publishes `DuackCli` as its own optional NuGet .NET tool (triggered by `cli-v*` tags), plus a README install note and CLI skill install instructions. (#11)
@@ -188,16 +188,16 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 - Sfx full-suite notes: `DuckMixer.Set(name, false)` now also clears ref-counted holds
   (releases like `ReleaseAll` for that source, at that source's release constant); the fixed
   SFX path (`Play` without `bus`) stays outside bus-duck composition, so a duck source
-  targeting the literal `"sfx"` bus applies only to bus-routed plays. Both behaviors unit-pinned.
-- **OpenCode review agent crew.** `.opencode/agents/` gains three `.opencode/agents/` gains three
-  subagents modeled on the FlatRedBall2 discipline-agent subset:
+  targeting the literal `"sfx"` bus applies only to bus-routed plays. Both behaviors unit-pinned. (#32)
+- **OpenCode review agent crew.** `.opencode/agents/` gains three subagents modeled on the
+  FlatRedBall2 discipline-agent subset:
   `qa` reviews diffs and PRs against AGENTS.md and issues a good or
   blocked verdict at a new plan-phase PR gate before a phase checkbox
   may tick; `refactoring-specialist` refactors test-first and runs
   only the targeted suites a diff touches; `docs-writer` maps
   landed changes to the changelog, skills, docs and README.
   AGENTS.md documents when each is used. Ships untested on purpose:
-  agent prompts and documentation only, no production code touched.
+  agent prompts and documentation only, no production code touched. (#23)
 - Every plan checkbox now names its issue (`- [ ] <step> (#N)`), created before work starts, and implementing commits carry a `Refs: #N` footer. `git log --grep '#N'` lists the exact commits behind a box so a change can be reviewed, documented or reverted as a unit. Added matching human/agent issue templates under `.github/ISSUE_TEMPLATE/` and documented the convention in `AGENTS.md`, `CONTRIBUTING.md`, `plan/plan.md`, `design/TODOS.md` and both plan templates. (#24)
 
 #### 2026-11-22
@@ -211,10 +211,10 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 - **GitHub Pages workflow for the web sample.** New `.github/workflows/pages.yml` builds and
   publishes `samples/Duack.Sample.Web` (WASM workload) to GitHub Pages on push to `master` or
   manual dispatch, so the crossfade + ducking demo is viewable in a browser without a local
-  build. Autoplay requires a click ("Start story") — documented up front.
+  build. Autoplay requires a click ("Start story") — documented up front. (#3)
 - Added MusicManager transition telemetry: IsTransitioning, elapsed/duration seconds, and source/target track names for UI, diagnostics, and progress indicators.
-  
-  
+
+
 #### 2026-10-29
 
 - **`MusicManager` no longer reports a stale fade-out duration in transition telemetry on
@@ -227,7 +227,7 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
   `Non_overlap_first_play_reports_only_the_fade_in_duration`,
   `Non_overlap_repeat_track_fade_in_does_not_inherit_the_previous_fade_out`.
   Also made `MusicTransitionSequencer.Advance` consume a delta across phase boundaries so a
-  single large `Update()` can complete a multi-phase transition.
+  single large `Update()` can complete a multi-phase transition. (#7)
 
 ### Fixed
 
@@ -291,7 +291,7 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 - `BusMixer.SetBus` no longer fires the `Changed` event when the volume value is unchanged -
   a per-frame hot-update loop re-notified all subscribers every frame. Creating a bus by the
   first call still notifies (it is a state change). Repro: set the same value twice and
-  assert one event (BusMixerTests.SetBus_SameValueOnKnownBus_SecondCallDoesNotRaiseChanged).
+  assert one event (BusMixerTests.SetBus_SameValueOnKnownBus_SecondCallDoesNotRaiseChanged). (#32)
 - Documented (no behavior change, pinned by test): `BusMixer.SetBus` on an unknown name
   intentionally creates the bus - it is the authoring surface, matching the
   `DuckMixer.ReloadSources` hot-update pattern - while `Resolve` on unknown names falls back
@@ -324,32 +324,32 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
   and their scaffolding/validation tests are gone from the active codebase. The prior
   implementation remains available on `legacy/pre-refactor`; active configuration is authored
   with `AudioConfigBuilder` and `PlaylistConfigBuilder`. Standalone playlist, audio-manifest,
-  and player-settings JSON remain supported because current CLI and runtime flows use them.
+  and player-settings JSON remain supported because current CLI and runtime flows use them. (#10)
 - **README adds a browser/WASM gotcha for copied Duack skills.** If a project targets the
   browser, keep the audio flow in Duack's C# API and adapters instead of re-implementing it in
   vanilla HTML/JS or raw browser audio code. Desktop builds are already C# and do not involve
-  HTML/JS.
+  HTML/JS. (#4)
 - **README clarifies the CLI is desktop-only build-time tooling**, not a runtime dependency:
   it runs on the dev machine and never ships to the browser; the web head reads the checked-in
   `audio-manifest.json`. README also notes that files the loader cannot open are reported (scan
   warnings + runtime `[Audio] Could not load ...` lines) rather than failing silently, adds a
   compact five-line config sample, an autoplay/user-gesture note, a "who adopts first"
-  (MonoGame, then FlatRedBall2) answer, and an old-way-vs-new-way crossfade table.
+  (MonoGame, then FlatRedBall2) answer, and an old-way-vs-new-way crossfade table. (#4)
 - **Web sample README brought up to date**: it now documents `WebAudioSfxBackend` for
-  overlapping one-shot cues instead of the obsolete "no sfx backend" note.
-- **README gains a Samples table** with a Play column linking to the GitHub Pages live demo.
+  overlapping one-shot cues instead of the obsolete "no sfx backend" note. (#4)
+- **README gains a Samples table** with a Play column linking to the GitHub Pages live demo. (#4)
 - **Web sample gains a live crossfade toggle.** Press `C` to flip `CrossfadeSeconds` between
   the authored value and 0 (instant hard cut); a corner indicator shows green (ramp) / red
-  (hard cut). README points at it.
+  (hard cut). README points at it. (#3)
 - **New `samples/Duack.Sample.Crossfade`** minimal showcase: click tracks or press 1/2/3/Space,
   click preset buttons for crossfade duration (4s/8s/12s/16s), toggle crossfade on/off.
-  Config mirrors `WithCrossfadeSeconds` usage.
+  Config mirrors `WithCrossfadeSeconds` usage. (#3)
 - **Crossfade demo UX clarified.** The player now presents a guided choose-track/play flow,
   labeled transport actions, larger touch targets, clearer transition and playback feedback,
   visible keyboard guidance, and an expandable explanation of the desktop and web transition
-  paths. The UI remains a sample-only Blazor surface over Duack's C# API.
+  paths. The UI remains a sample-only Blazor surface over Duack's C# API. (#3)
 - **Added `crossfade-demo.html`** standalone WebAudio page (slider + play buttons) under the
-  web sample's wwwroot for a lightweight feature showcase.
+  web sample's wwwroot for a lightweight feature showcase. (#3)
 
 ### Fixed
 
@@ -358,33 +358,33 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 - **Web player settings now propagate a storage rejection.** `WebPlayerSettingsStore.Save`
   previously returned success whenever `IKeyValueStorage.Set` returned normally, even when the
   storage adapter explicitly returned `false`; the settings UI could therefore report "Saved!"
-  although the new values were not persisted. A regression test now covers this path.
+  although the new values were not persisted. A regression test now covers this path. (#9)
 - **Added an HTML/Blazor control overlay to the Crossfade sample.** The overlay now mirrors the
   former two-column player layout with track list, previous/play/next controls, status, meter,
   crossfade toggle, and 4s/8s/12s/16s presets. All actions invoke the running C# `Game1` and
   Duack `MusicManager`; the canvas and browser/KNI audio path remain unchanged. No separate audio
   behavior test was added because this is a thin UI event bridge; existing `MusicManager` tests
-  cover the delegated transition behavior.
+  cover the delegated transition behavior. (#3)
 - **Removed the legacy Crossfade canvas UI and static HTML legend.** The Blazor overlay is now the
-  only visible control surface, avoiding duplicate track panels and conflicting mouse hit areas.
+  only visible control surface, avoiding duplicate track panels and conflicting mouse hit areas. (#3)
 - **Made the Crossfade transition meter live.** It now reads transition phase, source/target tracks,
   elapsed seconds, total duration, and progress from `MusicManager` through C#; no browser audio
-  timing or vanilla-JavaScript fade logic is involved.
+  timing or vanilla-JavaScript fade logic is involved. (#3)
 - **Fixed the Crossfade sample's duration presets.** Per-track `FadeInSeconds = 0.4f`
   accidentally overrode `MusicManager`'s configured crossfade duration, making the 4s/8s/12s/16s
   controls switch tracks after only 0.4 seconds. Removing those per-track overrides restores the
-  configured transition durations.
+  configured transition durations. (#2)
 - **GitHub Pages now deploys the actual Blazor/KNI Crossfade sample at
   `/crossfade-demo/`.** The workflow previously published only the Story sample, so the
   documented Crossfade route was missing and the `.html` link opened the separate standalone
   vanilla-JavaScript showcase instead. The Blazor sample is now published as its own directory,
-  preserving the configured 4s/8s/12s/16s Duack crossfade controls.
+  preserving the configured 4s/8s/12s/16s Duack crossfade controls. (#3)
 - **Renamed `AudioLibrary.SfxManageryName` to `AudioLibrary.SfxDirectoryName`.** The
   director→manager rename pass had accidentally rewritten the `SfxDirectoryName` constant
   (no "Director" substring intended) into `SfxManageryName`. Value (`"SFX"`) and behavior
   unchanged; the public constant now has the intended name. Any consumer referencing the
   misspelled name must update to `SfxDirectoryName`. Pins:
-  `Convention_directory_constants_have_the_intended_names`.
+  `Convention_directory_constants_have_the_intended_names`. (#2)
 
 ## [0.1.0-preview.4] - 2026-10-26
 

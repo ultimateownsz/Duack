@@ -11,6 +11,17 @@ Every code change is recorded in `CHANGELOG.md` under `## Unreleased`, in the ap
 reproduction detail to re-verify or revert. Reference the related PR/issue (e.g. `(#123)`)
 so it surfaces in the auto-generated release notes. Do not edit code without reflecting it there.
 
+Identify changes by date and PR/issue number only — never by plan-slice or
+phase names ("slice F's readback", "phase 02 work", and so on). The dated
+subsection and the issue reference already say everything a reader needs;
+slice names rot: every entry that names a slice is a manual fix-up none of
+the tooling can keep consistent. Slice/phase tracking belongs where it is
+maintained automatically: the plan workspace (`docs/plans/vnext/`, `plan/`).
+
+Documentation itself (plain-English tone, minimal why-only comments, the
+XML doc contract for public API) is the `docs-writer` agent's brief; consult
+`.opencode/agents/docs-writer.md` before writing or reviewing prose docs.
+
 ## Test-Driven Development (non-negotiable)
 
 Any refactor of existing behavior and any creation of new behavior is written test-first:

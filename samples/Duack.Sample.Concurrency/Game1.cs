@@ -214,6 +214,7 @@ public class Game1 : Game
     {
         // 5 rows, bit 2 = leftmost column of the 3-wide glyph.
         ['O'] = new byte[] { 0b111, 0b101, 0b101, 0b101, 0b111 },
+        ['L'] = new byte[] { 0b100, 0b100, 0b100, 0b100, 0b111 },
         ['M'] = new byte[] { 0b101, 0b111, 0b111, 0b101, 0b101 },
         ['N'] = new byte[] { 0b101, 0b111, 0b111, 0b111, 0b101 },
         ['A'] = new byte[] { 0b111, 0b101, 0b111, 0b101, 0b101 },

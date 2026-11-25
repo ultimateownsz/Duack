@@ -70,17 +70,20 @@
 
         const handle = { source: source, gain: gain };
         playingSources.push(handle);
-        sourcesById.set(nextSourceId, handle);
+        // Capture the id now: the onended closure must delete THIS source's mapping, not
+        // whatever id the counter holds when the source happens to end.
+        const id = nextSourceId++;
+        sourcesById.set(id, handle);
 
         source.onended = function () {
             const idx = playingSources.indexOf(handle);
             if (idx >= 0) playingSources.splice(idx, 1);
-            sourcesById.delete(nextSourceId);
+            sourcesById.delete(id);
             try { gain.disconnect(); } catch (e) {}
             try { source.disconnect(); } catch (e) {}
         };
 
-        return nextSourceId++;
+        return id;
     }
 
     // Stops one tracked voice by id (voice stealing); no-op for unknown or finished ids.

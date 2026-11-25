@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -107,12 +107,33 @@ public sealed class WebAudioSfxBackend : ISfxBackend, IDisposable
         }
     }
 
+    /// <summary>
+    /// Warms the browser HTTP cache for the given URLs (fire-and-forget, nothing is decoded):
+    /// the platform music player on BlazorGL fetches its tracks by URL on first play, so a demo
+    /// warms the track URLs right after the start gesture and the first track plays from cache
+    /// instead of the network. A missing URL logs loudly on the JS side and changes nothing
+    /// here. No-op after <see cref="Dispose"/>.
+    /// </summary>
+    public void WarmHttpCache(string[] urls)
+    {
+        if (_disposed || urls is null || urls.Length == 0) return;
+        try
+        {
+            _js.WarmHttpCache(urls);
+        }
+        catch
+        {
+            // Swallow: warming is opportunistic and never blocks startup.
+        }
+    }
+
     /// <inheritdoc />
     public void Dispose()
     {
         if (_disposed) return;
         _disposed = true;
         try { _js.StopAll(); } catch { }
+        try { _js.ReleaseAllBuffers(); } catch { } // the JS-side decoded buffers leave with the backend
         _cueUrls.Clear();
     }
 }

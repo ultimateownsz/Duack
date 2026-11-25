@@ -1,4 +1,4 @@
-// Duack WebAudio SFX backend — plays one-shot cues over the music track using the
+﻿// Duack WebAudio SFX backend — plays one-shot cues over the music track using the
 // browser WebAudio API. Attached to globalThis for synchronous [JSImport] calls from C#.
 
 (function () {
@@ -110,6 +110,22 @@
         node.gain.linearRampToValueAtTime(clamped, now + 0.003);
     }
 
+    // Warms the browser HTTP cache for URLs fetched by other elements (the platform <audio>
+    // for tracks): plain fetches, no AudioContext and no audio decode needed. Fire-and-forget
+    // with per-URL error logs so one bad file cannot block the rest.
+    function warmHttpCache(urls) {
+        for (const url of urls) {
+            fetch(url)
+                .catch(function (e) {
+                    console.error('[Duack WebAudio] Could not warm', url, e);
+                });
+        }
+    }
+
+    function releaseAllBuffers() {
+        buffers.clear();
+    }
+
     function stopAll() {
         // Iterate over a copy so source.stop() triggering onended (which splices
         // the live array) cannot skip elements.
@@ -129,5 +145,7 @@
         playSource,
         setBusVolume,
         stopAll,
+        warmHttpCache,
+        releaseAllBuffers,
     };
 })();

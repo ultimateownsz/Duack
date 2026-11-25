@@ -99,6 +99,17 @@ public class Game1 : Game, IDisposable
         var sfxBackend = new WebAudioSfxBackend(new WebAudioNative(), sfxUrls);
         _sfx = new SfxManager(_library, sfxBackend, _manager, "sfx", masterVolume: config.Buses[BusNames.Master].Volume, sfxBusVolume: config.Buses[BusNames.Sfx].Volume, sfxConfig: config.Sfx);
 
+        // First-track latency (maintainer ruling, Nov 25 round 5): the platform <audio>
+        // fetches its OGG on first play - warm the browser HTTP cache for every track URL
+        // right after the start gesture (this runs post-gesture), so the first track starts
+        // from cache. The platform MediaPlayer API offers no preload seam (KniMediaPlayerHost
+        // reaches only Play/Stop), so the cache warm is the honest mechanism; the element's
+        // one-time OGG decode on play remains, and the SFX buffers are already fully decoded
+        // by the backend's constructor call above.
+        sfxBackend.WarmHttpCache(_library.Tracks
+            .Select(track => $"Content/Audio/Tracks/{track}.ogg")
+            .ToArray());
+
         _manager.TrackCompleted += finished =>
             System.Diagnostics.Debug.WriteLine($"[Sample] track finished: {finished.Name} ({finished.Context})");
     }

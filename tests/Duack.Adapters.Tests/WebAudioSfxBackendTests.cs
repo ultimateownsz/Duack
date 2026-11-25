@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Duack.KNI;
 using Xunit;
@@ -35,6 +35,16 @@ internal sealed class FakeWebAudioNative : IWebAudioNative
     public void SetBusVolume(string bus, float volume)
     {
         Calls.Add($"SetBusVolume({bus}, {volume})");
+    }
+
+    public void WarmHttpCache(string[] urls)
+    {
+        Calls.Add($"WarmHttpCache({string.Join(",", urls)})");
+    }
+
+    public void ReleaseAllBuffers()
+    {
+        Calls.Add("ReleaseAllBuffers");
     }
 
     public void StopAll()
@@ -170,5 +180,44 @@ public class WebAudioSfxBackendTests
         backend.SetBusVolume(BusNames.Sfx, 0.5f);
 
         Assert.DoesNotContain(js.Calls, c => c.StartsWith("SetBusVolume"));
+    }    [Fact]
+    public void Dispose_releases_the_JS_side_prefetched_buffers()
+    {
+        var js = new FakeWebAudioNative();
+        js.Buffers["hit.wav"] = true;
+        var backend = new WebAudioSfxBackend(js, new[] { new KeyValuePair<string, string>("hit", "hit.wav") });
+
+        backend.Dispose();
+
+        Assert.Contains("ReleaseAllBuffers", js.Calls);
+    }
+    [Fact]
+    public void WarmHttpCache_forwards_the_urls_exactly_and_in_ctor_order()
+    {
+        var js = new FakeWebAudioNative();
+        var backend = new WebAudioSfxBackend(js, new[] { new KeyValuePair<string, string>("hit", "hit.wav") });
+
+        backend.WarmHttpCache(new[] { "Content/Audio/Tracks/battle.ogg", "Content/Audio/Tracks/overworld.ogg" });
+
+        Assert.Contains("WarmHttpCache(Content/Audio/Tracks/battle.ogg,Content/Audio/Tracks/overworld.ogg)", js.Calls);
+    }
+
+    [Fact]
+    public void Construction_prefetches_exactly_the_ctor_urls()
+    {
+        // Pins what the ruling found already in place: every constructed cue URL is handed to
+        // the bridge for fetch+decode in ctor order (one call, nothing missing, nothing extra).
+        var js = new FakeWebAudioNative();
+        var urls = new[]
+        {
+            new KeyValuePair<string, string>("hit", "Content/Audio/SFX/hit-1.wav"),
+            new KeyValuePair<string, string>("notice", "Content/Audio/SFX/notice-video-game-sfx.wav"),
+            new KeyValuePair<string, string>("battle-start", "Content/Audio/SFX/battle-start.wav"),
+        };
+        _ = new WebAudioSfxBackend(js, urls);
+
+        Assert.Equal(
+            "PreloadBuffers(Content/Audio/SFX/hit-1.wav,Content/Audio/SFX/notice-video-game-sfx.wav,Content/Audio/SFX/battle-start.wav)",
+            js.Calls.Single(c => c.StartsWith("PreloadBuffers")));
     }
 }

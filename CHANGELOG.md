@@ -127,6 +127,25 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
   Nov 22 maintainer call; the `sfx` fold stays pinned in core tests only. (#36)
 #### 2026-11-25
 
+- **Web sample prefetch: no first-play waits after the start gesture** (maintainer ruling,
+  Nov 25, human listening round 5: the first music track started with an audible network
+  delay on the web head - the desktop loads all Content up front). Investigation found the
+  SFX side already prefetching: `WebAudioSfxBackend`'s constructor (which runs after the
+  boot-screen gesture, `Index.razor.cs`) hands every cue URL to the bridge in one call and
+  the JS `preloadBuffers` fetches + `decodeAudioData`s all of them up front - now pinned
+  headlessly. The music path is the honest subset, like D18: the KNI
+  `MediaPlayer`/`IMediaPlayerHost` seam (`KniMediaPlayerHost.cs`) exposes only
+  `Play(uri)`/`Stop` - no preload/dual-buffer capability - so the BlazorGL `<audio>` fetches
+  its OGG on first play. What landed: `WarmHttpCache(urls)` on the backend/bridge
+  (`IWebAudioNative` contract addition, JS bridge `warmHttpCache` fetches, fire-and-forget)
+  and the sample warms every track URL right after the start gesture, so the first track
+  starts from the browser HTTP cache (~3.4 MB of demo OGGs) instead of the network.
+  Documented residue (ADR-8 pattern): the element's one-time OGG decode on first play
+  remains, and no pin can cover browser fetch behavior - it needs the human browser check.
+  Dispose semantics extended: `IWebAudioNative.ReleaseAllBuffers()` + JS
+  `releaseAllBuffers()` (contract additions), and `WebAudioSfxBackend.Dispose` now releases
+  the JS-side decoded SFX buffers (~1.4 MB for the demo set) instead of leaking them.
+  (#36)
 - **Per-bus gain nodes on the web SFX head.** The WebAudio JS bridge now keeps one
   persistent gain node per bus of the playing chain — the fixed `sfx` node every play's
   per-source gain routes through into the `master` node, then the destination — instead of

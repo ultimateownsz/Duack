@@ -72,4 +72,4 @@ sources with `MusicManager.ReloadDuckSources()` (duck state is preserved; existi
 swap params in place). Duack has **no built-in file watching** — file monitoring is the
 host's responsibility (and varies by engine; not standard in MonoGame/KNI).
 
-See also: `cli`, `player-settings`, `audio-core`.
+See also: `buses` (the full bus surface), `concurrency` (voice limits), `cli`, `player-settings`, `audio-core`.

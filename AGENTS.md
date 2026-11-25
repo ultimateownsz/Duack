@@ -71,7 +71,7 @@ A change that ships with no test needs a written reason in the changelog entry.
   two-directory convention; the storyline/wiring come from `Duack.Sample.Core`, pinned by…
 - `tests/Duack.Sample.Tests` — …the sample test project (references the core only; headless,
   no graphics device).
-- `samples/Duack.Sample.Concurrency` — standalone MonoGame example for Slice A voice limiting
+- `samples/Duack.Sample.Concurrency` — standalone MonoGame example for SFX voice-limiting
   (50-cue burst, global cap 8, on-screen active-voice counter). Feature examples get their own
   project; the storyline samples stay unchanged.
 - `samples/Duack.Sample.Web` — BlazorWASM/KNI music + storyline demo (same `Duack.Sample.Core`

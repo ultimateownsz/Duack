@@ -305,3 +305,40 @@ cannot catch, and the browser listening check remains the real verification.
   voices audibly stop) and the browser check of the wired web head.
 - Ruling wanted: `PlayDetailed` reports zero-gain plays as `Played` (master semantics).
 
+
+## feat/voice-concurrency — final PR-review gate (2026-11-25, third pass)
+
+- Reviewed: 2026-11-25
+- Head at review: `1a5ed3a8` (20 commits over `origin/master` `7b56ce78`; 29 files, +1489/−59)
+- Base: `origin/master`
+- Verdict: **good — PR-ready.** All agent-verifiable slice criteria and follow-up items pass;
+  the two human checks remain maintainer obligations and are not ticked.
+
+### Checks in this pass
+
+- Sweep of the full tracked diff (all 29 files) against the slice PLAN and the recorded
+  follow-up: caps, policies, per-cue overrides, observable results, dedicated example, seam,
+  web wiring, docs, changelog — no unplanned scope, nothing incomplete in the diff itself.
+- Hygiene scan forced over every git-tracked file (previous scans accidentally included
+  build-output directories and missed bare "slice" in three comments): zero planning-vocabulary
+  or conflict-marker hits outside the planning workspace, the plan-tooling docs, and master's
+  pre-existing changelog lines — all of which are the vocabulary's legitimate home per #39's
+  own text. Found and fixed in this pass: "Slice A" in AGENTS.md's sample listing and two
+  "(PLAN addendum)" references in the web-head comments (now `#38`).
+- Consumer-facing surfaces (docs-writer rules): README sample table now lists the demo;
+  config skill's See-also now routes to `buses` and `concurrency`; button labels are the
+  vocabulary-free PLAY/MANY/STOP; the skill doc claims only numeric observable behavior
+  (counter never exceeds 08) and explicitly defers the audible verdict to the human check.
+- JS bridge re-read after the id-capture fix: sourcesById is keyed by the captured per-source
+  id, cleaned on natural end, stopSource, and stopAll; StopVoice no-ops on unknown/stale ids.
+- Verification: solution build 0 errors/0 warnings; 450 tests green (348 + 38 + 21 + 43);
+  web sample builds explicitly (solution-excluded by design); plan_check → pass; plan tool
+  unittests → OK.
+
+### Maintainer obligations before merge
+
+- Human listening: `Duack.Sample.Concurrency` (PLAY fires one cue; MANY fires 50 overlapping
+  cues against the cap — judge whether stolen voices audibly stop; STOP resets); browser check
+  of the wired web head (user-gesture start, worst-moment standard).
+- Optional ruling: `PlayDetailed` reports zero-gain plays as `Played` (inherited master
+  semantics; `ZeroEffectiveGain` is the report channel).

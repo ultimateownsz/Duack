@@ -97,7 +97,7 @@ public class Game1 : Game, IDisposable
         var sfxUrls = _library.Sfx.Select(cue => new KeyValuePair<string, string>(
             cue, $"Content/Audio/SFX/{cue}.wav"));
         var sfxBackend = new WebAudioSfxBackend(new WebAudioNative(), sfxUrls);
-        // Voice limits on the web head too (PLAN addendum): same cap as the desktop stress
+        // Voice limits on the web head too (#38): same cap as the desktop stress
         // example, so a heavy page burst cannot saturate WebAudio. DefaultVoiceSeconds is the
         // authored lifetime; aged by SfxManager.Update every frame below.
         _sfx = new SfxManager(_library, sfxBackend, _manager, "sfx",
@@ -139,7 +139,7 @@ public class Game1 : Game, IDisposable
 
         _manager.Update(dt);
         // Voice lifetimes must age on the same unscaled dt: the authored limits never expire
-        // otherwise, and one sustained burst would saturate the cap forever (PLAN addendum).
+        // otherwise, and one sustained burst would saturate the cap forever (#38).
         _sfx?.Update(dt);
 
         if (_flash > 0f) _flash = Math.Max(0f, _flash - dt);

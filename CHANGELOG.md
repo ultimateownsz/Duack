@@ -9,7 +9,30 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 
 ## [Unreleased]
 
-### Changed
+### Added
+
+#### 2026-11-25
+- **2D positional SFX (#34).** `SfxManager.SetListener(x, y)` + `ListenerPosition` readback
+  anchor the listener; `SfxManager.PlayAt(cue, x, y, ...)` places a one-shot in the world and
+  returns an `SfxSpatialVoice` whose `SetPosition(x, y)` re-mixes the live voice as it (or the
+  listener) moves. The distance gain composes through the same chain every play uses — one
+  chain, after the resolved bus gain and the live duck ratio — so a positional cue rides user
+  buses and ducking unchanged; at or past the authored `MaxDistance` (the mute floor) the play
+  composes to zero and reports through `ZeroEffectiveGain`, consuming no voice slot. Pan
+  reaches backends through the additive `ISfxPositionalBackend` seam (same pattern as #38):
+  the package `SoundEffectSfxBackend` and the web `WebAudioSfxBackend` both apply it — web
+  through a per-voice `StereoPannerNode`, desktop through `SoundEffectInstance.Pan` — and a
+  backend without the seam plays the composed volume mono-centered. Authored via
+  `AudioConfigBuilder.WithSpatial(new SpatialConfig { ... })` (reference/max distance, rolloff,
+  pan distance/saturation, distance model linear/inverse — two knobs and two models shipped
+  per the slip-rule defaults; all curve parameters are debrief-tunable, revisitable until
+  Gate 0). Known limitations, recorded deliberately: the desktop platform pan is a linear
+  channel taper while the web panner is constant-power, so the same pan value reproduces
+  slightly different L/R gains per backend (an ADR-8-style documented acoustic difference,
+  not recombined until listening evidence asks); a live voice whose source trails past the
+  mute floor is silenced, not stopped, its slot freed by the limiter lifetime; and a voice's
+  remix record is dropped after twice the assumed one-shot lifetime, so a cue longer than
+  that keeps sounding but stops following its position.
 
 #### 2026-11-25
 - **Preview breaking (audible): a duck source targeting `"sfx"` now scales the fixed

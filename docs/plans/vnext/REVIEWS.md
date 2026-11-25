@@ -345,3 +345,55 @@ cannot catch, and the browser listening check remains the real verification.
   of the wired web head (user-gesture start, worst-moment standard).
 - Optional ruling: `PlayDetailed` reports zero-gain plays as `Played` (inherited master
   semantics; `ZeroEffectiveGain` is the report channel).
+
+## feat/spatial-sfx — restart review of the unmerged slice B work (2026-11-25): blocked
+
+- Head at review: `d4a1a23` (merge of `master` into `feat/spatial-sfx`)
+- Reviewer: `qa` subagent, run ahead of the slice B restart on #34.
+- Verdict: **blocked — do not merge, do not resume from it.** The slice restarts
+  fresh from `master` on `feat/positional-sfx`.
+
+### Blocking
+
+**F1 — the branch tip's tests pin an API its own tree does not contain.** The merge
+`d4a1a23` resolved `SfxManager.cs` in favor of master, dropping `f8d22ee`'s entire
+positional wiring (`SetListener`/`PlayAt`/`UpdatePosition`/`IPositionalSfxBackend` absent
+from the tip), while `SfxSpatialTests.cs` still calls them and the changelog claims they
+shipped. Verify: `git show feat/spatial-sfx:src/Duack/SfxManager.cs | grep -c PlayAt` -> 0.
+
+**F2 — the changelog documents phantom adapter features.** The 2026-11-23 entry claims
+MonoGame `IAudioInstance.Pan` application and a KNI `playPannedSource`/`StereoPannerNode`
+bridge that exist in no commit (`git grep -i playPannedSource feat/spatial-sfx` matches
+only CHANGELOG.md).
+
+### Carried into the restart design
+
+- A zero-gain positional play consumed a limiter slot (the mute floor must release it).
+- The cross-backend parity claim was false: desktop `SoundEffectInstance.Pan` is a linear
+  platform taper, web `StereoPannerNode` is constant-power; the restart records the
+  difference (STATUS.md) instead of asserting agreement.
+- The dead `SetCueMix` seam keyed live re-mixing by cue name, so two overlapping voices
+  of the same cue re-mixed as one; re-mix is restarted per voice handle.
+- Non-finite positions propagated unguarded into the pan curve.
+- Surface cut to the slip-rule defaults: two distance models (linear, inverse) and two
+  pan knobs (`PanSaturation`, `PanDistance`).
+
+Salvaged in spirit and re-derived from scratch: the `SpatialMath`/`SpatialConfig` shapes
+and their SHARED section-12 test properties, the ADR-11 input-seam API, and the web voice
+lifecycle pattern (onended disconnect + tracked id map) the panner calls layer on.
+
+## feat/positional-sfx — slice B restart phase-gate review (`7cb71c6..26df41e`, 2026-11-25): good
+
+- Head at review: `26df41e`
+- Reviewer: `qa` subagent; ran `dotnet test` (393 CodeOnly/JsonRoundTrip, 43 adapters, all
+  green) before ruling.
+- Verdict: **good.** The restart resolves every blocking finding of the previous entry:
+  the mute floor composes to zero before the limiter (no slot consumed, reported through
+  `ZeroEffectiveGain`), positional gain rides the unified bus chain and re-mix re-resolves
+  it live, re-mix keys by voice handle (two overlapping same-cue voices independent), the
+  remix-record map is pruned at 2× the assumed voice lifetime, and the JS bridge is one
+  leak-free contract in both shipped copies.
+- Non-blocking caveats recorded: desktop pan reproduces through the platform's linear taper
+  vs the web constant-power law (documented, unquantified); stereo correctness at
+  `|pan| -> 1` rests on the human-listening gate (open on #34); per-voice bus re-resolve in
+  `RemixVoiceNow` is fine at current voice counts, a note if they grow.

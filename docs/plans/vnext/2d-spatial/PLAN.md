@@ -22,3 +22,18 @@ Acceptance:
 - Web build of the sample verified in a browser with a user-gesture start (browsers suspend audio until gesture).
 
 Definition of done: tests green, both samples pass human listening, crossfade/ducking behavior unchanged (regression: run the existing sample storyline), CHANGELOG + skills doc.
+
+---
+
+Addendum 2026-11-25 — fresh restart from master (issue #34).
+
+Prior implementation on branch `feat/spatial-sfx` was set aside unmerged on the qa agent's
+blocking verdict (see REVIEWS.md, 2026-11-25: the merge resolution had silently dropped the
+SfxManager wiring, and the changelog described adapter wiring that never existed). The slice
+restarts from post-bus-unification `master` on `feat/positional-sfx` with the deltas recorded
+in [STATUS.md](STATUS.md): positional gain composes after bus resolution (the mute floor then
+releases the voice via the zero-effective-gain path), re-mix keys by voice handle through the
+additive `ISfxPositionalBackend` seam, the pan surface shrinks to two knobs (`PanSaturation`,
+`PanDistance`), two distance models ship per the slip-rule default (linear, inverse), and
+non-finite coordinates are pinned. Everything else in this PLAN — curves, the moving-source
+handle, the sample acceptance and listening gates — stands.

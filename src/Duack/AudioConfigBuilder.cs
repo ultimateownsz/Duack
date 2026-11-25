@@ -92,6 +92,17 @@ public sealed class AudioConfigBuilder
     }
 
     /// <summary>
+    /// Sets the 2D spatial settings for positional SFX plays (see
+    /// <see cref="SfxManager.PlayAt"/>): how listener-relative position and distance map to
+    /// pan and gain. Build sanitizes the values.
+    /// </summary>
+    public AudioConfigBuilder WithSpatial(SpatialConfig spatial)
+    {
+        _config.Sfx.Spatial = spatial ?? throw new ArgumentNullException(nameof(spatial));
+        return this;
+    }
+
+    /// <summary>
     /// Caps simultaneous SFX voices globally. 0 (the default) means unlimited;
     /// <paramref name="defaultVoiceSeconds"/> is the assumed lifetime of a one-shot.
     /// </summary>

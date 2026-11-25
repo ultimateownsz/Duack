@@ -192,21 +192,33 @@ private void ApplyFrame(StoryFrame frame)
     if (frame.SceneChanged || frame.Music is not null)
         manager.ReleaseDucks();
 
-    if (frame.Music is not null)
-        manager.Play(frame.Music);  // triggers crossfade immediately
-
-    // Cut lingering SFX on scene switch (e.g., long dialog cue)
-    if (frame.Sfx == StoryController.BattleStartCue)
+    // Cut lingering SFX on scene switch (e.g., long dialog cue) so no one-shot
+    // survives into the new screen
+    if (frame.SceneChanged)
         sfx.Stop();
+
+    // Battle-start sting: the crossfade starts on the cue's frame while the old
+    // screen is still up — the intro screen loads with the battle track running
+    if (frame.Sfx == StoryController.BattleStartCue
+        && manager.CurrentTrack?.Name != StoryController.BattlePlaylist)
+        manager.Play(StoryController.BattlePlaylist, fadeInSeconds: StoryController.BattleIntroSeconds);
+
+    if (frame.Music is not null && manager.CurrentTrack?.Name != frame.Music)
+    {
+        manager.Stop();                    // the old track is never heard on the new screen
+        manager.Play(frame.Music, fadeInSeconds: 0.8f);
+    }
 
     if (frame.Sfx is not null)
     {
-        // Duck only when no scene switch is happening
-        var duck = frame.Music is null;
-        sfx.Play(frame.Sfx, frame.Pitch, duck: duck);
+        sfx.Stop();                        // never let one cue bleed into the next
+        sfx.Play(frame.Sfx, frame.Pitch, duck: true, bus: frame.Bus);
     }
 }
 ```
+
+In the sample no frame ever mixes a cue with a scene or music switch — each cue rings on
+the screen it belongs to, and every screen loads clean — so story cues duck unconditionally.
 
 ## 7. Clean transitions: no leftover audio on the new screen
 

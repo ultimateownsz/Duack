@@ -80,6 +80,10 @@ musicManager.DuckRatioFor("ambience");   // the live duck ratio aimed at one tar
 `Views` reads the duck system live at snapshot time, so `DuckRatio` shows the current
 duck contribution per bus without embedding it in bus state.
 
+The samples show this without any controls: the storyline auto-plays on its timers and
+both heads print one `Views` readback line (master, music, sfx and the `ambience` bus
+with gains and duck ratios) per scene switch, in the console/debug stream.
+
 ## Ducking basics and holds
 
 Duck sources are declared under `MusicConfig.DuckSources` as always — the music duck

@@ -12,15 +12,15 @@ until one monster faints and the whole story loops back to the walk.
 dotnet run --project samples/Duack.Sample.Desktop -c Release
 ```
 
-## Keys
+## The loop (no controls)
 
-| Key | Action |
-|-----|--------|
-| **Space** | Advance/skip the current beat (walk, notice, dialog line, battle intro) |
-| **R** | Restart the story from the overworld walk |
-| **S** | Play a random discovered sfx (marble bag, no back-to-back repeats) |
-| **1** / **2** | Force the `overworld` / `battle` playlist |
-| **Esc** | Quit |
+The demo is non-interactive: the storyline auto-plays on its timers (~23 s per loop) with
+no keyboard handling at all. Each cue rings on the screen it belongs to — the notice sfx
+on the walk screen, the first dialog line on the notice screen, the battle-start sting on
+the dialog screen (the battle track crossfading in behind it), the KO hit on the battle
+screen — and every screen loads clean, with nothing bleeding in from the previous one.
+Each scene switch also prints one bus readback line to the console (`master`, `music`,
+`sfx` and the `ambience` bus with live gains and duck ratios). Close the window to exit.
 
 ## What it demonstrates
 
@@ -42,7 +42,8 @@ dotnet run --project samples/Duack.Sample.Desktop -c Release
 - The top strip visualizes `MusicManager.DuckRatio` — ducking you can see.
 - `MusicPlaylistController` + `MusicManager` crossfade scene switches over the
   `Duack.MonoGame` `IMusicBackend` (overlapping `SoundEffectInstance`s).
-- Console logs the discovered cues, the auto-built playlist JSON, and each scene change.
+- Console logs the discovered cues, the auto-built playlist JSON, and each scene change
+  together with one bus readback line (`SampleAudio.DescribeBuses`).
 
 ## Content layout
 

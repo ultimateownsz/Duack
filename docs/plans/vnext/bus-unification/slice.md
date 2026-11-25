@@ -109,6 +109,15 @@ Populated as implementation decisions land. ADR deviations belong in
   frame with music only. Entry stings stay (battle-start sting untouched — ruled an entry
   beat, not a leftover). The dead duck-exception (`duck = frame.Music is null`) was removed
   from both heads since no storyline frame carries both `Sfx` and `Music` anymore.
+- **D28 — D27 extended to every entry beat** (listening round 2, `623d665`): the notice cue,
+  line-1 dialog cue, and battle-start sting carried `Sfx` + `SceneChanged` on one frame — same
+  bleed at walk→notice, notice→dialog, dialog→battle-intro. Mechanism: three entry beats
+  (`_noticeCueBeat`/`_dialogCueBeat`/`_stingBeat`, 0.5/0.5/0.6 s) fire each cue on its OLD
+  screen; every switch frame loads clean. Uniform skip rule: Space fires the next exit cue but
+  never skips a beat or the battle; `Restart`/`EnterBattle` clear all beat state. Crossfade
+  starts with the sting on the dialog screen (heads key on the cue, not the flag). Loop pacing
+  +~1.6 s (≈23 s total with D27's +1.2). A full-loop pin now asserts no frame ever mixes a cue
+  with a switch.
 
 Deviations from PLAN wording, all changelogged: "one resolver" landed as two mixer instances
 over one table (D13, forced by D7); `BusMixer` ctor signature and `BusView` shape changed

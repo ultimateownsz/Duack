@@ -15,9 +15,9 @@ public class AudioConfigBuilderTests
         var expected = new AudioConfig();
         expected.Sanitize();
 
-        Assert.Equal(expected.MasterVolume, built.MasterVolume);
-        Assert.Equal(expected.Music.MasterVolume, built.Music.MasterVolume);
-        Assert.Equal(expected.Sfx.MasterVolume, built.Sfx.MasterVolume);
+        Assert.Equal(expected.Buses[BusNames.Master].Volume, built.Buses[BusNames.Master].Volume);
+        Assert.Equal(expected.Buses[BusNames.Music].Volume, built.Buses[BusNames.Music].Volume);
+        Assert.Equal(expected.Buses[BusNames.Sfx].Volume, built.Buses[BusNames.Sfx].Volume);
         Assert.Equal(expected.Music.CrossfadeSeconds, built.Music.CrossfadeSeconds);
     }
 
@@ -34,9 +34,9 @@ public class AudioConfigBuilderTests
             .WithDuckSource("sfx", new DuckSourceConfig { Ratio = 0.2f })
             .Build();
 
-        Assert.Equal(0.5f, built.MasterVolume);
-        Assert.Equal(0.6f, built.Music.MasterVolume);
-        Assert.Equal(0.7f, built.Sfx.MasterVolume);
+        Assert.Equal(0.5f, built.Buses[BusNames.Master].Volume);
+        Assert.Equal(0.6f, built.Buses[BusNames.Music].Volume);
+        Assert.Equal(0.7f, built.Buses[BusNames.Sfx].Volume);
         Assert.Equal(2.5f, built.Music.CrossfadeSeconds);
         Assert.Equal(0.4f, built.Music.Contexts["Overworld"]);
         Assert.Equal(0.9f, built.Music.Contexts["Battle"]);
@@ -52,7 +52,7 @@ public class AudioConfigBuilderTests
             .WithContext("Loud", 5f)
             .Build();
 
-        Assert.Equal(1f, built.MasterVolume);
+        Assert.Equal(1f, built.Buses[BusNames.Master].Volume);
         Assert.Equal(10f, built.Music.CrossfadeSeconds);
         Assert.Equal(1f, built.Music.Contexts["Loud"]);
     }

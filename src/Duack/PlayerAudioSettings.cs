@@ -38,9 +38,9 @@ public class PlayerAudioSettings
     /// <summary>Copies the tunable values out of an authored/effective config.</summary>
     public static PlayerAudioSettings FromConfig(AudioConfig config) => new()
     {
-        MasterVolume = config.MasterVolume,
-        MusicMasterVolume = config.Music.MasterVolume,
-        SfxMasterVolume = config.Sfx.MasterVolume,
+        MasterVolume = config.Buses[BusNames.Master].Volume,
+        MusicMasterVolume = config.Buses[BusNames.Music].Volume,
+        SfxMasterVolume = config.Buses[BusNames.Sfx].Volume,
         CrossfadeSeconds = config.Music.CrossfadeSeconds
     };
 

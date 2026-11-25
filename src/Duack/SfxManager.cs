@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Duack;
 
@@ -52,7 +53,9 @@ public sealed class SfxManager
         _music = music ?? throw new ArgumentNullException(nameof(music));
         _duckSource = duckSource ?? throw new ArgumentNullException(nameof(duckSource));
         _sfxConfig = sfxConfig;
-        _buses = new BusMixer(sfxConfig?.Buses);
+        // One resolver for every bus: the mixer owns the whole table (master/music/sfx plus the
+        // user buses) and the Views readback reads the duck system live (D4).
+        _buses = new BusMixer(sfxConfig?.Buses, target => _music.DuckRatioFor(target));
         _random = random ?? Random.Shared;
         MasterVolume = masterVolume;
         SfxBusVolume = sfxBusVolume;
@@ -61,16 +64,31 @@ public sealed class SfxManager
 
     /// <summary>
     /// Master bus volume (scales music and SFX alike), read live on every play so a settings
-    /// slider applies immediately; defaults to the constructor argument.
+    /// slider applies immediately; defaults to the constructor argument. A thin delegating
+    /// writer into the mixer's <see cref="BusNames.Master"/> entry — the same storage
+    /// <see cref="Buses"/> resolves from.
     /// </summary>
-    public float MasterVolume { get; set; }
-
-    /// <summary>SFX bus volume, read live on every play; defaults to the constructor argument.</summary>
-    public float SfxBusVolume { get; set; }
+    public float MasterVolume
+    {
+        get => _buses.VolumeOf(BusNames.Master);
+        set => _buses.SetBus(BusNames.Master, value);
+    }
 
     /// <summary>
-    /// Runtime state and routing for the user-defined buses: volumes, mute, pause and
-    /// the master mute, with <see cref="BusMixer.BusFellBack"/> reporting unknown bus names.
+    /// SFX bus volume, read live on every play; defaults to the constructor argument. A thin
+    /// delegating writer into the mixer's fixed <see cref="BusNames.Sfx"/> entry.
+    /// </summary>
+    public float SfxBusVolume
+    {
+        get => _buses.VolumeOf(BusNames.Sfx);
+        set => _buses.SetBus(BusNames.Sfx, value);
+    }
+
+    /// <summary>
+    /// Runtime state and routing for the one bus table: the fixed master/music/sfx entries and
+    /// the user buses - volumes, mute, pause and the master mute, live duck contribution in the
+    /// <see cref="BusMixer.Views"/> readback, with <see cref="BusMixer.BusFellBack"/> reporting
+    /// unknown bus names.
     /// </summary>
     public BusMixer Buses => _buses;
 
@@ -98,10 +116,14 @@ public sealed class SfxManager
         var variation = _sfxConfig?.CueVariation;
         var cuePlay = variation?.Resolve(_random) ?? new CuePlay(0f, 1f);
         var finalPitch = variation is null ? pitch : Math.Clamp(pitch + cuePlay.Pitch, -1f, 1f);
+        // One resolver: master -> bus volume -> mute/pause (all inside the mixer's effective
+        // gains) -> per-play volume, then the resolved bus's live duck ratio (D5). The fixed
+        // (un-routed) path lands on the "sfx" bus, so a duck source targeting "sfx" dips it too
+        // — one semantic, one path (the Gate D fold).
         var resolution = _buses.Resolve(bus);
         var finalVolume = Math.Clamp(volume * cuePlay.VolumeScale, 0f, 1f)
-                          * MasterVolume * SfxBusVolume * resolution.Gain
-                          * (bus is null ? 1f : _music.DuckRatioFor(resolution.Bus));
+                          * _buses.Resolve(BusNames.Master).Gain * resolution.Gain
+                          * _music.DuckRatioFor(resolution.Bus);
 
         // A play that resolves to zero gain reports its cause instead of staying silent: no
         // backend call, no music duck, nothing audible to duck for.

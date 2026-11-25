@@ -31,6 +31,7 @@ public class MusicManager
     private readonly MusicConfig _music;
     private readonly Random _random;
     private readonly DuckMixer _duck;
+    private readonly BusMixer _buses;
     private readonly MusicTransitionSequencer _sequencer = new();
 
     private PlaylistTrack? _active;
@@ -107,8 +108,14 @@ public class MusicManager
     /// <summary>
     /// Master bus volume (scales music and SFX alike), read live every frame so a settings
     /// slider applies without rebuilding the director; defaults to the constructor argument.
+    /// A thin delegating writer into the mixer's <see cref="BusNames.Master"/> entry — the
+    /// same storage the music bus resolves from.
     /// </summary>
-    public float MasterVolume { get; set; }
+    public float MasterVolume
+    {
+        get => _buses.VolumeOf(BusNames.Master);
+        set => _buses.SetBus(BusNames.Master, value);
+    }
 
     /// <param name="backend">The platform backend that actually plays tracks.</param>
     /// <param name="playlist">The playlist sequencer to drive.</param>
@@ -120,6 +127,10 @@ public class MusicManager
         _backend = backend ?? throw new ArgumentNullException(nameof(backend));
         _playlist = playlist ?? throw new ArgumentNullException(nameof(playlist));
         _music = music ?? new MusicConfig();
+        // One resolver: the master and music buses resolve through the same mixer chain the
+        // SFX path uses, seeded from the same flat table the config carries (D7: the only
+        // constructor is unchanged; the table rides in on the existing MusicConfig transport).
+        _buses = new BusMixer(_music.Buses);
         _transitionDuration = _music.CrossfadeSeconds;
         MasterVolume = masterVolume;
         _random = random ?? Random.Shared;
@@ -473,7 +484,11 @@ public class MusicManager
         if (!string.IsNullOrEmpty(context) && _music.Contexts.TryGetValue(context, out var authored))
             scale = authored;
 
-        return MusicVolumeMath.Effective(MasterVolume * _music.MasterVolume, scale, _duck.EffectiveRatio, fade);
+        // One resolver: master -> music bus volume -> mute/pause (the mixer's effective
+        // gains), then the music-only context scale, duck and fade (Gate M: contexts stay
+        // music-only; the duck ratio is read live, D4).
+        var busGain = _buses.Resolve(BusNames.Master).Gain * _buses.Resolve(BusNames.Music).Gain;
+        return MusicVolumeMath.Effective(busGain, scale, _duck.EffectiveRatio, fade);
     }
 
     private float NextCuePitch() => _music.CueVariation?.Resolve(_random).Pitch ?? 0f;

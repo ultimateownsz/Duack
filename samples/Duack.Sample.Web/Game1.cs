@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -7,7 +7,6 @@ using Duack.KNI;
 using Duack.Sample.Core;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 
 namespace Duack.Sample.Web;
 
@@ -30,7 +29,6 @@ public class Game1 : Game, IDisposable
     private readonly StoryController _story = new();
     private MarbleBag<string> _hitBag = null!;
 
-    private KeyboardState _previousKeyboard;
     private float _flash;
     private float _hitFlash;
     private int _hitSide = -1;
@@ -92,14 +90,25 @@ public class Game1 : Game, IDisposable
         var backend = new MediaPlayerMusicBackend(
             new KniMediaPlayerHost(), contentRoot: "Content/Audio/Tracks", extension: ".ogg");
         _controller = new MusicPlaylistController(playlists);
-        _manager = new MusicManager(backend, _controller, config.Music, masterVolume: config.MasterVolume);
+        _manager = new MusicManager(backend, _controller, config.Music, masterVolume: config.Buses[BusNames.Master].Volume);
 
         // WebAudio SFX backend: one-shots overlap the music track while DuckMixer dips music.
         // Cue URLs are relative to the app root; WAV files live in wwwroot/Content/Audio/SFX/.
         var sfxUrls = _library.Sfx.Select(cue => new KeyValuePair<string, string>(
             cue, $"Content/Audio/SFX/{cue}.wav"));
         var sfxBackend = new WebAudioSfxBackend(new WebAudioNative(), sfxUrls);
-        _sfx = new SfxManager(_library, sfxBackend, _manager, "sfx", masterVolume: config.MasterVolume, sfxBusVolume: config.Sfx.MasterVolume, sfxConfig: config.Sfx);
+        _sfx = new SfxManager(_library, sfxBackend, _manager, "sfx", masterVolume: config.Buses[BusNames.Master].Volume, sfxBusVolume: config.Buses[BusNames.Sfx].Volume, sfxConfig: config.Sfx);
+
+        // First-track latency (maintainer ruling, Nov 25 round 5): the platform <audio>
+        // fetches its OGG on first play - warm the browser HTTP cache for every track URL
+        // right after the start gesture (this runs post-gesture), so the first track starts
+        // from cache. The platform MediaPlayer API offers no preload seam (KniMediaPlayerHost
+        // reaches only Play/Stop), so the cache warm is the honest mechanism; the element's
+        // one-time OGG decode on play remains, and the SFX buffers are already fully decoded
+        // by the backend's constructor call above.
+        sfxBackend.WarmHttpCache(_library.Tracks
+            .Select(track => $"Content/Audio/Tracks/{track}.ogg")
+            .ToArray());
 
         _manager.TrackCompleted += finished =>
             System.Diagnostics.Debug.WriteLine($"[Sample] track finished: {finished.Name} ({finished.Context})");
@@ -116,9 +125,6 @@ public class Game1 : Game, IDisposable
     {
         var dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-        if (Keyboard.GetState().IsKeyDown(Keys.Escape))
-            Exit();
-
         _manager.Update(dt);
 
         if (_flash > 0f) _flash = Math.Max(0f, _flash - dt);
@@ -132,21 +138,21 @@ public class Game1 : Game, IDisposable
             _manager.Play(StoryController.OverworldPlaylist);
         }
 
-        var keyboard = Keyboard.GetState();
+        // The demo is a non-interactive showcase (maintainer ruling, Nov 25 round 3): the
+        // storyline advances on its own timers, no key drives anything.
+        ApplyFrame(_story.Update(dt));
 
-        if (WasKeyPressed(keyboard, _previousKeyboard, Keys.Space))
-            ApplyFrame(_story.Advance());
-        else if (WasKeyPressed(keyboard, _previousKeyboard, Keys.R))
-            ApplyFrame(_story.Restart());
-        else
-            ApplyFrame(_story.Update(dt));
-
-        _previousKeyboard = keyboard;
         base.Update(gameTime);
     }
 
     private void ApplyFrame(StoryFrame frame)
     {
+        // One readback line per scene switch, same as the desktop head: the non-interactive
+        // demo keeps slice F's one-mixer-path acceptance visible without interaction.
+        if (frame.SceneChanged)
+            System.Diagnostics.Debug.WriteLine(
+                $"[Sample] scene: {_story.Scene} views: [{(_sfx is null ? "no sfx yet" : SampleAudio.DescribeBuses(_sfx.Buses))}]");
+
         if (frame.Music is not null || frame.SceneChanged)
             _manager.ReleaseDucks();
 
@@ -170,17 +176,16 @@ public class Game1 : Game, IDisposable
             // Never let a previous one-shot (e.g. a long dialog cue) bleed into the next cue.
             _sfx?.Stop();
 
-            // Duck only when no scene switch is happening: a cue that accompanies a switch
-            // must not suppress the crossfade back to the overworld track.
-            var duck = frame.Music is null;
-
+            // Every story cue ducks: no beat shares its frame with a music switch anymore
+            // (the fainting blow lands on the battle screen; the walk switch frame carries no
+            // sfx), so there is no "cue accompanying a switch" to exempt from ducking.
             // Hit cues draw from the MarbleBag so a battle never plays the same hit twice in a row
             // (matches the desktop sample).
             var cueName = frame.Sfx;
             if (frame.Sfx == StoryController.HitCue && _hitBag is not null)
                 cueName = _hitBag.Draw();
 
-            if (_sfx!.Play(cueName, frame.Pitch, duck: duck, bus: frame.Bus) &&
+            if (_sfx!.Play(cueName, frame.Pitch, duck: true, bus: frame.Bus) &&
                 (frame.Sfx == StoryController.HitCue || frame.Sfx == StoryController.BattleStartCue))
             {
                 _flash = 0.12f;
@@ -401,9 +406,6 @@ public class Game1 : Game, IDisposable
 
     private void DrawRect(Rectangle rect, Color color) =>
         _spriteBatch!.Draw(_pixel, rect, color);
-
-    private static bool WasKeyPressed(KeyboardState current, KeyboardState previous, Keys key) =>
-        current.IsKeyDown(key) && previous.IsKeyUp(key);
 
     /// <inheritdoc />
     public new void Dispose()

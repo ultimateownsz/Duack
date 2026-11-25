@@ -9,37 +9,52 @@ public sealed class AudioConfigBuilder
 {
     private readonly AudioConfig _config = new();
 
-    /// <summary>Sets the global output master volume.</summary>
+    /// <summary>
+    /// Sets the global output master volume: a thin write into the pre-registered
+    /// <see cref="BusNames.Master"/> entry of the one bus table.
+    /// </summary>
     public AudioConfigBuilder WithMasterVolume(float value)
     {
-        _config.MasterVolume = value;
+        Bus(BusNames.Master).Volume = value;
         return this;
     }
 
-    /// <summary>Sets the music master volume.</summary>
+    /// <summary>
+    /// Sets the music master volume: a thin write into the pre-registered
+    /// <see cref="BusNames.Music"/> entry of the one bus table.
+    /// </summary>
     public AudioConfigBuilder WithMusicMasterVolume(float value)
     {
-        _config.Music.MasterVolume = value;
+        Bus(BusNames.Music).Volume = value;
         return this;
     }
 
-    /// <summary>Sets the sound-effect master volume.</summary>
+    /// <summary>
+    /// Sets the sound-effect master volume: a thin write into the pre-registered
+    /// <see cref="BusNames.Sfx"/> entry of the one bus table.
+    /// </summary>
     public AudioConfigBuilder WithSfxMasterVolume(float value)
     {
-        _config.Sfx.MasterVolume = value;
+        Bus(BusNames.Sfx).Volume = value;
         return this;
     }
 
     /// <summary>
     /// Defines (or replaces) a named user bus with its volume in [0, 1]. Cues routed to the bus
     /// via <see cref="SfxManager.Play(string, float, float, bool, string?)"/> scale by its
-    /// effective gain; un-routed cues stay on the fixed SFX bus.
+    /// effective gain; un-routed cues stay on the fixed SFX bus. Writing a pre-registered name
+    /// (<see cref="BusNames.Master"/>/<see cref="BusNames.Music"/>/<see cref="BusNames.Sfx"/>)
+    /// replaces that single table entry — there is no second storage.
     /// </summary>
     public AudioConfigBuilder WithBus(string name, float volume)
     {
-        _config.Sfx.Buses[name] = volume;
+        _config.Buses[name] = new BusConfig { Volume = volume };
         return this;
     }
+
+    /// <summary>The named table entry, adding it at full volume if it is not present yet.</summary>
+    private BusConfig Bus(string name) =>
+        _config.Buses.TryGetValue(name, out var bus) ? bus : _config.Buses[name] = new BusConfig();
 
     /// <summary>Sets the music crossfade time in seconds.</summary>
     public AudioConfigBuilder WithCrossfadeSeconds(float value)

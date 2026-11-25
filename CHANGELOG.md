@@ -1,4 +1,4 @@
-# Changelog
+﻿# Changelog
 
 All notable changes to this project are documented in this file.
 
@@ -10,6 +10,83 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 ## [Unreleased]
 
 ### Changed
+
+#### 2026-11-25
+- **Preview breaking (audible): a duck source targeting `"sfx"` now scales the fixed
+  (un-routed) SFX path too.** Symptom before: with a duck source authored as
+  `Target = "sfx"`, only bus-routed plays dipped; plain `SfxManager.Play(cue)` (the fixed
+  path, what every project without user buses uses) ignored the duck entirely — the same
+  authored config did different things depending on how a cue was routed. Now the fixed path
+  resolves on the `sfx` bus entry like any other bus, so the duck ratio applies to it
+  equally (Gate D fold: one semantic, one path). What breaks for consumers: existing mixes
+  whose duck sources name `"sfx`" get audibly quieter fixed-path cues while that duck is
+  active — no code change required, but re-listen to any `"sfx"`-targeted duck source; duck
+  sources targeting `music` (the default) or another bus are unaffected, pinned both ways in
+  tests. Zero-gain interplay: such a play can now compose to zero (e.g. ratio 0) and then
+  reports through `ZeroEffectiveGain` like every other silent play instead of playing
+  inaudibly. (#36)
+
+#### 2026-11-25
+- **Preview breaking: one resolver — `BusMixer` now owns the whole bus table.**
+  `SfxManager.Buses` (the `BusMixer`) seeds the fixed `master`/`music`/`sfx` entries from
+  the config table alongside the user buses, and both managers resolve every bus — fixed
+  three included — through that one mixer chain (master → bus volume → mute/pause): the SFX
+  path composes `master gain × bus gain` per play, `MusicManager` composes master × music
+  gain per frame. What breaks for consumers: `BusView` **gains a `DuckRatio` field** (any
+  code constructing, pattern-matching or deconstructing a `BusView` must add it), and
+  `SfxManager`'s `ZeroEffectiveGain` now also fires for the fixed (un-routed) SFX path when
+  it composes to zero — pinning the zero-fold that path already had via the fixed SFX bus.
+  The `SfxManager.MasterVolume`/`SfxBusVolume` and `MusicManager.MasterVolume` hot-update
+  properties keep compiling and behave the same, but are now thin delegating writers into
+  the mixer's `master`/`sfx` entries (`BusMixer.VolumeOf` is the new read side), so setting
+  e.g. `SfxBusVolume` and `Buses.SetBus("sfx", v)` touch the same single storage instead of
+  two parallel floats. Readback unification: `Buses.Views` carries, for every bus including
+  the fixed three, the effective gain and the live duck contribution (`DuckRatio`, read from
+  the duck system at snapshot time — duck ratios never embed in bus state);
+  `MusicManager.DuckRatioFor` stays and delegates unchanged. `MusicManager` keeps its own
+  mixer state seeded from the same table (constructor signatures are frozen), so per-bus
+  mute/pause state is per-manager and volumes are snapshotted from the table at
+  construction, as before. No audible change in this commit: duck sources still scale only
+  the buses they target; the `"sfx"` fold lands as its own preview-breaking note with the
+  next entry. (#36)
+
+#### 2026-11-25
+- **Preview breaking: volumes now live in one flat bus table.**
+  `AudioConfig.Buses` (a `Dictionary<string, BusConfig>` with lowercase, Ordinal-compared
+  names) is THE one storage for every bus volume: it comes pre-registered with the
+  `master`/`music`/`sfx` entries, and user buses authored via
+  `AudioConfigBuilder.WithBus(name, volume)` land in the same table
+  (`BusConfig { Volume }`; `Sanitize`/`Build` clamp every table volume to [0, 1] as before).
+  What breaks for consumers: the dedicated `AudioConfig.MasterVolume`,
+  `MusicConfig.MasterVolume` and `SfxConfig.MasterVolume` properties are **removed** — read
+  and write `config.Buses[BusNames.Master/Music/Sfx].Volume` instead;
+  `SfxConfig.Buses` is **re-typed** from `Dictionary<string, float>` (its own storage) to
+  `Dictionary<string, BusConfig>` (a reference to the same one table, wired by `AudioConfig`,
+  null when a `SfxConfig` is constructed standalone) — `sfx.Buses["ambience"] = 0.4f` no
+  longer compiles; use `buses["ambience"].Volume = 0.4f` on the shared table; and
+  `MusicConfig` gains the same `Buses` table reference so `MusicManager` construction is
+  unchanged. Symptom of staying on the old members: `CS0117`/`CS1061` compile errors on
+  `MasterVolume` and `CS0029`/`CS1503` on the old side-dictionary writes. No audible
+  behavior change: `WithMasterVolume`/`WithMusicMasterVolume`/`WithSfxMasterVolume`/`WithBus`
+  keep their exact signatures as thin writes into the one
+  table (`WithBus("master", v)` replaces the same single entry), and the runtime still
+  composes the fixed fields from the table values exactly as before. (#36)
+
+#### 2026-11-25
+- **The sample heads are non-interactive demos now** (maintainer ruling, Nov 25, human
+  listening round 3: the storyline auto-plays, so the keyboard controls were dead surface
+  advertising an interaction that does not exist). Removed in both heads: Space
+  (advance/skip), R (restart), S (random cue), 1/2 (playlist), M (ambience-bus mute), N
+  (sfx-bus mute — including the web head's `SetBusVolume` push), and the ESC exit branches,
+  plus all keyboard plumbing that served only them (`WasKeyPressed`, `_previousKeyboard`,
+  `KeyboardState`, the XNA `Input` using). The story advances solely on its timers;
+  `StoryController.Advance`/`Restart` stay public on the engine-free core (their semantics
+  are pinned headlessly; no head calls them). Slice F's one-mixer-path acceptance stays
+  visible without interaction: each scene switch now prints ONE line combining the scene
+  name with the shared bus readback
+  (`SampleAudio.DescribeBuses`: master/music/sfx + ambience with live gains and duck
+  ratios). No library behavior change; `WebAudioSfxBackend.SetBusVolume` remains the web
+  seam surface (pinned in the adapter tests) — its sample caller is what was removed. (#36)
 
 #### 2026-11-22
 - `BusMixer.SetBus` change detection compares volumes bit-exactly
@@ -35,6 +112,60 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 
 
 ### Added
+
+#### 2026-11-25
+
+- **Sample demo: the fixed sfx bus and the user buses through one mixer path.** The demo
+  heads now surface the bus unification through the shared storyline: both heads' HUD/debug
+  line prints one `SampleAudio.DescribeBuses(_sfx.Buses)` readback (pinned in
+  `Duack.Sample.Tests`) listing every bus of the resolved table — `master`, `music`, the
+  fixed `sfx` and the user `ambience` bus — with live effective gain and duck contribution,
+  so the fixed bus and the user bus are shown through the same `BusMixer.Views` machinery.
+  Hot mute got the same treatment: the desktop head keeps `M` (ambience) and gains `N`
+  (fixed sfx bus) through the identical `_sfx.Buses.SetMute` path, and the web head mirrors
+  both keys — with `N` also pushing the bus volume into the WebAudio seam
+  (`WebAudioSfxBackend.SetBusVolume`), so currently playing one-shots dip live in the
+  browser while the desktop stays arithmetic-only (applies from the next play), the
+  documented cross-backend difference. Bus-targeted ducks stay out of the sample per the
+  Nov 22 maintainer call; the `sfx` fold stays pinned in core tests only. (#36)
+#### 2026-11-25
+
+- **Web sample prefetch: no first-play waits after the start gesture** (maintainer ruling,
+  Nov 25, human listening round 5: the first music track started with an audible network
+  delay on the web head - the desktop loads all Content up front). Investigation found the
+  SFX side already prefetching: `WebAudioSfxBackend`'s constructor (which runs after the
+  boot-screen gesture, `Index.razor.cs`) hands every cue URL to the bridge in one call and
+  the JS `preloadBuffers` fetches + `decodeAudioData`s all of them up front - now pinned
+  headlessly. The music path is the honest subset, like D18: the KNI
+  `MediaPlayer`/`IMediaPlayerHost` seam (`KniMediaPlayerHost.cs`) exposes only
+  `Play(uri)`/`Stop` - no preload/dual-buffer capability - so the BlazorGL `<audio>` fetches
+  its OGG on first play. What landed: `WarmHttpCache(urls)` on the backend/bridge
+  (`IWebAudioNative` contract addition, JS bridge `warmHttpCache` fetches, fire-and-forget)
+  and the sample warms every track URL right after the start gesture, so the first track
+  starts from the browser HTTP cache (~3.4 MB of demo OGGs) instead of the network.
+  Documented residue (ADR-8 pattern): the element's one-time OGG decode on first play
+  remains, and no pin can cover browser fetch behavior - it needs the human browser check.
+  Dispose semantics extended: `IWebAudioNative.ReleaseAllBuffers()` + JS
+  `releaseAllBuffers()` (contract additions), and `WebAudioSfxBackend.Dispose` now releases
+  the JS-side decoded SFX buffers (~1.4 MB for the demo set) instead of leaking them.
+  (#36)
+- **Per-bus gain nodes on the web SFX head.** The WebAudio JS bridge now keeps one
+  persistent gain node per bus of the playing chain — the fixed `sfx` node every play's
+  per-source gain routes through into the `master` node, then the destination — instead of
+  connecting each source straight to the destination, and gains a `setBusVolume(bus,
+  volume)` bridge call with a matching `WebAudioSfxBackend.SetBusVolume` (clamped to
+  [0, 1], 3 ms ramp inside JS) so a live bus volume change moves the currently playing
+  voices through that node, not only future plays. Contract change: `IWebAudioNative`
+  implementors (custom test fakes, alternative bridges) must add
+  `SetBusVolume(string, float)`; `ISfxBackend`/`ISfxBackend.Play` are unchanged and the
+  per-play volume the core hands the backend is applied exactly as before, so the
+  observable API is identical across backends. Honest subset (known limitation): the core
+  seam hands the adapter only the fully composed per-play volume — no bus name — so of the
+  flat table's buses only the fixed `sfx`/`master` chain carries audio today; user-bus
+  nodes are created on demand and ready to drive, but nothing routes into them until the
+  core seam passes the resolved bus per play (a core `ISfxBackend` contract change, out of
+  this adapter's scope). Real-browser listening still pending: the headless seam tests pin
+  the bridge calls, not the JS audio graph. (#36)
 
 #### 2026-11-22
 
@@ -99,6 +230,62 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
   single large `Update()` can complete a multi-phase transition.
 
 ### Fixed
+
+#### 2026-11-25
+- **Every screen now loads clean — the entry cues land on their own screen too** (maintainer
+  ruling, Nov 25, human listening round 2, extending the KO fix to the story's ENTRY
+  transitions). Symptom: the same Sfx-over-switch bleed existed at walk→notice (the notice
+  cue played into the freshly loaded notice screen), notice→dialog (the first line's cue)
+  and dialog→battle-intro (the battle-start sting) — each transition frame carried BOTH the
+  sfx and the scene switch, the same overlap the KO fix removed. Fix: `StoryController` now
+  runs the same beat pattern on every entry — the cue fires while the OLD screen is still up
+  (`NoticeCueBeatSeconds`/`DialogCueBeatSeconds` 0.5 s, `StingBeatSeconds` 0.6 s; the storyline
+  loop is ~1.6 s longer per full pass), and the switch frame one beat later carries the scene
+  change and NO sfx. The battle-music crossfade still starts with the sting (both heads key
+  on `BattleStartCue` itself), firing a beat earlier on the dialog screen; the intro screen
+  keeps its `BattleIntroSeconds` pause. Space still kicks a pace break's exit cue off
+  (skipping the wait), but no beat — entry, ending, or the battle — can be skipped;
+  `Restart()` and a new battle clear all beat state. Pinned headlessly: the full-loop
+  no-mixed-frames pin (no frame ever carries both a cue and a scene/music switch) plus
+  per-beat pins for all three entries. (#36)
+- **Beats let each cue finish instead of clipping it at the switch** (maintainer clarification,
+  Nov 25, human listening round 4: the no-bleed rulings D27–D29 mean "no lingering sound
+  reaches the next screen", NOT truncation; the change should make sounds play the way a
+  player expects, not act as a workaround). Symptom: the battle-start sting's tail was
+  clipped at the dialog→intro switch (the 0.6 s beat equaled the cue, so the switch-frame
+  `Stop()` chopped it) and the notice cue was cut roughly in half at the walk→notice switch
+  (0.5 s beat vs a 1.08 s asset); a drawn 1.73 s hit-2 could also be clipped by the
+  battle-ending beat's 1.2 s. Fix: every beat is sized to its cue's shipped asset plus one
+  named tail margin (`BeatTailSeconds` 0.10 s, documented as covering the Update tick
+  boundary): `NoticeCueBeatSeconds` 0.5 → 1.18 s, `StingBeatSeconds` 0.6 → 0.70 s, and the
+  battle-ending beat gains its own constant `BattleEndingSeconds` = 1.83 s (longest hit
+  draw) instead of reusing `BattleRoundSeconds`. `ISfxBackend` exposes no completion
+  telemetry, so the beats are sized from the shipped WAVs (event-driven switching needs
+  per-playback handles — the deferred experiment). The storyline loop grows ~1.41 s
+  (~24.5 s); heads' `Stop()` on scene change stays and now cuts nothing. Pinned headlessly
+  against the shipped WAV durations (`Every_beat_outlasts_its_cue...`). Pre-existing,
+  confirmed, not fixed here (out of scope): the `dialog` cue has no shipped asset, so it
+  silently plays nothing. (#36)
+- **The KO hit no longer bleeds over the walk screen** (maintainer ruling from human
+  listening, Nov 25: no cue from a finished gameplay screen may survive into the next
+  screen). Symptom: play either sample head through a battle; on the KO, the fainting
+  "hit" cue played over the freshly loaded walk screen while the music crossfaded back to
+  the overworld — the classic XNA/MonoGame forum complaint about one-shots overlapping a
+  freshly loaded screen. Fix: `StoryController` gains a battle-ending beat — the fainting
+  tick returns the plain hit frame (the battle screen stays up and the music is still the
+  battle track, so the KO is heard on the battle screen), and only the NEXT round tick
+  (~1.2 s later) returns the walk-switch frame carrying the overworld music and NO sfx.
+  The ending beat resets on `Restart()` and `EnterBattle()` and, like the battle itself,
+  cannot be skipped by Space. Entry stings are untouched. The heads' dead
+  "duck only when no music switch" exception in `ApplyFrame` (no frame carries both an sfx
+  and a music switch anymore) was simplified away: every story cue now ducks. Pinned
+  headlessly in `Duack.Sample.Tests` (KO-on-battle-screen, clean walk switch, no skip,
+  mid-ending restart). (#36)
+- The web sample's (`M`/`N`) no longer rely on nullable-dereference
+  suppression of `CS8602` warnings: they use the same post-initialization idiom
+  (`_sfx!`) the story loop already uses, so the sample head builds warning-clean. Also makes
+  `SampleAudio`'s `System.Linq` usage explicit instead of implicit-usings-dependent. No
+  library behavior change; sample code only. (#36)
 
 #### 2026-11-22
 - `BusMixer.SetBus` no longer fires the `Changed` event when the volume value is unchanged -

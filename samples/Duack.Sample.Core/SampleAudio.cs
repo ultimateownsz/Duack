@@ -1,3 +1,5 @@
+using System.Linq;
+
 namespace Duack.Sample.Core;
 
 /// <summary>
@@ -25,6 +27,15 @@ public static class SampleAudio
         {
             ContextForTrack = name => name == StoryController.BattlePlaylist ? "Battle" : "Overworld",
         });
+
+    /// <summary>
+    /// One mixer readback line for the demo HUD: every bus of the resolved table - the fixed
+    /// sfx bus through the same machinery as the user ambience bus - with its live effective
+    /// gain and duck contribution. Both heads print exactly this string, so the shared
+    /// <see cref="BusMixer.Views"/> readback cannot drift between them.
+    /// </summary>
+    public static string DescribeBuses(BusMixer buses) =>
+        string.Join(", ", buses.Views.Select(v => $"{v.Name}: gain={v.EffectiveGain:0.##}, duck={v.DuckRatio:0.##}"));
 
     /// <summary>Builds the shared demo mix: masters, contexts, crossfade, ducking, playlists.</summary>
     public static AudioConfig BuildConfig() =>

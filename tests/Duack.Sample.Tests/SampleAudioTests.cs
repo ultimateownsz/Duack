@@ -74,8 +74,8 @@ public class SampleAudioTests
 
         var config = SampleAudio.BuildConfig();
 
-        Assert.Equal(0.8f, config.MasterVolume);
-        Assert.Equal(0.8f, config.Music.MasterVolume);
+        Assert.Equal(0.8f, config.Buses[BusNames.Master].Volume);
+        Assert.Equal(0.8f, config.Buses[BusNames.Music].Volume);
         Assert.Equal(1.2f, config.Music.CrossfadeSeconds);
         Assert.Equal(1f, config.Music.Contexts["Overworld"]);
         Assert.Equal(0.9f, config.Music.Contexts["Battle"]);
@@ -92,11 +92,26 @@ public class SampleAudioTests
     {
         var config = SampleAudio.BuildConfig();
 
-        Assert.Equal(0.55f, config.Sfx.Buses[SampleAudio.AmbienceBus]);
+        Assert.Equal(0.55f, config.Buses[SampleAudio.AmbienceBus].Volume);
         Assert.Equal("music", config.Music.DuckSources[SampleAudio.SfxDuckSource].Target);
 
         // No bus-targeted duck: the scenario (e.g. dialogue ducking a bus) stays out of the
         // sample until a real project proves it. The mechanism keeps its core unit tests.
         Assert.DoesNotContain(config.Music.DuckSources.Values, d => d.Target != "music");
+    }
+    [Fact]
+    public void DescribeBuses_lists_the_fixed_sfx_bus_and_the_user_bus_through_one_readback()
+    {
+        // Bus unification surfaced in the demo: one readback line for every bus of the resolved
+        // table - the fixed sfx bus is the same machinery as the user ambience bus, gain and
+        // live duck contribution per bus. Both heads print exactly this string.
+        var mixer = new BusMixer(SampleAudio.BuildConfig().Buses);
+
+        var line = SampleAudio.DescribeBuses(mixer);
+
+        Assert.Contains("master: gain=", line);
+        Assert.Contains("music: gain=", line);
+        Assert.Contains("sfx: gain=1, duck=1", line);
+        Assert.Contains("ambience: gain=0.55, duck=1", line);
     }
 }

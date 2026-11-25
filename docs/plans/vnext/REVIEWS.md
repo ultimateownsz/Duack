@@ -106,3 +106,104 @@ Verification at `9c13104`: `python -m unittest discover -s tools/tests` 13/13;
 
 Verdict: **good**. Human sign-off (perception, "does it sound right") remains out of scope for
 agents and is not required for this PR — it is tooling and docs only.
+
+## 2026-11-24 — slice F recording review at head `c74d3c0`: good
+
+Pre-PR `qa` review of the working diff that records slice F (bus unification, #36) in the
+plan workspace before any implementation: `docs/plans/vnext/bus-unification/PLAN.md` (new)
+plus the slice F row in `docs/plans/vnext/README.md`. Docs only, no code, no public API.
+
+- Head at review: `c74d3c0` (base `master`)
+- Verdict: **good** — diff contains exactly the two claimed files (37 insertions, no quiet
+  scope); PLAN.md faithfully carries issue #36's problem, seven scope bullets, non-goals,
+  gates M/D and acceptance criteria with nothing dropped or added beyond the issue; every
+  relative link resolves; quoted claims verified line-by-line against `user-buses/slice.md`
+  (qa verdict lines, D1–D5), `user-buses/review-structure.md` (W1/W2, Non-work list),
+  `user-buses/STATUS.md` (Gate 2), `user-buses/PLAN.md` ("per-bus readback of the stages"),
+  and `SHARED.md` (§0/§3/§8/§9 citations); slice lettering F does not collide with A–E and
+  contradicts no SHARED.md §11 sequencing reference; `STATUS.md`/`slice.md` correctly absent
+  per the start-the-slice convention; walk test passes from the files alone;
+  `python tools/plan_check.py` → `pass`.
+- Non-blocking, fixed in the follow-up commit carrying this record:
+  - "Docs ride in the same PR (SHARED.md §8)" cited the wrong section — the discipline is
+    §9 (preview-API, matching skills updates). Corrected.
+  - D1 attribution pointed at review-structure.md §4; D1 is recorded in §3, §4 holds the
+    Non-work list. Corrected to name both.
+- Non-blocking, left as-is: the pre-existing slice E README row says "needs bus tree" while
+  D1 records hierarchy as rejected — wording predates slice F and is maintainer scope.
+
+The same follow-up commit adds the slice F checkbox (`(#36)`) to
+`plan/01-vnext/phase-01-vnext-slices.md`, which the review caught as missing from the
+original recording.
+
+## 2026-11-25 — slice F phase-gate review of `feat/bus-unification` (`c74d3c0..8facac5`): good
+
+Full plan-phase PR-gate `qa` on the whole slice F working diff (14 commits, 32 files,
++1127/−190 against `master`) before any PR opens. Contract: `bus-unification/PLAN.md`,
+constrained by issue #36, `user-buses/review-structure.md` D1–D5, and `slice.md` D6–D26.
+
+Evidence run independently by the reviewer: `dotnet test Duack.slnx` 420/420 green across
+all four test projects; `samples/Duack.Sample.Web` builds clean; `python tools/plan_check.py`
+→ `pass`.
+
+Verdict **good** — no blocking findings: every scope bullet implemented (config table,
+unified resolver, the `"sfx"` fold with `BREAKING CHANGE` footer as a single-line revert
+unit pinned both ways, `Views` duck readback, web per-bus gain nodes, routing unchanged);
+non-goals respected (no parent/solo/snapshots/effects, ctor signatures unchanged D7, no
+per-bus player settings); all slice C pins hold with equivalent coverage (W1/W2,
+`BusFellBack`, both `ZeroEffectiveGain` cases, ref-counted holds, composition order);
+changelog entries match behavior with dated `(#36)` refs; commit discipline clean;
+SKILL.md/README verified against the compiling API with no planning vocabulary leaked;
+core purity intact (empty-cache restore passes upstream); recorded deviations (D13, D18,
+surface re-types) properly decisioned and changelogged. Checkbox correctly unticked —
+pending the human Gate D listening on both backends.
+
+Non-blocking findings, applied in the follow-up commits carrying this record:
+- CS8602 null-deref in the web sample's new `M`/`N` handlers → fixed with the file's
+  existing `_sfx!` idiom; sample builds warning-clean.
+- BOM introduced in 20 diff files (three more carried it on master, left untouched) →
+  stripped; trailing newlines restored.
+- `SampleAudio`'s Linq usage was implicit-usings-dependent → explicit `using`.
+- `buses` SKILL.md stated custom-bus creation only via a code comment → an explicit
+  sentence added in Setup (maintainer feedback during review).
+Fourth observation (slice decisions recorded in preceding `docs(plans)` commits rather than
+inside each work-item commit) left as-is: it matches master's established practice
+(d547980, 78195d8) and each decision names its work-item commit explicitly.
+
+## 2026-11-25 — slice F phase-gate re-review of the grown diff (`8facac5..5a9592e`): good
+
+Re-review before the slice F checkbox tick, after five maintainer listening rounds and the
+fixes they demanded (D27–D31: no-bleed KO, entry cues on old screens, non-interactive heads,
+asset-sized beats, web warm-up). Reviewer: same `qa` session as the phase-gate review
+(full prior context); delta scope deep-checked, full-diff gates re-verified.
+
+Evidence run independently: `dotnet test Duack.slnx` **427/427 green** (329+21+34+43);
+`samples/Duack.Sample.Web` builds with 0 warnings (the two earlier CS8602 are gone);
+`python tools/plan_check.py` → `pass`; keyboard remnant grep clean on both story heads
+(`Advance`/`Restart` called by no head, matching the D29 changelog claim).
+
+Verdict **good** — no blocking findings: the delta adds no unplanned library scope
+(`src/Duack` changes are BOM-strip only; behavior change confined to the sample core,
+the KNI adapter seam, and changelog, exactly what the listening rounds demanded); the
+beat machine is coherent (all four flags reset on `Restart`/`EnterBattle`, beats unskippable,
+full-loop pin asserts no frame mixes a cue with a scene or music switch); `IWebAudioNative`
+growth (`WarmHttpCache`, `ReleaseAllBuffers`) is changelogged per the D20 pattern with
+dispose semantics pinned; every delta surface has a dated `(#36)` changelog entry that
+matches the mechanics; customer docs carry no planning vocabulary and their examples compile
+against the current API; commit discipline holds (one change per commit, `Refs: #36`, cliff
+types parse); the earlier non-blocking findings (BOM, newlines, CS8602, implicit Linq) all
+addressed.
+
+Non-blocking observations from this round, applied (`d5a273d`) or recorded: the
+`STATUS.md` open-questions closure and this record ride the tick commit; the one-line
+brace/attribute pair in `WebAudioSfxBackendTests` and the web README's "Start story"
+naming fixed beforehand; the WAV-header pin's location-sensitive lookup recorded as the
+accepted tradeoff of sizing beats from the actual assets (D30).
+
+Ruling: the slice F checkbox may tick — all agent-verifiable acceptance criteria green
+(427 tests incl. wrapper-equivalence and both-way fold pins), deferrals honestly recorded
+(per-bus voice counts, bus-targeted-duck validation), and the human listening obligations
+met and decisioned by the maintainer across five rounds. The tick, the README row flip
+to landed, and `STATUS.md` closure land as one commit with this record, per the plan-phase
+gate; nothing in it is code, so no changelog entry attaches.
+

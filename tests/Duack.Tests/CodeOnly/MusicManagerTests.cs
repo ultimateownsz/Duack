@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Duack;
 
 namespace Duack.Tests.CodeOnly;
@@ -309,7 +310,7 @@ public class MusicManagerTests
     {
         var backend = new FakeMusicBackend(supportsOverlap: true);
         var playlist = new MusicPlaylistController(OneTrack("solo"), new Random(1));
-        var manager = new MusicManager(backend, playlist, new MusicConfig { CrossfadeSeconds = 0f, MasterVolume = 0.5f });
+        var manager = new MusicManager(backend, playlist, new MusicConfig { CrossfadeSeconds = 0f, Buses = new Dictionary<string, BusConfig> { [BusNames.Music] = new BusConfig { Volume = 0.5f } } });
 
         manager.Play("main");
         manager.Update(0.016f);
@@ -459,7 +460,7 @@ public class MusicManagerTests
     {
         var backend = new FakeMusicBackend(supportsOverlap: true);
         var playlist = new MusicPlaylistController(OneTrack("solo"), new Random(1));
-        var music = new MusicConfig { CrossfadeSeconds = 0f, MasterVolume = 0.5f };
+        var music = new MusicConfig { CrossfadeSeconds = 0f, Buses = new Dictionary<string, BusConfig> { [BusNames.Music] = new BusConfig { Volume = 0.5f } } };
         var manager = new MusicManager(backend, playlist, music, masterVolume: 0.5f);
 
         manager.Play("main");
@@ -474,7 +475,7 @@ public class MusicManagerTests
     {
         var backend = new FakeMusicBackend(supportsOverlap: true);
         var playlist = new MusicPlaylistController(OneTrack("solo"), new Random(1));
-        var music = new MusicConfig { CrossfadeSeconds = 0f, MasterVolume = 0.5f };
+        var music = new MusicConfig { CrossfadeSeconds = 0f, Buses = new Dictionary<string, BusConfig> { [BusNames.Music] = new BusConfig { Volume = 0.5f } } };
         var manager = new MusicManager(backend, playlist, music);
 
         manager.Play("main");

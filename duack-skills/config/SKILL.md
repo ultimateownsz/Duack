@@ -30,10 +30,10 @@ var config = new AudioConfigBuilder()
 
 ## Sanitize() clamping
 
-- MasterVolume, Music.MasterVolume, Sfx.MasterVolume → [0,1].
+- Every bus's `Volume` in `AudioConfig.Buses` (the one flat table: master/music/sfx plus user
+  buses) → [0,1].
 - Music.CrossfadeSeconds → [0.1, 10].
 - Contexts → [0,1].
-- Sfx.Buses → [0,1] per bus.
 - Duck sources: Ratio [0,1], Attack/Hold/Release >= 0; `Target` names what the source ducks ("music" default, or a user bus).
 - CueVariation rebuilt (ranges normalized).
 - SchemaVersion normalized.

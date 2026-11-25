@@ -70,7 +70,7 @@ which are a deferred experiment.
 `samples/Duack.Sample.Concurrency` is the dedicated concurrency example — the storyline samples are
 deliberately left untouched. Run it with
 `dotnet run --project samples/Duack.Sample.Concurrency` (it reuses the desktop sample's SFX
-assets via the project file). Click **ONE** for a single cue, **BURST** for 50 overlapping cues
+assets via the project file). Click **PLAY** for a single cue, **BURST** for 50 overlapping cues
 through a manager capped at 8 voices, or **STOP** to silence everything mid-listen (Space/T and
 the keys mirror the buttons). The two-digit readout and the eight slot bars show
 `ActiveVoiceCount`; the count must never exceed 08 during the burst. A human listening check is

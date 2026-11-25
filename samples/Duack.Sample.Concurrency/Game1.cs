@@ -13,7 +13,7 @@ public static class Program
 }
 
 /// <summary>
-/// Dedicated voice-concurrency example: SFX voice limiting. Click ONE to fire a single cue,
+/// Dedicated voice-concurrency example: SFX voice limiting. Click PLAY to fire a single cue,
 /// BURST to fire 50 overlapping cues through a manager capped at 8 voices (oldest-voice stealing),
 /// and STOP to silence everything mid-listen; Space/T/Escape mirror the buttons from the keyboard.
 /// The two-digit readout is the limiter's ActiveVoiceCount and must never exceed 08 during the
@@ -161,7 +161,7 @@ public class Game1 : Game
         DrawDigit(x + digitSize + 8, y, digitSize, count % 10, Color.White);
 
         LayoutButtons();
-        DrawButton(_singleButton, "ONE", Color.White);
+        DrawButton(_singleButton, "PLAY", Color.White);
         DrawButton(_burstButton, "BURST", Color.White);
         DrawButton(_stopButton, "STOP", Color.OrangeRed);
 
@@ -215,6 +215,8 @@ public class Game1 : Game
         // 5 rows, bit 2 = leftmost column of the 3-wide glyph.
         ['O'] = new byte[] { 0b111, 0b101, 0b101, 0b101, 0b111 },
         ['N'] = new byte[] { 0b101, 0b111, 0b111, 0b111, 0b101 },
+        ['A'] = new byte[] { 0b111, 0b101, 0b111, 0b101, 0b101 },
+        ['Y'] = new byte[] { 0b101, 0b101, 0b010, 0b010, 0b010 },
         ['E'] = new byte[] { 0b111, 0b100, 0b111, 0b100, 0b111 },
         ['B'] = new byte[] { 0b111, 0b101, 0b110, 0b101, 0b111 },
         ['U'] = new byte[] { 0b101, 0b101, 0b101, 0b101, 0b111 },

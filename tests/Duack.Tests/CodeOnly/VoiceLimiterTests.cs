@@ -3,7 +3,7 @@ using Duack;
 namespace Duack.Tests.CodeOnly;
 
 /// <summary>
-/// Slice A: global and per-cue voice caps, stealing policies, and explicit refusal reasons.
+/// Voice limiting: global and per-cue voice caps, stealing policies, and explicit refusal reasons.
 /// The limiter is pure core — no backend, no platform timers.
 /// </summary>
 public class VoiceLimiterTests

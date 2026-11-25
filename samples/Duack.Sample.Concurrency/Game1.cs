@@ -56,7 +56,7 @@ public class Game1 : Game
 
         _cues = new MarbleBag<string>(library.Sfx, random: null, avoidImmediateRepeat: true);
 
-        // Music is untouched by this slice: an empty playlist and a real backend are enough for
+        // Music is untouched by this example: an empty playlist and a real backend are enough for
         // SfxManager's duck pulse, which is a no-op without a configured duck source.
         var clips = new SoundEffectClipLibrary(library);
         var music = new MusicManager(

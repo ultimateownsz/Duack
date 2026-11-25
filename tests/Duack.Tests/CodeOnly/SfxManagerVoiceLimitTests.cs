@@ -2,7 +2,7 @@ using Duack;
 
 namespace Duack.Tests.CodeOnly;
 
-/// <summary>Slice A integration: SfxManager enforces authored caps and reports every refusal.</summary>
+/// <summary>Voice-limit integration: SfxManager enforces authored caps and reports every refusal.</summary>
 public class SfxManagerVoiceLimitTests
 {
     private sealed class FakeSfxBackend : ISfxBackend

@@ -74,4 +74,4 @@ assets via the project file). Click **ONE** for a single cue, **BURST** for 50 o
 through a manager capped at 8 voices, or **STOP** to silence everything mid-listen (Space/T and
 the keys mirror the buttons). The two-digit readout and the eight slot bars show
 `ActiveVoiceCount`; the count must never exceed 08 during the burst. A human listening check is
-still required before the slice is called done; the counter alone is not proof of audible quality.
+still required before voice limiting is called done; the counter alone is not proof of audible quality.

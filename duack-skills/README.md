@@ -1,8 +1,9 @@
 # Duack Skills
 
 Plain-Markdown guides covering common Duack tasks (ducking, buses, playlists, SFX variation,
-player settings, audio library, config, adapters, CLI, crossfades, and the audio-core
-quick reference). This directory is the **single source of truth** for the skill content.
+spatial, player settings, audio library, config, adapters, CLI, crossfades, concurrency,
+track duration, and the audio-core quick reference). This directory is the **single source
+of truth** for the skill content.
 
 Duack ships these as plain Markdown you copy into your project so your AI coding assistant
 has Duack context without you pasting anything manually. Each file is self-contained.

@@ -11,6 +11,14 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 
 ### Added
 
+#### 2026-11-26
+- Added the `spatial` duack-skill (`duack-skills/spatial/SKILL.md`): a self-contained guide
+  to the 2D positional SFX surface — `SetListener`/`PlayAt` world placement, the pan and
+  distance knobs in `SpatialConfig`, moving sources via `SfxSpatialVoice`, and the mute
+  floor. Completed the `duack-skills/README.md` topic index: it now lists every shipped
+  topic, including the previously omitted `track duration` and `concurrency`. Docs only;
+  no behavior change. (#34)
+
 #### 2026-11-25
 - **2D positional SFX (#34).** `SfxManager.SetListener(x, y)` + `ListenerPosition` readback
   anchor the listener; `SfxManager.PlayAt(cue, x, y, ...)` places a one-shot in the world and

@@ -326,6 +326,8 @@ public class MusicManagerFadeTests
         manager.Update(0f);
 
         Assert.True(manager.IsTransitioning);
-        Assert.Equal(supportsOverlap ? 0.5f : 0.75f, manager.TransitionDurationSeconds);
+        // Web splits the 0.5s crossfade into 0.25s out + 0.25s in, so the total is 0.5s on
+        // both backends; the stale 1.0f call fade would have reported 1.0s / 1.5s instead.
+        Assert.Equal(0.5f, manager.TransitionDurationSeconds);
     }
 }

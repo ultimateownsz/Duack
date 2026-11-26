@@ -34,7 +34,7 @@ backends the same pan value (pinned cross-seam in tests); only the L/R reproduct
 differs. A curve-matching recombination on desktop is deliberately not built until
 listening evidence demands it.
 
-Awaiting after the code lands (external checks and taste, tracked on #34):
+Awaiting after the code landed on master (#41, merged 2026-11-25; external checks and taste, tracked on #44):
 
 - Positional sample on both heads + human listening (acceptance criterion; judged by
   the worst moment).

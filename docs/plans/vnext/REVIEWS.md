@@ -397,3 +397,22 @@ lifecycle pattern (onended disconnect + tracked id map) the panner calls layer o
   vs the web constant-power law (documented, unquantified); stereo correctness at
   `|pan| -> 1` rests on the human-listening gate (open on #34); per-voice bus re-resolve in
   `RemixVoiceNow` is fine at current voice counts, a note if they grow.
+
+## PR #45 — docs: resync slice B plan state with merged #41, retarget acceptance remainder to #44 (2026-11-25): good
+
+- Head at review: `3c0f6c8` (commits `9ab6fbe`, `3c0f6c8`), base `master`.
+- Reviewer: qa pass per `.opencode/commands/pr-review.md`; CI `build-and-test` green, `plan_check` pass.
+- Verdict: **good.** The three-file resync is accurate against the live state: #41 merged
+  2026-11-25, #34 closed, the phase checkbox keeps #34/#41 and names #44 for the remainder,
+  the README slice B row and the STATUS.md "Awaiting" heading both retarget #34 → #44, and
+  no code is touched. Both commits end with `Refs: #44`.
+- The same PR adds the qa-verdict checkbox rule (AGENTS.md rules of engagement,
+  pr-review.md step 6): a good verdict that completes a phase checkbox lands a small docs
+  commit ticking it and moving its plan index row; boxes with remaining acceptance
+  (listening, samples) stay unticked. Consistent with "a state changed but no file did
+  not happen"; not ticked here because PR #45 completes no checkbox.
+- Non-blocking observations, pre-existing on master and out of scope here: the phase doc
+  ticks Slice C `[x] (#31)` while the README slice row still reads "in progress" after the
+  Gate 2 adoption note; Slice E has no issue number on its checkbox
+  (`plan/01-vnext/phase-01-vnext-slices.md`) and the index row for E in this doc says
+  "draft", both worth their own resync pass.

@@ -561,4 +561,37 @@ public class MusicManagerTests
         Assert.Equal("b", manager.CurrentTrack?.Name);
         Assert.Equal(8f, manager.TransitionDurationSeconds);
     }
+
+    [Fact]
+    public void CurrentPlaylistName_forwards_the_controller()
+    {
+        var backend = new FakeMusicBackend(supportsOverlap: true);
+        var playlist = new MusicPlaylistController(TwoTracks("a", "b"));
+        var manager = new MusicManager(backend, playlist);
+
+        Assert.Null(manager.CurrentPlaylistName);
+
+        manager.Play("main");
+
+        Assert.Equal("main", manager.CurrentPlaylistName);
+    }
+
+    [Fact]
+    public void Playing_an_unknown_playlist_forwards_the_fallback_report_and_stops_music()
+    {
+        var backend = new FakeMusicBackend(supportsOverlap: true);
+        var playlist = new MusicPlaylistController(TwoTracks("a", "b"));
+        var manager = new MusicManager(backend, playlist, new MusicConfig { CrossfadeSeconds = 0f });
+        manager.Play("main");
+        Assert.True(manager.IsPlaying);
+
+        string? reported = null;
+        manager.PlaylistFellBack += name => reported = name;
+
+        manager.Play("misspelled");
+
+        Assert.Equal("misspelled", reported);
+        Assert.Null(manager.CurrentPlaylistName);
+        Assert.False(manager.IsPlaying);
+    }
 }

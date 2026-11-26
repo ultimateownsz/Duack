@@ -147,6 +147,25 @@ public class MusicManager
     /// <summary>The track the playlist currently names (what the backend should be playing).</summary>
     public PlaylistTrack? CurrentTrack => _playlist.CurrentTrack;
 
+    /// <summary>
+    /// The name of the playlist the controller is running, or null when stopped. The re-trigger guard
+    /// should compare against this — <see cref="PlaylistTrack.Name"/> is a track name and only equals
+    /// the playlist name for a single-track playlist named after its track.
+    /// </summary>
+    public string? CurrentPlaylistName => _playlist.CurrentPlaylistName;
+
+    /// <summary>
+    /// Raised when <see cref="Play"/> names a playlist that cannot play (unknown name or no tracks),
+    /// carrying the requested name. Without it a typo silently stops the running music; the report
+    /// mirrors the SFX path's <see cref="BusMixer.BusFellBack"/>. Forwarded from
+    /// <see cref="MusicPlaylistController.PlaylistFellBack"/>.
+    /// </summary>
+    public event Action<string>? PlaylistFellBack
+    {
+        add => _playlist.PlaylistFellBack += value;
+        remove => _playlist.PlaylistFellBack -= value;
+    }
+
     /// <summary>Seconds since the current track started (0 when nothing is playing).</summary>
     public float CurrentTrackElapsedSeconds => _backend.IsTrackPlaying ? _backend.CurrentTrackElapsedSeconds : 0f;
 

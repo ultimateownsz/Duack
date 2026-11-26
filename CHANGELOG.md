@@ -12,6 +12,16 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 ### Added
 
 #### 2026-11-26
+- **Music playlist misses are now reported instead of silent.** Two surfaces: `MusicManager.Play`
+  with an unknown (or empty) playlist previously stopped the running music silently — the
+  controller's no-throw guard is deliberate, but nothing surfaced the miss. Both
+  `MusicPlaylistController` and `MusicManager` now raise `PlaylistFellBack` (the `BusFellBack`
+  precedent on the SFX path) carrying the requested name. `MusicManager.CurrentPlaylistName`
+  is newly exposed too, so the re-trigger guard can compare playlist-to-playlist: the documented
+  `CurrentTrack?.Name != frame.Music` pattern compares a track name to a playlist name and only
+  holds for single-track playlists named after their track; on a multi-track playlist it would
+  restart the sequence every frame. Docs updated (crossfade skill guard caveat, playlists skill
+  naming convention, deferred register scope). (#56)
 - Added the `spatial` duack-skill (`duack-skills/spatial/SKILL.md`): a self-contained guide
   to the 2D positional SFX surface — `SetListener`/`PlayAt` world placement, the pan and
   distance knobs in `SpatialConfig`, moving sources via `SfxSpatialVoice`, and the mute

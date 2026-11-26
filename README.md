@@ -127,7 +127,7 @@ sfx.Play("notice", duck: true);   // pulses the "sfx" duck source: the music dip
 music.Update(dt);
 ```
 
-Playlists for automatic sequencing (track intro --> loop, for example):
+Playlists for automatic sequencing (a battle sequence of intro -> loop -> victory, for example; `Repeat` applies to the whole playlist, so `Track` would loop the intro forever and never reach `battle-loop`):
 ```csharp
 using Duack;
 
@@ -135,7 +135,8 @@ var playlists = new PlaylistConfigBuilder()
     .WithPlaylist("battle-sequence", p => p
         .Track("battle-intro", "Battle")
         .Track("battle-loop",  "Battle")
-        .Repeat(PlaylistRepeatMode.Track))
+        .Track("victory",      "Battle")
+        .Repeat(PlaylistRepeatMode.Off))
     .Build();
 ```
 

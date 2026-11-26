@@ -21,7 +21,9 @@ widening of one. Every tick lands in the same commit as the work it
 describes.
 
 Each box carries its issue number, created before the work starts:
-`- [ ] <step> (#N)`. The issue holds the problem, acceptance criteria and
+`- [ ] <step> (#N)`. The issue title follows Conventional Commits
+(`type(scope): <what it ships>`), never the slice or phase name; the
+issue holds the problem, acceptance criteria and
 repro; this file holds the status. End every implementing commit with a
 `Refs: #N` footer so `git log --grep '#N'` gives the exact set to review,
 document or revert. Review verdicts and listening results go in issue

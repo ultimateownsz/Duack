@@ -142,8 +142,12 @@ comments. A feature request filed as an issue is recorded in
 pointer to that entry. Do not leave wishlist issues open.
 
 Every checkbox names its issue (`- [ ] <step> (#123)`), created before the
-work starts. The issue holds the problem, acceptance criteria and repro;
-the plan file holds status. End every implementing commit with a
+work starts. Its title follows Conventional Commits, exactly like a
+commit title (`fix:`, `feat:`; a scope may narrow it, e.g.
+`docs(audio-core): ...`), and names what the issue ships — never the slice
+or phase it belongs to; the plan index row already says which slice, and
+AGENTS.md forbids slice names as identifiers. The issue holds the
+problem, acceptance criteria and repro; the plan file holds status. End every implementing commit with a
 `Refs: #123` footer, so `git log --grep '#123'` lists exactly the commits
 behind that box — the set to review, document, or revert when a change
 turns out to be a bug or a misunderstanding. Post evidence (review

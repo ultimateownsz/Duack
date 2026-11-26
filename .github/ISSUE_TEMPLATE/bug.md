@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: A reproduced bug with enough detail to verify the fix and revert it if needed
+about: "A reproduced bug with enough detail to verify the fix and revert it if needed. Title: Conventional Commits form, e.g. 'fix(scope): symptom'"
 title: ""
 ---
 

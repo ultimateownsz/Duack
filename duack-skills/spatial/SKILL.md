@@ -61,10 +61,10 @@ voice?.SetPosition(x + 4f, y);
 voice?.Stop(); // silence now; slot bookkeeping still ages normally
 ```
 
-Aging runs inside `Update(deltaSeconds)`: twice the cue's recorded lifetime after its start
-(`VoiceLimits.DefaultVoiceSeconds` if no per-cue limit sets one, floored so the prune is at
-least 0.1 s) the remix record is dropped, and a cue longer than that keeps sounding but stops
-following its position.
+Aging runs inside `Update(deltaSeconds)`: twice the configured default voice seconds
+(`VoiceLimits.DefaultVoiceSeconds`, 0.5 s when unset, floored so the prune is at least
+0.1 s) the remix record is dropped — per-cue lifetimes do not extend it — and a cue longer
+than that keeps sounding but stops following its position.
 
 ## The mute floor releases, not mutes
 
@@ -82,7 +82,8 @@ api, no pan). The desktop `SoundEffectSfxBackend` and the web `WebAudioSfxBacken
 implement it. One acoustic difference is recorded, not hidden: the web voice pans through a
 `StereoPannerNode` (constant-power law); desktop pan is the platform `SoundEffectInstance.Pan`
 (linear taper). The core hands both the same pan value; the two reproductions share the
-endpoints (pan ±1 is full left on both) but differ at every off-center pan: the constant-power
+endpoints (pan -1 is full left and pan 1 is full right on both) but differ at every off-center
+pan: the constant-power
 law keeps left-squared plus right-squared constant, while the linear taper lets the combined
 level rise between the extremes. Which law fits your game is a listening call on your target.
 

@@ -127,7 +127,11 @@ Rules of engagement:
 - Mark checkboxes and index statuses in the same commit as the work they
   describe. If a state changed but no file changed, it did not happen.
   Unplanned work becomes a new box or a new phase, never quiet widening
-  of the ones that exist.
+  of the ones that exist. When a good qa verdict on the PR is the gate
+  that completes a checkbox, the review pass itself lands a small docs
+  commit ticking the box and moving its plan index row, ending with the
+  usual `Refs: #<issue>` footer. A checkbox whose acceptance items remain
+  open (human listening, samples) stays unticked.
 - Commits and branches follow CONTRIBUTING.md: Conventional Commits,
   one branch per phase, named after what it implements.
 

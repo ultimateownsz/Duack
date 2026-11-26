@@ -5,7 +5,7 @@ description: 2D positional SFX in Duack - SetListener/PlayAt world positioning, 
 
 # Duack — 2D Positional SFX
 
-Duack positions **one-shot SFX cues in the world** (issue #34). Music is untouched: the
+Duack positions **one-shot SFX cues in the world**. Music is untouched: the
 playlist engine plays in stereo as authored, and the mix tools for music stay crossfade and
 ducking. Distances and offsets are plain floats — Duack never takes engine types (no Vector2,
 no entities): engine-side wiring (camera, listeners on movers) is your code calling the
@@ -61,15 +61,19 @@ voice?.SetPosition(x + 4f, y);
 voice?.Stop(); // silence now; slot bookkeeping still ages normally
 ```
 
-A remix record is dropped after twice the assumed voice lifetime, so a cue longer than that
-keeps sounding but stops following its position.
+Aging runs inside `Update(deltaSeconds)`: twice the cue's recorded lifetime after its start
+(`VoiceLimits.DefaultVoiceSeconds` if no per-cue limit sets one, floored so the prune is at
+least 0.1 s) the remix record is dropped, and a cue longer than that keeps sounding but stops
+following its position.
 
 ## The mute floor releases, not mutes
 
 A play at or past `MaxDistance` composes to zero total gain: it reports through
 `ZeroEffectiveGain` and `LastPlayResult` stays `Played`, but nothing is played and **no voice
 slot is consumed** — a very distant gameplay jam cannot crowd out important audio. A live voice
-whose source walks past the floor is silenced (not stopped) until its lifetime expires.
+whose source walks past the floor is silenced (not stopped): remixes compose it to zero gain,
+a `SetPosition` back inside the floor makes it audible again, and the limiter slot itself is
+freed when the voice's recorded lifetime expires — silencing does not add or unlock slot time.
 
 ## Backend support and the pan difference
 
@@ -77,13 +81,16 @@ The seam is additive: a backend without it plays the composed volume mono-center
 api, no pan). The desktop `SoundEffectSfxBackend` and the web `WebAudioSfxBackend` both
 implement it. One acoustic difference is recorded, not hidden: the web voice pans through a
 `StereoPannerNode` (constant-power law); desktop pan is the platform `SoundEffectInstance.Pan`
-(linear taper). The core hands both the same pan value; at extreme pan the desktop stereo
-separation reads slightly narrower. Tune by listening on your target.
+(linear taper). The core hands both the same pan value; the two reproductions share the
+endpoints (pan ±1 is full left on both) but differ at every off-center pan: the constant-power
+law keeps left-squared plus right-squared constant, while the linear taper lets the combined
+level rise between the extremes. Which law fits your game is a listening call on your target.
 
 ## Web (browser) wiring
 
 The core of this page is backend-agnostic: `SetListener`, `PlayAt`, and `SfxSpatialVoice`
-behave identically on desktop and web — only the construction differs. Browsers cannot
+compose the same gain and pan for a given position on desktop and web — only the construction
+differs, and how the platform renders that pan can differ (the note above). Browsers cannot
 enumerate directories, so the web head builds the library from the checked-in manifest
 (`duackcli scan`, see `audio-library`), preloads every cue through the WebAudio bridge, and
 serves WAV by relative URL:
@@ -101,9 +108,10 @@ voice?.SetPosition(x, y);       // re-mixes the live voice's StereoPannerNode + 
 
 Under the panner: one voice = one `AudioBufferSourceNode` → per-voice `GainNode` (the
 composed volume, onset and remix ramps are 3 ms so nothing zippers), panned voices get a
-`StereoPannerNode` inserted between them and the persistent sfx bus node. Voices create the
-panner mid-flight the first time a remix moves them off center; everything disconnects on
-natural end, `Stop()`, or stealing, so a long session leaks no nodes.
+`StereoPannerNode` inserted between them and the persistent sfx bus node — created at play
+time for a voice that starts off-center, or mid-flight the first time a remix moves a
+centered voice off center. Everything disconnects on natural end, `Stop()`, or stealing, so
+a long session leaks no nodes.
 
 Two browser facts matter: the `AudioContext` starts suspended until a user gesture, so
 construct the backend (it resumes the context at init) inside the click that starts your

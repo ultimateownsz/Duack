@@ -51,10 +51,10 @@ Euclidean distance; pan comes from the horizontal offset only (2D screen/left-ri
 
 `PlayAt` returns an `SfxSpatialVoice`, or null when the play did not start (unknown cue,
 a backend refusal, a voice-cap refusal, silence). Call `SetPosition(x, y)` on the voice
-every time the source moves,
-and the manager re-mixes that exact voice — the pan and gain it composed for the new position
-reach the backend through the additive positional seam, keyed per voice. Move the listener with
-`SetListener` and every live voice re-mixes around the new anchor.
+every time the source moves, and the manager re-mixes that exact voice — the pan and gain it
+composed for the new position reach the backend through the additive positional seam, keyed
+per voice. Move the listener with `SetListener` and every live voice re-mixes around the
+new anchor.
 
 ```csharp
 var voice = sfx.PlayAt("hit", x, y);
@@ -83,10 +83,10 @@ api, no pan). The desktop `SoundEffectSfxBackend` and the web `WebAudioSfxBacken
 implement it. One acoustic difference is recorded, not hidden: the web voice pans through a
 `StereoPannerNode` (constant-power law); desktop pan is the platform `SoundEffectInstance.Pan`
 (linear taper). The core hands both the same pan value; the two reproductions share the
-endpoints (pan -1 is full left and pan 1 is full right on both) but differ at every off-center
-pan: the constant-power
-law keeps left-squared plus right-squared constant, while the linear taper lets the combined
-level rise between the extremes. Which law fits your game is a listening call on your target.
+endpoints (pan -1 is full left and pan 1 is full right on both) but differ at every
+off-center pan: the constant-power law keeps left-squared plus right-squared constant, while
+the linear taper lets the combined level rise between the extremes. Which law fits your game
+is a listening call on your target.
 
 ## Web (browser) wiring
 

@@ -53,6 +53,9 @@ dotnet tool install --global DuackCli
 duackcli scan <audioRoot>
 ```
 
+Install the DuackCli version matching your Duack package preview; the CLI
+tags (`cli-v*`) release in lockstep with library previews.
+
 ### Samples
 
 Each sample is a complete runnable game/tool built on the library — open the source to see real usage patterns.
@@ -138,8 +141,8 @@ var playlists = new PlaylistConfigBuilder()
 
 The same on the web (KNI / WASM); the browser can't list your files, so generate a manifest once and check it in:
 ```sh
-# from a clone of this repository (the CLI ships with the repo in this preview, not as a package)
-dotnet run --project tools/DuackCli -- scan Content/Audio        # writes audio-manifest.json
+dotnet tool install --global DuackCli
+duackcli scan Content/Audio        # writes audio-manifest.json
 ```
 
 ```csharp
@@ -192,7 +195,15 @@ Nothing in Duack requires the CLI. The library is fully usable from code alone. 
 | `scan` | `duackcli scan <audioRoot> [--out <file>]` |
 | `normalize` | `duackcli normalize <dir> [<outDir>] [--out <dir>]` |
 
-In this preview, run it from the repository: 
+Install the published tool and run it from anywhere:
+
 ```sh
-dotnet run --project tools/DuackCli -- <command>`.
+dotnet tool install --global DuackCli
+duackcli <command>
+```
+
+Working inside a clone of this repository, you can also run it in place:
+
+```sh
+dotnet run --project tools/DuackCli -- <command>
 ```

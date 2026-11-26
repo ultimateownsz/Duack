@@ -49,6 +49,7 @@ public static class PlayerSettings
             {
                 CueVariation = authored.Sfx.CueVariation
             },
+            MixStates = CloneMixStates(authored.MixStates),
         };
 
         effective.Buses[BusNames.Master].Volume = saved.MasterVolume;
@@ -82,6 +83,15 @@ public static class PlayerSettings
 
     /// <summary>Drops the saved preferences so the next <see cref="ApplyOverrides(AudioConfig)"/> uses authored values.</summary>
     public static void ClearOverrides() => Store.Clear();
+
+    private static Dictionary<string, MixStateConfig> CloneMixStates(Dictionary<string, MixStateConfig> source)
+    {
+        var clone = new Dictionary<string, MixStateConfig>(source.Count);
+        foreach (var (key, value) in source)
+            clone[key] = new MixStateConfig { Buses = new Dictionary<string, float>(value.Buses) };
+
+        return clone;
+    }
 
     private static Dictionary<string, DuckSourceConfig> CloneDuckSources(Dictionary<string, DuckSourceConfig> source)
     {

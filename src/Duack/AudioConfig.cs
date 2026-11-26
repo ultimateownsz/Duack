@@ -121,6 +121,7 @@ public class SfxConfig
 public class AudioConfig
 {
     private Dictionary<string, BusConfig> _buses = CreateDefaultBuses();
+    private Dictionary<string, MixStateConfig> _mixStates = new(StringComparer.Ordinal);
     private MusicConfig _music = new();
     private SfxConfig _sfx = new();
 
@@ -169,6 +170,20 @@ public class AudioConfig
         set { _sfx = value; value.Buses = _buses; }
     }
 
+    /// <summary>
+    /// The named mix states (see <see cref="MixStateConfig"/>), keyed by state name
+    /// (lowercase, <see cref="StringComparer.Ordinal"/>) and authored via
+    /// <see cref="AudioConfigBuilder.WithMixState(string, Action{MixStateBuilder})"/>. Each
+    /// state is a vector of per-bus volume targets over the same flat table
+    /// <see cref="Buses"/> names — authored config, never captured runtime state (ADR-10) —
+    /// applied at runtime by a <see cref="MixStateManager"/>.
+    /// </summary>
+    public Dictionary<string, MixStateConfig> MixStates
+    {
+        get => _mixStates;
+        set => _mixStates = value ?? new Dictionary<string, MixStateConfig>(StringComparer.Ordinal);
+    }
+
     /// <summary>Creates the table pre-registered with master/music/sfx at full volume.</summary>
     public static Dictionary<string, BusConfig> CreateDefaultBuses() => new(StringComparer.Ordinal)
     {
@@ -182,6 +197,10 @@ public class AudioConfig
     {
         foreach (var bus in _buses.Values)
             bus.Volume = System.Math.Clamp(bus.Volume, 0f, 1f);
+
+        foreach (var state in _mixStates.Values)
+            foreach (var bus in state.Buses.Keys.ToList())
+                state.Buses[bus] = System.Math.Clamp(float.IsNaN(state.Buses[bus]) ? 0f : state.Buses[bus], 0f, 1f);
 
         Music.CrossfadeSeconds = System.Math.Clamp(Music.CrossfadeSeconds, 0.1f, 10f);
 

@@ -316,6 +316,20 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
   the fixed snippet, the loop track follows the intro. Docs only, no behavior change, so no
   test ships; the API itself is already pinned by `MusicManagerFadeTests` and the
   `MusicPlaylistController` sequencing tests. (#51)
+- **A call-level `fadeInSeconds` now outranks the track's authored `FadeInSeconds`.**
+  Symptom: `Play(name, fadeInSeconds: 0.8f)` on a track authored with
+  `FadeInSeconds = 0.4f` faded over 0.4s — `Update` overwrote the call's fade with the
+  track's before `BeginTransition` consumed it, so the consumer's runtime intent was
+  silently discarded (the playlists skill's "overrides track fade" claim was inverted).
+  Precedence is now call-level > track-level > `CrossfadeSeconds`, matching how the call
+  already outranked the config-level default. Also fixed in the same path: a `Play` with
+  a call fade that never started a transition (same-track re-request) leaked its fade
+  into the *next* transition; the call fade is now consumed by its own transition or
+  discarded when `Play` returns. Repro to re-verify:
+  `Call_level_fade_in_overrides_the_track_fade_in`,
+  `Track_fade_in_applies_when_the_call_omits_a_fade`, and
+  `A_call_fade_never_leaks_into_a_later_transition` in `MusicManagerFadeTests` (both
+  overlap and sequenced backends). (#52)
 
 #### 2026-11-25
 - **Every screen now loads clean — the entry cues land on their own screen too** (maintainer

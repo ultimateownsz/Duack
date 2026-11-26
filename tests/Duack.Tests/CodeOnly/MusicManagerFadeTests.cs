@@ -265,4 +265,67 @@ public class MusicManagerFadeTests
         Assert.Equal(1.0f, track.FadeInSeconds);
         Assert.Equal(0.5f, track.FadeOutSeconds);
     }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void Call_level_fade_in_overrides_the_track_fade_in(bool supportsOverlap)
+    {
+        var backend = new FakeMusicBackend(supportsOverlap);
+        var playlist = new MusicPlaylistController(OneTrackWithFade("a", fadeIn: 0.4f));
+        var manager = new MusicManager(backend, playlist, new MusicConfig { CrossfadeSeconds = 1f });
+
+        manager.Play("main", fadeInSeconds: 0.8f);
+
+        Assert.True(manager.IsTransitioning);
+        Assert.Equal(0.8f, manager.TransitionDurationSeconds);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void Track_fade_in_applies_when_the_call_omits_a_fade(bool supportsOverlap)
+    {
+        var backend = new FakeMusicBackend(supportsOverlap);
+        var playlist = new MusicPlaylistController(OneTrackWithFade("a", fadeIn: 0.4f));
+        var manager = new MusicManager(backend, playlist, new MusicConfig { CrossfadeSeconds = 1f });
+
+        manager.Play("main");
+
+        Assert.True(manager.IsTransitioning);
+        Assert.Equal(0.4f, manager.TransitionDurationSeconds);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void A_call_fade_never_leaks_into_a_later_transition(bool supportsOverlap)
+    {
+        var backend = new FakeMusicBackend(supportsOverlap);
+        var config = new PlaylistConfig
+        {
+            Playlists =
+            {
+                ["main"] = new PlaylistDefinition
+                {
+                    Tracks =
+                    {
+                        new PlaylistTrack { Name = "a", Context = "Overworld" },
+                        new PlaylistTrack { Name = "b", Context = "Overworld" },
+                    },
+                },
+            },
+        };
+        var manager = new MusicManager(backend, new MusicPlaylistController(config), new MusicConfig { CrossfadeSeconds = 0.5f });
+
+        manager.Play("main");
+        manager.Update(0.016f);
+        manager.Play("main", fadeInSeconds: 1.0f);   // same track: the request is a no-op
+
+        manager.Next();                               // the next transition must not see the 1.0f
+        manager.Update(0f);
+
+        Assert.True(manager.IsTransitioning);
+        Assert.Equal(supportsOverlap ? 0.5f : 0.75f, manager.TransitionDurationSeconds);
+    }
 }

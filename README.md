@@ -136,6 +136,9 @@ var playlists = new PlaylistConfigBuilder()
         .Track("battle-intro", "Battle")
         .Track("battle-loop",  "Battle")
         .Track("victory",      "Battle")
+        // Repeat is playlist-level: Off stops after "victory", Playlist replays the
+        // sequence from the intro, Track loops whatever track is current — so to loop
+        // "battle-loop" alone, give it its own single-track playlist with Repeat(Track).
         .Repeat(PlaylistRepeatMode.Off))
     .Build();
 ```

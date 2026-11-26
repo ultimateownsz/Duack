@@ -28,7 +28,7 @@ state and open questions live in each slice's `STATUS.md`; the boxes here
 track slice completion only.
 
 - [x] Slice A — voice concurrency (#40)
-- [ ] Slice B — 2D positional SFX (#34 landed via #41; remainder #44)
+- [x] Slice B — 2D positional SFX (#34 landed via #41; remainder #44)
 - [x] Slice C — user-defined buses (#31)
 - [ ] Slice E — named mix states (#46)
 - [ ] Slice D — build-time effects experiment (dormant until Gate 0 evidence)

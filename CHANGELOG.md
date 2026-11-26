@@ -324,6 +324,12 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 
 ### Fixed
 
+#### 2026-11-26
+- Fixed the CS0067 build warning in the mix-state tests: the headless backend fake's
+  `TrackEnded` event was declared but never used. The fake now mirrors `MusicManagerTests`
+  with a `RaiseTrackEnded` helper that invokes it, so the event a completion test would fire
+  exists without a pragma. Test-only change; no behavior touched. (#46)
+
 #### 2026-11-25
 - **Every screen now loads clean — the entry cues land on their own screen too** (maintainer
   ruling, Nov 25, human listening round 2, extending the KO fix to the story's ENTRY

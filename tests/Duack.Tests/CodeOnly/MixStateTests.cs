@@ -230,5 +230,12 @@ public class MixStateTests
         public void StopOutgoing() { }
         public void Stop() => IsTrackPlaying = false;
         public void Update(float deltaSeconds) { }
+
+        /// <summary>Simulates the active track reaching its end, keeping the event in use.</summary>
+        public void RaiseTrackEnded()
+        {
+            IsTrackPlaying = false;
+            TrackEnded?.Invoke(this, EventArgs.Empty);
+        }
     }
 }

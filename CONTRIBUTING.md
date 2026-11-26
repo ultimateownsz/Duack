@@ -75,7 +75,10 @@ Conventional Commits (`feat:`, `fix:`, `refactor:`, `docs:`, `test:`,
 `chore:`); breaking changes use the `!` suffix or a `BREAKING CHANGE:`
 footer. If your tooling does not set them, the maintainer sets the
 type in the squash-merge title. The changelog is generated from commits;
-that is the only reason this rule exists. Commits implementing a planned
+that is the only reason this rule exists. Issue titles use the same
+Conventional Commits form (`type(scope): summary`, e.g.
+`fix(concurrency): ...`) and name the shipped change, not the plan slice
+they came from. Commits implementing a planned
 checkbox end with a `Refs: #<issue>` footer; the issue number is already
 on the box, and `git log --grep '#<issue>'` gives the exact set to review
 or revert.

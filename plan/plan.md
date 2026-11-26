@@ -36,8 +36,10 @@ How it is worked:
 - Every checkbox names its issue, created before the work starts:
   `- [ ] <step> (#123)`. Implementation commits end in `Refs: #123`, so
   `git log --grep '#123'` lists exactly the commits behind that box — the
-  set to review, document or revert when a change proves wrong. The issue
-  holds the problem, acceptance criteria and repro; evidence goes in its
+  set to review, document or revert when a change proves wrong. The
+  issue title follows Conventional Commits (`type(scope): <what it
+  ships>`), never the slice or phase name. The issue holds the problem,
+  acceptance criteria and repro; evidence goes in its
   comments. Status stays here.
 - Decisions and gotchas keep stable IDs: `D<n>` and `G<n>`, ranges
   reserved per phase in overview.md. Cite D30; never cite "the decision

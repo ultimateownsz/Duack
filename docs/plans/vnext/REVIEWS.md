@@ -417,6 +417,35 @@ lifecycle pattern (onended disconnect + tracked id map) the panner calls layer o
   (`plan/01-vnext/phase-01-vnext-slices.md`) and the index row for E in this doc says
   "draft", both worth their own resync pass.
 
+## PR #48 — docs: issue titles follow Conventional Commits, never slice names (2026-11-26): good
+
+- Head at review: `c63efdc` (base `master`); re-reviewed at `48a59c4` after the
+  blocking finding was fixed plus the recorded-verdict commit.
+- Reviewer: qa pass per `.opencode/commands/pr-review.md`; CI `build-and-test` green
+  at `c63efdc`, `plan_check` pass.
+- Blocking finding (fixed): the PR shipped with no backing issue and no
+  `Refs: #<issue>` footer, against CONTRIBUTING.md PR rule 1 ("An agreed issue
+  first, except typos and tiny doc fixes") — verified: the only commit `c63efdc`
+  had no footer, and no open issue covered the change. Fix: work-item #49 opened
+  (titled in the new conventional form it introduces) and the commit amended to
+  end with `Refs: #49`.
+- Verdict: **good** on content. The rule is stated
+  identically in all four guidance files (`AGENTS.md` checkbox paragraph,
+  `CONTRIBUTING.md` Commits, `plan/plan.md`, `plan/_templates/phase.md`) —
+  consistent with how the slice-folder convention is stated (cf. #26) — and the
+  .github/ISSUE_TEMPLATE hint carries the example, so the planner that reads any
+  one of these files now cannot default to the slice name. Live retitles
+  verified: #46 → `feat(mix-states): author the mix-state spec and implement`,
+  #44 → `feat(2d-spatial): finish acceptance — positional sample on both heads,
+  human listening, and resync plan state`.
+- Checked and clear: no code touched; docs-only path, so the desktop/web
+  acceptance rule does not apply; line lengths in the edited paragraphs match
+  each file's existing wrapping; `plan_check` pass; templates' YAML frontmatter
+  still parses (quoted `about:` strings).
+- Non-blocking: the sentence in `AGENTS.md` self-references AGENTS.md's own
+  slice-name ban, which reads circular in a file that is itself the rule source,
+  but is accurate and harmless.
+
 ## PR #47 — feat: named mix states (core), slice E start
 
 - Reviewed: 2026-11-26
@@ -459,3 +488,4 @@ lifecycle pattern (onended disconnect + tracked id map) the panner calls layer o
 - Hot path: `MixStateManager.Update` allocates nothing per frame.
 - Plan-phase gate: the slice E checkbox stays unticked on purpose — the verdict clears the core but acceptance items remain (two-backend sample, human listening), so per the `/pr-review` rule nothing is ticked and the remainder stays on #46 (mirroring the #34 → #44 retarget).
 - Walk test: `tools/plan_check.py` prints `pass`; `docs/plans/vnext/README.md` slice E row and `mix-states/STATUS.md` describe the true branch state.
+

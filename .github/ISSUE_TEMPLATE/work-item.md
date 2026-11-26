@@ -1,8 +1,12 @@
 ---
 name: Work item
-about: A planned checkbox, feature, or follow-up — problem and acceptance, not progress
+about: "A planned checkbox, feature, or follow-up — problem and acceptance, not progress. Title: Conventional Commits form, e.g. 'feat(scope): what it ships' — never the slice name"
 title: ""
 ---
+
+<!-- Title rule: same form as a commit title — type(scope): summary, e.g.
+     `docs(audio-core): record the limiter defaults`. Never title an issue
+     with its plan slice; the plan index already tracks that. -->
 
 ## Problem
 

@@ -50,7 +50,8 @@ Euclidean distance; pan comes from the horizontal offset only (2D screen/left-ri
 ## Moving sources
 
 `PlayAt` returns an `SfxSpatialVoice`, or null when the play did not start (unknown cue,
-backend refusal, silence). Call `SetPosition(x, y)` on the voice every time the source moves,
+a backend refusal, a voice-cap refusal, silence). Call `SetPosition(x, y)` on the voice
+every time the source moves,
 and the manager re-mixes that exact voice — the pan and gain it composed for the new position
 reach the backend through the additive positional seam, keyed per voice. Move the listener with
 `SetListener` and every live voice re-mixes around the new anchor.

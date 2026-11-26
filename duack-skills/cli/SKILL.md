@@ -39,17 +39,17 @@ track's RMS level. Aliases: `loudness`, `analyze`, `analyse`, `measure`, `loudno
 
 ## Installation
 
-Run from the repository (dev/preview):
-
-```
-dotnet run --project tools/DuackCli -- <command>
-```
-
-Or install the published tool (no clone needed):
+Install the published tool (no clone needed):
 
 ```
 dotnet tool install --global DuackCli
 duackcli <command>
+```
+
+From a clone of this repository (contributors):
+
+```
+dotnet run --project tools/DuackCli -- <command>
 ```
 
 ## Tooling rules

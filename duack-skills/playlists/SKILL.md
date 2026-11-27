@@ -58,11 +58,35 @@ Where a playlist name comes from decides how to address it:
   defeat the drag-and-drop flow.
 - **Hand-authored playlists** (`battle-sequence`, a custom all-tracks playlist) exist
   only in your `WithPlaylist` call and your `Play` call — the same two-site shape as mix
-  states — and fit a game-side enum adapter: `public enum GamePlaylist { BattleSequence }`
-  plus a one-line `Play(GamePlaylist.BattleSequence)` extension over
-  `MusicManager.Play(string)`. The closed set gives compile-time typo safety and a
-  missing-member check (`Enum.GetValues` against the playlist table at startup). See
-  `mix-states` for the adapter pattern; the core API takes strings either way.
+  states — and fit a game-side enum adapter, the same pattern the `mix-states` skill
+  documents:
+
+```csharp
+public enum GamePlaylist { BattleSequence }
+
+public static class GamePlaylistAudio
+{
+    public static string Name(this GamePlaylist playlist)
+        => playlist.ToString().ToLowerInvariant();
+    public static void Play(this MusicManager music, GamePlaylist playlist, float? fadeInSeconds = null)
+        => music.Play(playlist.Name(), fadeInSeconds);
+}
+
+// authoring — the same .Name() mapping on both sides, so they cannot drift:
+new PlaylistConfigBuilder()
+    .WithPlaylist(GamePlaylist.BattleSequence.Name(), p => p
+        .Track("battle-intro", "Battle")
+        .Track("battle-loop",  "Battle")
+        .Repeat(PlaylistRepeatMode.Off));
+
+// runtime — no raw strings at the call site:
+music.Play(GamePlaylist.BattleSequence, fadeInSeconds: 1.5f);
+```
+
+  The closed set gives compile-time typo safety and a missing-member check
+  (`Enum.GetValues` against the playlist table at startup); the core API takes
+  strings either way. Auto-built playlists stay out of the enum on purpose:
+  they must keep appearing when you drop a track in, with no recompile.
 
 ## Controller
 

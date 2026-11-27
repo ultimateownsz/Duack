@@ -117,6 +117,30 @@ public class MixStateTests
     }
 
     [Fact]
+    public void TransitionTo_SliderWriteDuringTransitionSurvives()
+    {
+        // The old contract raced: the state layer's per-frame SetBus writes and the player's
+        // settings slider wrote the same number (last writer wins). Factors live in separate
+        // state, so a slider write mid-transition keeps its value and composes multiplicatively
+        // with the eased factor (#68).
+        var config = ConfigWithStates();
+        var mixer = new BusMixer(config.Buses);
+        var manager = new MixStateManager(config.MixStates, mixer);
+        manager.ApplyState("calm");
+        Assert.True(manager.TransitionTo("combat", 2f));
+
+        mixer.SetBus("music", 0.3f); // the player drags the slider mid-transition
+        manager.Update(0.5f);
+
+        var tau = 2f / MathF.Log(1f / MixStateManager.SettleEpsilon);
+        var expectedFactor = 0.4f + (1f - 0.4f) * MathF.Exp(-0.5f / tau);
+        Assert.Equal(0.3f, mixer.VolumeOf("music"));
+        Assert.Equal(expectedFactor, mixer.StateFactorOf("music"), 5);
+        Assert.Equal(0.3f * expectedFactor, mixer.Resolve("music").Gain, 5);
+        Assert.True(manager.IsTransitioning);
+    }
+
+    [Fact]
     public void TransitionTo_IsMonotoneAndSettlesExactlyAtDuration()
     {
         var config = ConfigWithStates();

@@ -27,6 +27,24 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
   to `FastFadeOutSeconds`. Pinned by
   `MusicManagerFadeTests.Overlap_playlist_switch_fades_the_outgoing_track_instead_of_cutting_it`
   (red first against the old code). (#46)
+- **Player-settings storage failures are reported by default again (#46).** Symptom: a swallowed
+  storage failure on the web (a failed localStorage read/save, corrupt stored JSON) was reported
+  NOWHERE: the store-level sink is opt-in and `PlayerSettings.Diagnostics` defaulted to
+  `NullPlayerSettingsDiagnostics`, so the failure looked exactly like "nothing saved yet" with no
+  way to find out why — the dogfooding game's web head hit exactly this (its volume sliders
+  appeared to never save, and nothing in the browser console said why). The player-settings skill
+  still documented the contract as "failed writes log via Console.WriteLine (not Debug) so they
+  survive Release/browser builds" — the null-sink default broke that contract. The facade's
+  default is now `ConsolePlayerSettingsDiagnostics` (on KNI, Console routes to the browser
+  console, which is where someone debugging a stuck save is looking); tests that need silence
+  assign `NullPlayerSettingsDiagnostics` explicitly, and the store-level sink stays opt-in
+  (pinned by the existing sink tests). Also fixed the skill's stale "Settings overlay flow"
+  sample, which documented `settings.MusicVolume`/`settings.SfxVolume` fields that do not exist
+  (the real fields are `MasterVolume`/`MusicMasterVolume`/`SfxMasterVolume` + `CrossfadeSeconds`)
+  and a boot sequence that did not layer the saved settings before manager construction; the
+  corrected sample shows the bus-table reads the managers actually snapshot. Pinned by
+  `PlayerSettingsTests.Diagnostics_default_to_console_so_storage_failures_survive_release` (red
+  first). (#46)
 
 ### Added
 

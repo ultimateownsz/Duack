@@ -41,6 +41,10 @@ PlayerSettings.ClearOverrides();               // drop saved prefs
 tracks, extension data). A store that fails to load yields authored values. `PlayerSettings` lives
 in the core (`Duack`); the JSON serialization of `PlayerAudioSettings` is also in the core
 (SnakeCaseLower, source-generated context), as is the `AudioConfig` document serialization.
+- **Diagnostics are on by default**: `PlayerSettings.Diagnostics` is the console sink, so a
+  swallowed storage failure (a failed localStorage read/save, corrupt JSON) is reported somewhere
+  findable instead of looking like "nothing saved yet". Tests that need silence assign
+  `NullPlayerSettingsDiagnostics` explicitly; a game may replace the sink per platform.
 
 ## Stores
 
@@ -73,26 +77,32 @@ Human loudness is closer to logarithmic; quadratic makes midpoint noticeably qui
 ## Settings overlay flow
 
 ```csharp
-// Load
-var authored = AudioConfig.Load();
-var effective = PlayerSettings.ApplyOverrides(authored);
-manager = new MusicManager(backend, controller, effective.Music);
+// Load (at boot, BEFORE the managers are constructed - they snapshot the bus
+// table at construction, so a later layering needs an explicit push):
+var effective = PlayerSettings.ApplyOverrides(authoredConfig);
+manager = new MusicManager(backend, controller, effective.Music,
+    masterVolume: effective.Buses[BusNames.Master].Volume,
+    sfxBusVolume: effective.Buses[BusNames.Sfx].Volume);
 
-// Save
-settings.MusicVolume = VolumeCurve.ToAmplitude(sliderMusic);
-settings.SfxVolume   = VolumeCurve.ToAmplitude(sliderSfx);
-PlayerSettings.SaveOverrides(effectiveConfig);
+// Save (the overlay's save button; returns the store's verdict)
+PlayerSettings.SaveOverrides(effectiveConfig);   // fields: MasterVolume,
+                                                 // MusicMasterVolume, SfxMasterVolume,
+                                                 // CrossfadeSeconds (see PlayerAudioSettings)
 ```
 
 ## Web storage
 
-`WebPlayerSettingsStore` needs an `IKeyValueStorage` (localStorage adapter). Browser autoplay
-and storage availability are environment concerns — document, don't solve silently.
+`WebPlayerSettingsStore` needs an `IKeyValueStorage` (localStorage adapter) and takes an optional
+storage `key` (default `duack:playerAudioSettings`) - a game keeping its historical key passes it
+explicitly. Browser autoplay and storage availability are environment concerns - document, don't
+solve silently.
 
 ## Tips
 
 - Save returns the store's verdict; surface "Saved!" only on true.
-- Failed writes log via `Console.WriteLine` (not Debug) so they survive Release/browser builds.
+- Failed writes report through `PlayerSettings.Diagnostics` (console by default), and the report
+  API survives Release/browser builds - a `Debug.WriteLine`-based diagnostic would be stripped
+  from exactly the build the browser runs.
 - `ClearOverrides` makes next `ApplyOverrides` use authored values.
 
 ## Studio & sound engineering concepts

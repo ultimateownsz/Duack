@@ -345,6 +345,16 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 
 ### Fixed
 
+#### 2026-11-27
+- **An interrupted mix-state transition reports its origin instead of null.** Symptom:
+  starting `TransitionTo` while another was still running read `FromState = CurrentState`,
+  which is null mid-transition, so the interrupting transition's `FromState` was null —
+  wrong telemetry for debug HUDs or transition-gated logic, with the audio easing
+  unaffected. `FromState` now reports the interrupted transition's target as the state
+  being left. Repro to re-verify:
+  `TransitionTo_InterruptingAnInFlightTransitionReportsTheInterruptedTargetAsFrom` in
+  `MixStateTests`. (#60)
+
 #### 2026-11-26
 - Fixed the CS0067 build warning in the mix-state tests: the headless backend fake's
   `TrackEnded` event was declared but never used. The fake now mirrors `MusicManagerTests`

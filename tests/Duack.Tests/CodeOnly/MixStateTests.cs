@@ -136,6 +136,22 @@ public class MixStateTests
     }
 
     [Fact]
+    public void TransitionTo_InterruptingAnInFlightTransitionReportsTheInterruptedTargetAsFrom()
+    {
+        var config = ConfigWithStates();
+        var mixer = new BusMixer(config.Buses);
+        var manager = new MixStateManager(config.MixStates, mixer);
+        manager.ApplyState("calm");
+        manager.TransitionTo("combat", 2f);
+
+        manager.TransitionTo("calm", 1f);
+
+        Assert.True(manager.IsTransitioning);
+        Assert.Equal("combat", manager.FromState);
+        Assert.Equal("calm", manager.ToState);
+    }
+
+    [Fact]
     public void TransitionTo_ZeroDuration_AppliesInstantly()
     {
         var config = ConfigWithStates();

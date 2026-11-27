@@ -53,6 +53,22 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 ### Added
 
 #### 2026-11-27
+- **Playback position, duration, seek, and context resume (#15).** `MusicManager` exposes
+  `Position` (TimeSpan), `Duration`, `SupportsSeek`, and `Play(name, startIndex,
+  startPosition, fadeInSeconds)` so leaving a context can resume the same track at the same
+  audible spot (the battle-interrupt case: capture playlist + track index + position on exit,
+  `Play(..., startIndex, startPosition)` on return). Backends report capability honestly: the
+  web `MediaPlayerMusicBackend` rides the platform player's position and seeks it (KNI 4.3.9001
+  has no managed seek, so the adapter drives the browser `<audio>` element's `fastSeek`
+  through the platform seam — fail-soft, a failed seek reports and changes nothing);
+  the clip-based `SoundEffectMusicBackend` cannot seek a `SoundEffectInstance`, so its
+  `SupportsSeek` is false, `Seek` (and a resume position) are reported no-ops and the track
+  restarts from its top — the track+index part of the resume still works. `Duration` on the
+  clip backend comes from the new optional `IAudioClip.DurationSeconds` (implemented by the
+  MonoGame adapter via `SoundEffect.Duration`; null/zero when the clip cannot know).
+  `MusicManager.Seek` returns false on an unseekable backend without touching anything.
+  The track-duration duack-skill documents the TimeSpan surface and the per-backend
+  capabilities. (#15)
 - **Playlist name exposure and fallback report (#56).** `MusicManager` now exposes
   `CurrentPlaylistName` — the name of the playlist the controller is running, or null when
   stopped — so the per-frame re-trigger guard compares playlist to playlist:

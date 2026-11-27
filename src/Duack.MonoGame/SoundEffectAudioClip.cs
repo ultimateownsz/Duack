@@ -24,6 +24,9 @@ internal sealed class SoundEffectAudioClip : IAudioClip
 
     public IAudioInstance CreateInstance() => new SoundEffectAudioInstance(_effect.CreateInstance());
 
+    /// <summary>The platform clip exposes its decoded length.</summary>
+    public float? DurationSeconds => (float)_effect.Duration.TotalSeconds;
+
     public void Dispose()
     {
         if (_disposed) return;

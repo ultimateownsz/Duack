@@ -33,8 +33,38 @@ public sealed class SoundEffectMusicBackend : IMusicBackend
     /// <inheritdoc />
     public bool SupportsOverlap => true;
 
+    private bool _paused;
+    private IAudioClip? _activeClip;
+
     /// <inheritdoc />
     public bool IsTrackPlaying => _active is { IsPlaying: true };
+
+    /// <summary>
+    /// The clip clock: <c>_elapsed</c> is advanced by <see cref="Update"/> and reset on every
+    /// <see cref="PlayTrack"/>/<see cref="Stop"/>, so it tracks the active instance's audible
+    /// position as long as updates run every frame. A <c>SoundEffectInstance</c> exposes no real
+    /// position, so this is the best reading available on clip backends.
+    /// </summary>
+    public TimeSpan Position => _active is null ? TimeSpan.Zero : TimeSpan.FromSeconds(_elapsed);
+
+    /// <summary>The active clip's duration, when the clip library exposes one.</summary>
+    public TimeSpan Duration => _activeClip?.DurationSeconds is { } seconds ? TimeSpan.FromSeconds(seconds) : TimeSpan.Zero;
+
+    /// <inheritdoc />
+    public bool SupportsSeek => false;
+
+    /// <summary>
+    /// A <c>SoundEffectInstance</c> cannot seek: the call is a reported no-op, so a caller that
+    /// skipped the <see cref="SupportsSeek"/> check hears the track restart from zero rather than
+    /// from the requested position. Reported once per call, Console (not Debug) so it survives
+    /// Release builds.
+    /// </summary>
+    public void Seek(TimeSpan position) =>
+        Console.WriteLine($"[Duack] Seek({position}) ignored: clip backends cannot seek a " +
+                          "SoundEffectInstance; check IMusicBackend.SupportsSeek before relying on a resume position.");
+
+    /// <inheritdoc />
+    public bool IsPaused => _paused;
 
     /// <inheritdoc />
     public float CurrentTrackElapsedSeconds => _active is null ? 0f : _elapsed;
@@ -58,6 +88,7 @@ public sealed class SoundEffectMusicBackend : IMusicBackend
         _outgoing?.Dispose();
         _outgoing = _active;
 
+        _activeClip = clip;
         _active = clip.CreateInstance();
         _active.IsLooped = false;
         _active.Volume = initialVolume;
@@ -95,9 +126,31 @@ public sealed class SoundEffectMusicBackend : IMusicBackend
         _active?.Stop();
         _active?.Dispose();
         _active = null;
+        _activeClip = null;
         _activeStarted = false;
         _elapsed = 0f;
+        _paused = false;
         StopOutgoing();
+    }
+
+    /// <inheritdoc />
+    public void Pause()
+    {
+        if (_active is { IsPlaying: true })
+        {
+            _active.Pause();
+            _paused = true;
+        }
+    }
+
+    /// <inheritdoc />
+    public void Resume()
+    {
+        if (_paused && _active != null)
+        {
+            _active.Play();
+            _paused = false;
+        }
     }
 
     /// <inheritdoc />
@@ -106,6 +159,7 @@ public sealed class SoundEffectMusicBackend : IMusicBackend
         if (_active is not null)
             _elapsed += deltaSeconds;
         if (_activeStarted && _active is { IsPlaying: false })
+        if (!_paused && _activeStarted && _active is { IsPlaying: false })
         {
             // The instance stopped on its own (reached the end); report completion exactly once.
             _activeStarted = false;

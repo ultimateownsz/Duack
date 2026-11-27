@@ -20,12 +20,14 @@ public class SoundEffectSfxBackendPositionalTests
 
         public void Play() => IsPlaying = true;
         public void Stop() => IsPlaying = false;
+        public void Pause() { }
         public void Dispose() { }
     }
 
     private sealed class PanningAudioClip : IAudioClip
     {
         public FakePanningInstance? Last { get; private set; }
+        public float? DurationSeconds => null;
 
         public IAudioInstance CreateInstance()
         {

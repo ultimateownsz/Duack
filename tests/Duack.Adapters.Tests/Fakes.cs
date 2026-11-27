@@ -21,6 +21,21 @@ internal sealed class FakeMediaPlayerHost : IMediaPlayerHost
     public int StopCount { get; private set; }
     public Exception? ThrowOnPlay { get; set; }
 
+    public TimeSpan Position { get; set; }
+    public TimeSpan Duration { get; set; }
+    public int SeekCount { get; private set; }
+    public TimeSpan? LastSeek { get; private set; }
+    public bool SeekResult { get; set; } = true;
+
+    public bool TrySeek(TimeSpan position)
+    {
+        SeekCount++;
+        LastSeek = position;
+        if (SeekResult)
+            Position = position;
+        return SeekResult;
+    }
+
     public void Play(string relativeUri)
     {
         if (ThrowOnPlay != null)
@@ -37,6 +52,10 @@ internal sealed class FakeMediaPlayerHost : IMediaPlayerHost
         IsPlaying = false;
         StateChanged?.Invoke(this, EventArgs.Empty);
     }
+
+    public void Pause() { }
+
+    public void Resume() { }
 
     /// <summary>Simulates the platform finishing the current track (state -> stopped + event).</summary>
     public void SimulateNaturalEnd()

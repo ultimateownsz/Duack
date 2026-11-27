@@ -30,4 +30,23 @@ public interface IMediaPlayerHost
 
     /// <summary>Stops the current track immediately.</summary>
     void Stop();
+
+    /// <summary>Pauses the current track, preserving position.</summary>
+    void Pause();
+
+    /// <summary>Resumes a paused track.</summary>
+    void Resume();
+
+    /// <summary>Current playback position of the active track (zero when unknown).</summary>
+    TimeSpan Position { get; }
+
+    /// <summary>Total duration of the active track (zero when unknown).</summary>
+    TimeSpan Duration { get; }
+
+    /// <summary>
+    /// Seeks the active track to <paramref name="position"/>. Returns false when the seek could
+    /// not be applied (the platform player exposes no managed seek; the adapter's fallback path
+    /// failed) — the caller decides what a dropped resume means.
+    /// </summary>
+    bool TrySeek(TimeSpan position);
 }

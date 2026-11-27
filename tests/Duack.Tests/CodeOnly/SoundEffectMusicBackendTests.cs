@@ -152,4 +152,50 @@ public class SoundEffectMusicBackendTests
         Assert.Equal(1, ended);
         Assert.False(backend.IsTrackPlaying);
     }
+
+    [Fact]
+    public void Position_tracks_the_clip_clock_and_resets_on_stop()
+    {
+        var (backend, _, _) = Create();
+        backend.PlayTrack("overworld", 0.5f, 0f);
+
+        backend.Update(5f);
+        backend.Update(0.5f);
+        Assert.Equal(TimeSpan.FromSeconds(5.5), backend.Position);
+
+        backend.Stop();
+        Assert.Equal(TimeSpan.Zero, backend.Position);
+    }
+
+    [Fact]
+    public void Position_is_zero_before_any_playback()
+    {
+        var (backend, _, _) = Create();
+
+        Assert.Equal(TimeSpan.Zero, backend.Position);
+    }
+
+    [Fact]
+    public void Duration_reports_the_active_clips_duration()
+    {
+        var library = new FakeAudioClipLibrary();
+        library.Add("overworld").DurationSeconds = 95.5f;
+        var backend = new SoundEffectMusicBackend(library);
+
+        Assert.Equal(TimeSpan.Zero, backend.Duration); // nothing active yet
+
+        backend.PlayTrack("overworld", 0.5f, 0f);
+        Assert.Equal(TimeSpan.FromSeconds(95.5), backend.Duration);
+
+        backend.Stop();
+        Assert.Equal(TimeSpan.Zero, backend.Duration);
+    }
+
+    [Fact]
+    public void Clip_backends_cannot_seek()
+    {
+        var (backend, _, _) = Create();
+
+        Assert.False(backend.SupportsSeek);
+    }
 }

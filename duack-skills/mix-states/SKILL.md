@@ -114,6 +114,12 @@ foreach (var name in config.MixStates.Keys)
         throw new InvalidOperationException($"Authored state '{name}' has no enum member.");
 ```
 
+The `Name()` mapping joins words without separators — `GameMix.LowHealth` maps
+to `"lowhealth"`, not `"low-health"` — so prefer single-identifier state names
+and keep the mapping mechanical. Use an explicit `switch` inside `Name()` only when
+a hyphenated spelling must be preserved (a shared config file, a debug console); the
+startup sync check above catches spelling drift in either case.
+
 The core stays string-keyed on purpose: `AudioConfig.MixStates` is a
 `Dictionary<string, MixStateConfig>` that round-trips JSON and is cloned by the
 player-settings overlay, and every other name surface (buses, contexts,

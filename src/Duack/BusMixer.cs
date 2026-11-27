@@ -12,10 +12,10 @@ namespace Duack;
 /// Routing: a cue reaches a bus by its per-play <c>bus</c> argument. An un-routed cue stays on
 /// the fixed SFX bus; an unknown bus name falls back to the SFX bus and raises <see
 /// cref="BusFellBack"/> so the routing mistake surfaces instead of staying silent (the
-/// no-silent-failure principle applied to routing). Effective gain per bus is volume × (muted
-/// or paused ? 0 : 1); the global master mute zero-folds into every resolution, and <see
-/// cref="Changed"/> fires on any state change so a frontend mixer can render this state
-/// without owning it.
+/// no-silent-failure principle applied to routing). Effective gain per bus is volume × state
+/// factor × (muted or paused ? 0 : 1); the global master mute zero-folds into every resolution,
+/// and <see cref="Changed"/> fires on any state change so a frontend mixer can render this
+/// state without owning it.
 /// </para>
 /// </summary>
 public sealed class BusMixer

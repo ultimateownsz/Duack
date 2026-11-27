@@ -105,7 +105,7 @@ public sealed class MixStateManager
     /// zero (or less) applies the state instantly instead. Returns false — touching nothing,
     /// reporting through <see cref="UnknownState"/> — when the state is not authored. A
     /// transition can be started while another is running: it restarts the ease from the
-    /// current volumes toward the new state's targets.
+    /// current factors toward the new state's targets.
     /// </summary>
     public bool TransitionTo(string name, float seconds)
     {
@@ -128,11 +128,11 @@ public sealed class MixStateManager
         DurationSeconds = seconds;
         _transitionTargets = state;
 
-        // Capture each mixer's own starting volume for every target bus. The mixers seed from
+        // Capture each mixer's own starting factor for every target bus. The mixers seed from
         // the same table and every write reaches all of them, so they agree unless a caller
         // hand-diverged them (a real project writes the player's volumes onto one mixer each);
         // capturing per mixer keeps every mixer's ease on its own audible baseline instead of
-        // jumping the second mixer off the volume it was actually playing.
+        // jumping the second mixer off the factor it was actually applying.
         _starts = new Dictionary<string, float>[_mixers.Length];
         for (var i = 0; i < _mixers.Length; i++)
         {

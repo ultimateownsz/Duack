@@ -657,3 +657,29 @@ All three findings from the `9eec2f0` review are now closed at head `c00de5f`:
 
 Verification: CI `build-and-test` pass at `c00de5f` on the combined tree (run 46074956237, 46s —
 the tests the sandbox still cannot run, no SDK). Verdict: **good**, mergeable.
+
+### 2026-11-28 — docs-writer pass over the PR's prose surfaces: clear after three stale-sentence fixes
+
+Ran the `docs-writer` brief (`.opencode/agents/docs-writer.md`) over every doc surface the PR
+touches. Skill, changelog, and the new members' summaries checked out: every skill claim
+verified against the code and tests (`Build` clamps targets, the composition chain, omitted
+buses keep their factor, per-mixer factor ease, loud unknown-state reporting, `BusView`
+readability), frontmatter convention matches the sibling skills, no slice/phase jargon in
+consumer-facing docs, changelog category/date/symptom framing and `(#68)` reference correct, and
+the entry's wrap width matches the file's existing norm.
+
+Three stale sentences still described the old volume-write contract and were fixed in this
+pass:
+
+- `BusMixer` class summary (`src/Duack/BusMixer.cs:15`): the effective-gain formula omitted the
+  state factor — now `volume × state factor × (muted or paused ? 0 : 1)`.
+- `MixStateManager.TransitionTo` summary (`src/Duack/MixStateManager.cs:108`): "restarts the
+  ease from the current volumes" — the ease runs on factors.
+- The `_starts` capture comment (`src/Duack/MixStateManager.cs:131`): "starting volume … the
+  volume it was actually playing" — the captured baseline is the mixer's own factor.
+
+Flagged, not fixed (pre-existing, repo-wide): the brief's XML doc contract asks every public
+parameter for a `<param>` and every returned value for a `<returns>`, but the bus/mix-state API
+(`SetBus`, `SetMute`, `ApplyState`, `TransitionTo`, the new `SetStateFactor`/`StateFactorOf`)
+documents parameters in prose inside `<summary>`, matching the file's established style. A
+file-wide `<param>`/`<returns>` pass is its own change, not this PR's.

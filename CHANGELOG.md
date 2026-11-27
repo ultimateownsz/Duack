@@ -329,6 +329,16 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
   `TrackEnded` event was declared but never used. The fake now mirrors `MusicManagerTests`
   with a `RaiseTrackEnded` helper that invokes it, so the event a completion test would fire
   exists without a pragma. Test-only change; no behavior touched. (#46)
+- The README's playlist example no longer teaches the wrong `Repeat` mode. Symptom: the
+  "automatic sequencing (track intro --> loop)" snippet authored a two-track
+  `battle-sequence` with `PlaylistRepeatMode.Track`, but repeat is playlist-level, so the
+  intro looped forever and `battle-loop` never played — the opposite of the comment. The
+  example now matches the playlists skill: a three-track intro -> loop -> victory sequence
+  with `Repeat.Off`. Repro to re-verify: with the old snippet, let `battle-intro` end and
+  hear it restart (the controller's `Advance` early-returns under `Repeat=Track`); with
+  the fixed snippet, the loop track follows the intro. Docs only, no behavior change, so no
+  test ships; the API itself is already pinned by `MusicManagerFadeTests` and the
+  `MusicPlaylistController` sequencing tests. (#51)
 
 #### 2026-11-25
 - **Every screen now loads clean — the entry cues land on their own screen too** (maintainer

@@ -136,6 +136,33 @@ public class MixStateTests
     }
 
     [Fact]
+    public void TransitionTo_EasesEachMixerFromItsOwnCurrentVolume()
+    {
+        // A real project (monsterprojectweb) drives TWO mixers and diverges them on purpose:
+        // the game's settings push writes the player's volumes onto one mixer each, so the
+        // music mixer's sfx entry keeps the authored 1f while the SFX mixer's sfx entry carries
+        // the player's 0.6f. A transition targeting sfx must ease EACH mixer from ITS OWN
+        // current volume - capturing the starts from the first mixer only made the first frame
+        // jump off the player's setting (the second mixer was eased from a volume it never had).
+        var config = new AudioConfigBuilder()
+            .WithMixState("combat", s => s.Bus(BusNames.Music, 0.4f).Bus(BusNames.Sfx, 0.7f))
+            .Build();
+        var music = new BusMixer(config.Buses);
+        var sfx = new BusMixer(config.Buses);
+        sfx.SetBus(BusNames.Sfx, 0.2f);
+        var manager = new MixStateManager(config.MixStates, music, sfx);
+
+        Assert.True(manager.TransitionTo("combat", 1f));
+        manager.Update(0.25f);
+
+        var tau = 1f / MathF.Log(1f / MixStateManager.SettleEpsilon);
+        var expectedMusic = 0.7f + (1f - 0.7f) * MathF.Exp(-0.25f / tau);
+        var expectedSfx = 0.7f + (0.2f - 0.7f) * MathF.Exp(-0.25f / tau);
+        Assert.Equal(expectedMusic, music.VolumeOf(BusNames.Sfx), 5);
+        Assert.Equal(expectedSfx, sfx.VolumeOf(BusNames.Sfx), 5);
+    }
+
+    [Fact]
     public void TransitionTo_InterruptingAnInFlightTransitionReportsTheInterruptedTargetAsFrom()
     {
         var config = ConfigWithStates();

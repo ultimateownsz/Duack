@@ -29,6 +29,7 @@ writing both runtime mixers. See slice.md for the decision record.
 ## Known limitations
 
 - The runtime remains two bus mixers seeded from one table (slice-F D13); a state writes both,
-  so an externally hand-diverged mixer re-converges during a transition by construction (D2).
+  and a transition eases each mixer from its own current volume, so an externally hand-diverged
+  mixer is eased from its own audible baseline, not re-converged through the first mixer (D2).
 - `MixStateManager.Update` expects the same unscaled frame delta the managers get, like every
   other ease in the library; there is no way to enforce that from the core.

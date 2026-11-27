@@ -33,7 +33,7 @@ public sealed class MixStateManager
 
     private readonly Dictionary<string, MixStateConfig> _states;
     private readonly BusMixer[] _mixers;
-    private readonly Dictionary<string, float> _starts = new(StringComparer.Ordinal);
+    private Dictionary<string, float>[] _starts = Array.Empty<Dictionary<string, float>>();
     private MixStateConfig? _transitionTargets;
 
     /// <summary>
@@ -123,13 +123,19 @@ public sealed class MixStateManager
         DurationSeconds = seconds;
         _transitionTargets = state;
 
-        // Capture each target bus's starting volume from the first mixer that owns it: the
-        // mixers seed from the same table and every write reaches all of them, so they agree
-        // unless a caller hand-diverged them — in which case the ease re-converges them on
-        // the first frame by construction.
-        _starts.Clear();
-        foreach (var bus in state.Buses.Keys)
-            _starts[bus] = _mixers.Length > 0 ? _mixers[0].VolumeOf(bus) : 0f;
+        // Capture each mixer's own starting volume for every target bus. The mixers seed from
+        // the same table and every write reaches all of them, so they agree unless a caller
+        // hand-diverged them (a real project writes the player's volumes onto one mixer each);
+        // capturing per mixer keeps every mixer's ease on its own audible baseline instead of
+        // jumping the second mixer off the volume it was actually playing.
+        _starts = new Dictionary<string, float>[_mixers.Length];
+        for (var i = 0; i < _mixers.Length; i++)
+        {
+            var starts = new Dictionary<string, float>(StringComparer.Ordinal);
+            foreach (var bus in state.Buses.Keys)
+                starts[bus] = _mixers[i].VolumeOf(bus);
+            _starts[i] = starts;
+        }
         return true;
     }
 
@@ -145,20 +151,25 @@ public sealed class MixStateManager
 
         foreach (var (bus, target) in _transitionTargets.Buses)
         {
-            var value = Sanitize(target);
-            if (!finished)
+            var targetVolume = Sanitize(target);
+            for (var i = 0; i < _mixers.Length; i++)
             {
-                // Absolute closed form (start value → target over elapsed), not an
-                // incremental step: repeated updates compose to the same curve with no drift.
-                var start = _starts.TryGetValue(bus, out var captured) ? captured : _mixers.Length > 0 ? _mixers[0].VolumeOf(bus) : value;
-                var eased = value + (start - value) * MathF.Exp(-ElapsedSeconds / tau);
-                if (MathF.Abs(eased - value) < SettleEpsilon)
-                    eased = value;
-                value = Sanitize(eased);
-            }
+                var value = targetVolume;
+                if (!finished)
+                {
+                    // Absolute closed form (start value → target over elapsed), not an
+                    // incremental step: repeated updates compose to the same curve with no drift.
+                    var start = _starts.Length > i && _starts[i].TryGetValue(bus, out var captured)
+                        ? captured
+                        : _mixers[i].VolumeOf(bus);
+                    var eased = value + (start - value) * MathF.Exp(-ElapsedSeconds / tau);
+                    if (MathF.Abs(eased - value) < SettleEpsilon)
+                        eased = value;
+                    value = Sanitize(eased);
+                }
 
-            foreach (var mixer in _mixers)
-                mixer.SetBus(bus, value);
+                _mixers[i].SetBus(bus, value);
+            }
         }
 
         if (!finished) return;
@@ -182,7 +193,7 @@ public sealed class MixStateManager
         FromState = null;
         ToState = null;
         _transitionTargets = null;
-        _starts.Clear();
+        _starts = Array.Empty<Dictionary<string, float>>();
     }
 
     private static float Sanitize(float volume) =>

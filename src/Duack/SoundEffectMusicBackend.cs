@@ -51,17 +51,60 @@ public sealed class SoundEffectMusicBackend : IMusicBackend
     public TimeSpan Duration => _activeClip?.DurationSeconds is { } seconds ? TimeSpan.FromSeconds(seconds) : TimeSpan.Zero;
 
     /// <inheritdoc />
-    public bool SupportsSeek => false;
+    public bool SupportsSeek => _activeClip is ISeekableAudioClip;
 
     /// <summary>
-    /// A <c>SoundEffectInstance</c> cannot seek: the call is a reported no-op, so a caller that
-    /// skipped the <see cref="SupportsSeek"/> check hears the track restart from zero rather than
-    /// from the requested position. Reported once per call, Console (not Debug) so it survives
-    /// Release builds.
+    /// Seeks the active track by rebuilding its playback instance from a clip decoded at the
+    /// offset — a <c>SoundEffectInstance</c> cannot seek, but the fully decoded buffer it came
+    /// from can (the skip is a decode-and-discard for OGG, a byte slice for WAV). The replacement
+    /// starts before the old instance stops, so there is no audible gap; the instance's current
+    /// volume/pitch carry over (an in-flight crossfade keeps fading) and a paused backend stays
+    /// paused. Fail-soft: an unseekable clip or a failed offset decode reports and changes
+    /// nothing. Position readback is exact after the seek — the clock is set, not accumulated.
     /// </summary>
-    public void Seek(TimeSpan position) =>
-        Console.WriteLine($"[Duack] Seek({position}) ignored: clip backends cannot seek a " +
-                          "SoundEffectInstance; check IMusicBackend.SupportsSeek before relying on a resume position.");
+    public void Seek(TimeSpan position)
+    {
+        if (position < TimeSpan.Zero) position = TimeSpan.Zero;
+        if (_activeClip is not ISeekableAudioClip seekable)
+        {
+            Console.WriteLine($"[Duack] Seek({position}) ignored: clip backends cannot seek a " +
+                              "SoundEffectInstance; check IMusicBackend.SupportsSeek before relying on a resume position.");
+            return;
+        }
+
+        var instance = seekable.CreateInstance(position);
+        if (instance is null)
+        {
+            Console.WriteLine($"[Duack] Seek({position}) failed: the clip could not be decoded " +
+                              "from the offset; playback continues where it was.");
+            return;
+        }
+
+        if (_active != null)
+        {
+            instance.Volume = _active.Volume;
+            instance.Pitch = _active.Pitch;
+        }
+
+        var old = _active;
+        _active = instance;
+        _elapsed = (float)position.TotalSeconds;
+        if (_paused) instance.Pause();
+        else
+        {
+            instance.Play();
+            _activeStarted = true;
+        }
+
+        // The replacement is already audible, so tearing the old instance down overlaps two
+        // playing instances for the swap frame only - inaudible next to a resume seek.
+        if (old != null)
+        {
+            old.Stop();
+            old.Dispose();
+            seekable.Release(old);
+        }
+    }
 
     /// <inheritdoc />
     public bool IsPaused => _paused;

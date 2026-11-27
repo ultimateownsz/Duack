@@ -1,6 +1,8 @@
 # Slice E — named mix states — STATUS
 
-Started: Nov 26, 2026. Tracking issue: #46.
+Started: Nov 26, 2026. Tracking issue: #46 (closed; core landed via #47) — acceptance
+remainder (two-backend sample, human listening, MonsterProjectWeb dogfood re-check after
+#69) tracked on #73.
 
 ## State
 

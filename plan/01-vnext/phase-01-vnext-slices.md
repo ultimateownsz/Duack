@@ -27,7 +27,7 @@ The checkbox list is the phase's truth. It is non-exhaustive. Slice-level
 state and open questions live in each slice's `STATUS.md`; the boxes here
 track slice completion only.
 
-- [x] Slice A — voice concurrency (#40)
+- [ ] Slice A — voice concurrency (#40 landed; remainder #72)
 - [x] Slice B — 2D positional SFX (#34 landed via #41; remainder #44)
 - [x] Slice C — user-defined buses (#31)
 - [ ] Slice E — named mix states (#46)

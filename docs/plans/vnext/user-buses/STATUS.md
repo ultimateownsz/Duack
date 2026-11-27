@@ -9,8 +9,8 @@ Started: Nov 22, 2026.
   music-only. Recorded as a **revisitable default**, not a validated choice: if the
   Gate 0 debrief shows the target user routed differently, the routing surface is
   revised under preview rules.
-- Slice B will follow this one; slice D stays dormant; slice A is implemented on
-  `feat/voice-concurrency` awaiting the human listening check (unchanged).
+- Slice B will follow this one; slice D stays dormant; slice A landed on `master` via #40
+  (2026-11-25), acceptance remainder on #72.
 
 ## Open questions
 

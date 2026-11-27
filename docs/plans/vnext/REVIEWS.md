@@ -532,3 +532,58 @@ lifecycle pattern (onended disconnect + tracked id map) the panner calls layer o
 - `OnBackendTrackEnded`'s override reads (the repeat-Track loop restart) predate this PR (#57); the PR's null-out only narrows the override lifetime — it removes the old leak path rather than adding one.
 - Changelog: dated `#### 2026-11-26` under `Unreleased → Fixed` with the repro test names and `(#52)`.
 - Docs: `MusicManager.Play`'s `fadeInSeconds` param doc now states the precedence; the playlists skill's "overrides track fade" claim is now true.
+
+## PR #63 — fix(mix-states): ease each mixer from its own current volume (#46) (2026-11-27): good
+
+- Reviewed: 2026-11-27
+- Head at review: `0e029e5500ea436845206ce0eaec9b1d2055769e`
+- Base: `master`
+- Verdict: **good**
+- Reviewer: `qa` pass against `.opencode/agents/qa.md`; findings verified on the head (CI `build-and-test` green at the reviewed head; full suite re-run in the dogfooding sandbox)
+
+### Blocking
+
+- (none)
+
+### Checked and clear
+
+- **Fix correctness:** `TransitionTo` now captures one start map per `BusMixer`
+  (`src/Duack/MixStateManager.cs:36`, `:126-137`) and `Update` eases each mixer from its own
+  captured value (`:154-171`). The repro test
+  `MixStateTests.TransitionTo_EasesEachMixerFromItsOwnCurrentVolume` fails on master (second
+  mixer eased 0.2 → from the first mixer's 1.0: 0.73 instead of 0.69) and passes with the fix.
+- **Empty-mixer edge case:** zero mixers produce an empty `_starts` array; `Update`'s loop writes
+  nothing — identical to the old behavior (the old code captured 0f starts it never wrote).
+- **Interrupt path:** an interrupting `TransitionTo` re-captures per mixer before easing
+  (covered by the existing `TransitionTo_InterruptingAnInFlightTransitionReportsTheInterruptedTargetAsFrom`,
+  unchanged and green); the per-mixer fallback in `Update` (`_mixers[i].VolumeOf(bus)`) reads the
+  right mixer's live value when a start is missing.
+- **State/timing:** same SetBus write pattern and `Changed` event ordering as before; the
+  finished-check-then-write boundary is unchanged (one large delta still settles exactly at
+  duration, pinned by the monotone test).
+- **Regression risk:** `_starts` is private to `MixStateManager`; no public surface changed. The
+  only doc mention of the old first-mixer capture was D2 itself
+  (`docs/plans/vnext/mix-states/slice.md:12-16`), updated in this PR; the mix-states skill never
+  stated the capture rule, so nothing there needs a follow-up.
+- **Changelog:** dated `#### 2026-11-27` under `### Fixed` with the repro test name, the observed
+  numbers (0.6 → 0.73 vs 0.6 → 0.7) and `(#46)`, matching the diff.
+- **Architecture:** no package or project reference added to `src/Duack`; pure BCL change.
+- **Consumer verification:** the dogfooding game (monsterprojectweb) pins the diverged-mixer case
+  from the consumer side (`MixStateDogfoodTests`, 4/4 against this head); full game suite 1120
+  passed, 8 pre-existing failures unrelated to audio.
+
+### Low
+
+**F1 — `TransitionTo` now allocates one small dictionary per mixer per call.**
+- Rule: hot-path allocation discipline (`.opencode/agents/qa.md` hot paths).
+- Proof: `src/Duack/MixStateManager.cs:130-137` allocates `Dictionary<string, float>` per mixer;
+  the old code reused one dictionary via `Clear()`. `TransitionTo` is event-driven (state
+  switches), not per-frame, and the per-update loop allocates nothing — so this is acceptable.
+- Required: none. If a per-frame transition-retarget pattern ever emerges, reuse per-mixer
+  dictionaries (clear + refill) instead.
+- Status: open (informational).
+
+### Plan gate
+
+No slice E checkbox completes here — the acceptance remainder (human listening on both heads,
+two-backend sample) stays on #46 per `STATUS.md` — so nothing is ticked per the `/pr-review` rule.

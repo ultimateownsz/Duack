@@ -11,6 +11,14 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 
 ### Added
 
+#### 2026-11-27
+- Added the "Authoring playlist names" section to the playlists duack-skill: where a
+  playlist name comes from decides how to address it — auto-built names (from the audio
+  root or manifest) belong to strings/constants so a dropped track stays a no-code
+  change, while hand-authored playlists fit the game-side enum adapter the mix-states
+  skill documents. Docs only; no behavior change. (follow-up to the mix-states skill,
+  PR #47)
+
 #### 2026-11-26
 - **Named mix states (#46), core.** Authored per-bus target vectors with named states —
   the standard game pattern of peace/combat/low-health mix identities over the same buses —

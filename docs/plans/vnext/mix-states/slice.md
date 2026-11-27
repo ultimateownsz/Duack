@@ -12,8 +12,10 @@ Populated as implementation decisions land. ADR deviations belong in
   it is the same per-frame `Update(dt)` loop the game already owns.
 - **D2 — A state writes both mixers, every write reaches all of them.** Slice-F D13 keeps two
   `BusMixer` states seeded from one table; a state applied to one mixer would move music but
-  not SFX. The transition's starting values are captured from the first mixer — if a caller
-  hand-diverged the mixers, the ease re-converges them on the first frame by construction.
+  not SFX. The transition's starting values are captured PER MIXER — a real consumer (the
+  dogfooding game) diverges the mixers on purpose by pushing the player's volumes onto one
+  mixer each, so each mixer's ease must start from its own current volume rather than
+  re-converging through the first mixer's.
 - **D3 — Duration-mapped one-pole τ.** A timed transition runs the §12 formula
   `g(t) = target + (start − target)·e^(−t/τ)` with `τ = duration / ln(1/ε)`,
   ε = 1e-4 (the duck source's settle epsilon), so the ease settles exactly at its stated

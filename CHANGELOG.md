@@ -182,6 +182,23 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 - Clarified docs that "configuration-driven" means ducking/crossfades/playlists/volumes are driven by config objects authored in C# via `AudioConfigBuilder`/`PlaylistConfigBuilder`. Updated README and audio-core/crossfade skill docs to remove the apparent "config-driven (code-only)" contradiction.
 
 
+### Fixed
+
+#### 2026-11-27
+- **Mix-state transitions now ease each mixer from its own current volume (#46).** Symptom:
+  `TransitionTo` captured every target bus's starting volume from the FIRST mixer only (the
+  mixers-"seed from the same table so they agree" assumption), then wrote the same eased value to
+  every mixer. A real two-manager consumer (the dogfooding game, monsterprojectweb) diverges the
+  mixers on purpose — its settings push writes the player's volumes onto one mixer each (music on
+  the music mixer, sfx on the SFX mixer) — so a transition toward such a bus eased the second
+  mixer from a volume it was never playing: the first frame audibly jumped off the player's
+  setting (observed: the player's 0.6 bus jumped toward the value the authored 1.0 start implies,
+  0.73, instead of easing 0.6 → 0.7). Now the starts are captured per mixer (one start map per
+  `BusMixer`) and each mixer's ease runs from its own baseline; the absolute closed-form curve and
+  the settle-at-duration telemetry are unchanged, and mixers that agree behave exactly as before.
+  Found by dogfooding (consumer test `MixStateDogfoodTests` in monsterprojectweb); pinned upstream
+  by `MixStateTests.TransitionTo_EasesEachMixerFromItsOwnCurrentVolume`. (#46)
+
 ### Changed
 
 #### 2026-11-27

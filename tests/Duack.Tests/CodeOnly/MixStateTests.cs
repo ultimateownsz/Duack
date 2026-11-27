@@ -1,14 +1,15 @@
 using System;
+using System.Collections.Generic;
 
 namespace Duack.Tests.CodeOnly;
 
 /// <summary>
-/// Pins named mix states (issue #46): code-first authoring via
+/// Pins named mix states (issue #46, multiplicative layering #68): code-first authoring via
 /// <see cref="AudioConfigBuilder.WithMixState"/>, instant <c>ApplyState</c>, timed
 /// <c>TransitionTo</c> pinned against the one-pole smoothing formula of the shared plan,
 /// transition telemetry (crossfade pattern), loud unknown-state reporting, composition order
-/// (state targets are bus volumes; duck stays live on top; the player's master slider layers
-/// after), and the player-settings overlay carrying authored states over.
+/// (state factors multiply the authored bus volume; duck stays live on top; the player's
+/// master slider layers after), and the player-settings overlay carrying authored states over.
 /// </summary>
 public class MixStateTests
 {
@@ -38,7 +39,7 @@ public class MixStateTests
     }
 
     [Fact]
-    public void ApplyState_WritesTargetsInstantlyOnEveryMixer()
+    public void ApplyState_SetsFactorsWithoutTouchingBusVolumes()
     {
         var config = ConfigWithStates();
         var music = new BusMixer(config.Buses);
@@ -47,8 +48,10 @@ public class MixStateTests
 
         manager.ApplyState("combat");
 
-        Assert.Equal(0.4f, music.VolumeOf("music"));
-        Assert.Equal(0.6f, sfx.VolumeOf("ambience"));
+        Assert.Equal(1f, music.VolumeOf("music"));
+        Assert.Equal(0.4f, music.StateFactorOf("music"));
+        Assert.Equal(0.6f, sfx.StateFactorOf("ambience"));
+        Assert.Equal(0.4f, music.Resolve("music").Gain);
         Assert.Equal("combat", manager.CurrentState);
         Assert.False(manager.IsTransitioning);
     }
@@ -64,6 +67,7 @@ public class MixStateTests
         manager.ApplyState("combat");
 
         Assert.Equal(0.8f, mixer.VolumeOf("ui"));
+        Assert.Equal(1f, mixer.StateFactorOf("ui"));
     }
 
     [Fact]
@@ -81,10 +85,11 @@ public class MixStateTests
         Assert.Equal("bossfight", reported);
         Assert.Null(manager.CurrentState);
         Assert.Equal(1f, mixer.VolumeOf("music"));
+        Assert.Equal(1f, mixer.StateFactorOf("music"));
     }
 
     [Fact]
-    public void TransitionTo_EasesTowardTargetsPerOnePoleFormula()
+    public void TransitionTo_EasesTheFactorTowardTargetsPerOnePoleFormula()
     {
         var config = ConfigWithStates();
         var mixer = new BusMixer(config.Buses);
@@ -104,7 +109,9 @@ public class MixStateTests
         var tau = 2f / MathF.Log(1f / MixStateManager.SettleEpsilon);
         var expected = 0.4f + (1f - 0.4f) * MathF.Exp(-0.5f / tau);
         manager.Update(0.5f);
-        Assert.Equal(expected, mixer.VolumeOf("music"), 5);
+        Assert.Equal(expected, mixer.StateFactorOf("music"), 5);
+        // The authored bus volume never moves: the state is a multiplicative layer.
+        Assert.Equal(1f, mixer.VolumeOf("music"));
         Assert.Equal(0.5f, manager.ElapsedSeconds, 5);
         Assert.True(manager.IsTransitioning);
     }
@@ -118,17 +125,17 @@ public class MixStateTests
         manager.ApplyState("calm");
         manager.TransitionTo("combat", 1f);
 
-        var previous = mixer.VolumeOf("ambience");
+        var previous = mixer.StateFactorOf("ambience");
         for (var t = 0f; t < 0.95f; t += 0.05f)
         {
             manager.Update(0.05f);
-            var current = mixer.VolumeOf("ambience");
-            Assert.True(current <= previous + 1e-6f, $"volume must not rise while easing down at {t}s");
+            var current = mixer.StateFactorOf("ambience");
+            Assert.True(current <= previous + 1e-6f, $"factor must not rise while easing down at {t}s");
             previous = current;
         }
 
         manager.Update(0.05f); // reaches the 1s mark
-        Assert.Equal(0.6f, mixer.VolumeOf("ambience"));
+        Assert.Equal(0.6f, mixer.StateFactorOf("ambience"));
         Assert.False(manager.IsTransitioning);
         Assert.Equal("combat", manager.CurrentState);
         Assert.Null(manager.FromState);
@@ -136,20 +143,18 @@ public class MixStateTests
     }
 
     [Fact]
-    public void TransitionTo_EasesEachMixerFromItsOwnCurrentVolume()
+    public void TransitionTo_EasesEachMixerFromItsOwnCurrentFactor()
     {
         // A real project (monsterprojectweb) drives TWO mixers and diverges them on purpose:
-        // the game's settings push writes the player's volumes onto one mixer each, so the
-        // music mixer's sfx entry keeps the authored 1f while the SFX mixer's sfx entry carries
-        // the player's 0.6f. A transition targeting sfx must ease EACH mixer from ITS OWN
-        // current volume - capturing the starts from the first mixer only made the first frame
-        // jump off the player's setting (the second mixer was eased from a volume it never had).
+        // the game's settings push writes the player's volumes onto one mixer each. The
+        // mix-state FACTORS are per mixer too: a transition targeting sfx must ease EACH
+        // mixer's factor from ITS OWN current factor, not a captured shared one.
         var config = new AudioConfigBuilder()
             .WithMixState("combat", s => s.Bus(BusNames.Music, 0.4f).Bus(BusNames.Sfx, 0.7f))
             .Build();
         var music = new BusMixer(config.Buses);
         var sfx = new BusMixer(config.Buses);
-        sfx.SetBus(BusNames.Sfx, 0.2f);
+        sfx.SetStateFactor(BusNames.Sfx, 0.2f);
         var manager = new MixStateManager(config.MixStates, music, sfx);
 
         Assert.True(manager.TransitionTo("combat", 1f));
@@ -158,8 +163,10 @@ public class MixStateTests
         var tau = 1f / MathF.Log(1f / MixStateManager.SettleEpsilon);
         var expectedMusic = 0.7f + (1f - 0.7f) * MathF.Exp(-0.25f / tau);
         var expectedSfx = 0.7f + (0.2f - 0.7f) * MathF.Exp(-0.25f / tau);
-        Assert.Equal(expectedMusic, music.VolumeOf(BusNames.Sfx), 5);
-        Assert.Equal(expectedSfx, sfx.VolumeOf(BusNames.Sfx), 5);
+        Assert.Equal(expectedMusic, music.StateFactorOf(BusNames.Sfx), 5);
+        Assert.Equal(expectedSfx, sfx.StateFactorOf(BusNames.Sfx), 5);
+        Assert.Equal(1f, music.VolumeOf(BusNames.Sfx));
+        Assert.Equal(1f, sfx.VolumeOf(BusNames.Sfx));
     }
 
     [Fact]
@@ -189,7 +196,8 @@ public class MixStateTests
         manager.TransitionTo("combat", 0f);
 
         Assert.False(manager.IsTransitioning);
-        Assert.Equal(0.4f, mixer.VolumeOf("music"));
+        Assert.Equal(0.4f, mixer.StateFactorOf("music"));
+        Assert.Equal(1f, mixer.VolumeOf("music"));
         Assert.Equal("combat", manager.CurrentState);
     }
 
@@ -209,29 +217,29 @@ public class MixStateTests
         Assert.Equal("bossfight", reported);
         Assert.False(manager.IsTransitioning);
         Assert.Equal(1f, mixer.VolumeOf("music"));
+        Assert.Equal(1f, mixer.StateFactorOf("music"));
     }
 
     [Fact]
-    public void CompositionOrder_StateTargetsThenLiveDuckThenPlayerMaster()
+    public void CompositionOrder_StateFactorThenLiveDuckThenPlayerMaster()
     {
-        // State targets are bus volume inputs to the same single resolver: the state writes
-        // the music bus, the duck ratio is read live on top (never embedded), and the
-        // player's master slider layers last as the master bus write.
+        // The state factor multiplies the authored bus volume inside the resolver; the duck
+        // ratio stays live on top (never embedded in bus state), and the player's master
+        // slider layers last as the master bus write.
         var config = ConfigWithStates();
         var duckRatio = 0.25f;
         var mixer = new BusMixer(config.Buses, target => duckRatio);
         var manager = new MixStateManager(config.MixStates, mixer);
         manager.ApplyState("combat");
 
-        // The player's settings slider writes the master bus after the state's targets.
+        // The player's settings slider writes the master bus after the state's factor.
         mixer.SetBus(BusNames.Master, 0.5f);
 
-        // Music composition: master -> music bus (state target) -> duck (live, unchanged in state).
+        // Music composition: master -> music bus (authored 1f) -> state factor -> duck.
         var composedGain =
             mixer.Resolve(BusNames.Master).Gain * mixer.Resolve(BusNames.Music).Gain * duckRatio;
-        Assert.Equal(0.5f * 0.4f * 0.25f, composedGain, 5);
-        // The state target stays a bus volume; the duck moves without touching it.
-        Assert.Equal(0.4f, mixer.VolumeOf(BusNames.Music));
+        Assert.Equal(0.5f * 1f * 0.4f * 0.25f, composedGain, 5);
+        Assert.Equal(1f, mixer.VolumeOf(BusNames.Music));
         duckRatio = 1f;
         Assert.Equal(0.5f * 0.4f, mixer.Resolve(BusNames.Master).Gain * mixer.Resolve(BusNames.Music).Gain, 5);
     }
@@ -261,20 +269,43 @@ public class MixStateTests
     /// <summary>Records every call; playback state stays unused by the readback test.</summary>
     private sealed class FakeMusicBackend : IMusicBackend
     {
-        public bool SupportsOverlap => true;
+        public bool SupportsOverlap { get; }
+        public List<(string Name, float InitialVolume, float Pitch)> Played { get; } = new();
+        public List<float> ActiveVolumes { get; } = new();
+        public List<float> OutgoingVolumes { get; } = new();
+        public int StopOutgoingCalls { get; private set; }
+        public int StopCalls { get; private set; }
         public bool IsTrackPlaying { get; private set; }
         public float CurrentTrackElapsedSeconds { get; set; }
         public float? CurrentTrackDurationSeconds { get; set; }
+        public bool IsPaused { get; private set; }
+        public TimeSpan Position { get; set; }
+        public TimeSpan Duration { get; set; }
+        public bool SupportsSeek { get; set; }
         public event EventHandler? TrackEnded;
 
-        public void PlayTrack(string trackName, float initialVolume = 1f, float pitch = 0f) => IsTrackPlaying = true;
-        public void SetActiveVolume(float volume) { }
-        public void SetOutgoingVolume(float volume) { }
-        public void StopOutgoing() { }
-        public void Stop() => IsTrackPlaying = false;
+        public void PlayTrack(string trackName, float initialVolume = 1f, float pitch = 0f)
+        {
+            Played.Add((trackName, initialVolume, pitch));
+            IsTrackPlaying = true;
+            CurrentTrackElapsedSeconds = 0f;
+        }
+
+        public void SetActiveVolume(float volume) => ActiveVolumes.Add(volume);
+        public void SetOutgoingVolume(float volume) => OutgoingVolumes.Add(volume);
+        public void StopOutgoing() => StopOutgoingCalls++;
+        public void Stop()
+        {
+            StopCalls++;
+            IsTrackPlaying = false;
+        }
+
+        public void Seek(TimeSpan position) { }
+        public void Pause() => IsPaused = true;
+        public void Resume() => IsPaused = false;
         public void Update(float deltaSeconds) { }
 
-        /// <summary>Simulates the active track reaching its end, keeping the event in use.</summary>
+        /// <summary>Simulates the active track reaching its end (completion detection).</summary>
         public void RaiseTrackEnded()
         {
             IsTrackPlaying = false;

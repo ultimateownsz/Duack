@@ -53,10 +53,12 @@ public sealed class AudioConfigBuilder
     }
 
     /// <summary>
-    /// Defines (or replaces) a named mix state — a vector of authored per-bus volume targets
+    /// Defines (or replaces) a named mix state — a vector of authored per-bus factors
     /// (e.g. <c>WithMixState("combat", s => s.Bus("music", 0.4f).Bus("ambience", 1f))</c>),
-    /// applied at runtime by a <see cref="MixStateManager"/> riding the same bus table. Buses
-    /// a state does not name keep their current volume when it is applied.
+    /// applied at runtime by a <see cref="MixStateManager"/> riding the same bus table.
+    /// Each factor multiplies that bus's authored volume at effective-gain time (the
+    /// multiplicative layer, #68) — it never overwrites the bus volume the player's
+    /// settings sliders write. Buses a state does not name keep their current factor.
     /// </summary>
     public AudioConfigBuilder WithMixState(string name, System.Action<MixStateBuilder> state)
     {

@@ -18,7 +18,7 @@ namespace Duack.MonoGame;
 internal static class OggPcmWav
 {
     /// <summary>Decodes <paramref name="ogg"/> into a seekable in-memory WAV stream.</summary>
-    public static Stream Decode(Stream ogg) => Decode(ogg, TimeSpan.Zero);
+    public static Stream Decode(Stream ogg) => Decode(ogg, TimeSpan.Zero)!;
 
     /// <summary>
     /// Decodes <paramref name="ogg"/> into a seekable in-memory WAV stream that starts at
@@ -59,7 +59,7 @@ internal static class OggPcmWav
                 }
             }
 
-            if (reader.DecodedPosition >= totalFrames) return null;
+            if (reader.SamplePosition >= totalFrames) return null;
         }
 
         var frames = totalFrames - startFrame;

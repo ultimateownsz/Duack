@@ -48,7 +48,9 @@ real backlog.
   in issue #31's comment thread / slice C review).
 - Reopens when: a user reports a typo-caused silent failure on any surface that never
   reports at play time (unknown context silently at scale 1, `SetDuck`/`BeginDuck`/`EndDuck`
-  on an unregistered source, `DuckSourceConfig.Target` naming a never-declared bus), or
+  on an unregistered source, `DuckSourceConfig.Target` naming a never-declared bus, a
+  hand-authored `PlaylistTrack.Name` naming a track the library never found, or
+  `Play` naming a playlist that only exists misspelled), or
   when slice E's named mix states add more cross-referencing string surfaces that make the
   silent paths materially likelier.
 

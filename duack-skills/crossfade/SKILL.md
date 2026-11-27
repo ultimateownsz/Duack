@@ -248,7 +248,15 @@ complementary tools:
      }
      ```
 
-The `CurrentTrack?.Name` guard prevents re-triggering a track that is already playing.
+The `CurrentTrack?.Name` guard prevents re-triggering a track that is already
+playing. It compares a track name to a playlist name, so it only holds when the
+playlist is a single-track playlist named after its track (the auto-built scene
+playlists are exactly that). For a multi-track playlist, guard on
+`manager.CurrentPlaylistName != frame.Music` instead: `CurrentTrack?.Name` is
+the track inside the playlist and never equals the playlist name, so the guard
+would call `Play` on every frame and restart the sequence from the top.
+`Play` with an unknown playlist name silently stops the running music;
+`manager.PlaylistFellBack` reports the requested name so the miss is findable.
 
 ## 8. Key insight: Play() triggers transition immediately
 

@@ -12,6 +12,19 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 ### Added
 
 #### 2026-11-27
+- **Playlist name exposure and fallback report (#56).** `MusicManager` now exposes
+  `CurrentPlaylistName` — the name of the playlist the controller is running, or null when
+  stopped — so the per-frame re-trigger guard compares playlist to playlist:
+  `PlaylistTrack.Name` is a track name and only equals the playlist name for a single-track
+  playlist named after its track (the auto-built scene playlists), so guarding on it with a
+  multi-track playlist re-plays the sequence from the top on every frame. `MusicPlaylistController.Play`
+  on an unknown or empty playlist still stops and stays idle rather than throwing, but now
+  raises `PlaylistFellBack` with the requested name before stopping — the `BusMixer.BusFellBack`
+  precedent applied to music, so a typo that silently stopped the running music is findable.
+  `MusicManager` forwards the event; `Stop` and successful plays do not raise. The crossfade
+  duack-skill documents the single-track caveat of the `CurrentTrack?.Name` guard, and the
+  playlists duack-skill documents the `PlaylistNames`/`TrackNames` consumer-constants
+  convention. (#57)
 - Added the "Authoring playlist names" section to the playlists duack-skill: where a
   playlist name comes from decides how to address it — auto-built names (from the audio
   root or manifest) belong to strings/constants so a dropped track stays a no-code

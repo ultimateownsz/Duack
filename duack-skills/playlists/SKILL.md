@@ -149,9 +149,17 @@ audible and correct mid-transition. See `crossfade`.
 
 ## Edge cases
 
-- Unknown/empty playlist → controller stops and stays idle (no throw).
+- Unknown/empty playlist → controller stops and stays idle (no throw), and raises
+  `PlaylistFellBack` (forwarded by `MusicManager`) with the requested name — the
+  report that a typo stopped the music instead of a silent halt.
 - `Play(null)` throws `ArgumentNullException`.
 - Empty library → `BuildPlaylists` yields no playlists.
+- Playlist names and track names are different name spaces; a playlist may share a
+  string with a track (the auto-built scene playlists deliberately do). Author
+  them through consumer constants classes (`static class PlaylistNames` /
+  `TrackNames`, the `BusNames` discipline) so the two uses stay rename-safe —
+  constants document intent; only `MusicManager.CurrentPlaylistName` guards play
+  correctly for multi-track playlists.
 
 ## Studio & broadcast concepts
 

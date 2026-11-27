@@ -44,6 +44,15 @@ public sealed class MusicPlaylistController
     /// <summary>The name of the playlist started by the last successful <see cref="Play"/>, or null.</summary>
     public string? CurrentPlaylistName { get; private set; }
 
+    /// <summary>
+    /// Raised when <see cref="Play"/> names a playlist that cannot play (unknown name or no tracks),
+    /// carrying the requested name. The controller then stops and stays idle rather than throwing, so
+    /// this report is the only signal of the miss — without it a typo silently stops the running
+    /// music. Mirrors the SFX path's <see cref="BusMixer.BusFellBack"/> precedent. Not raised by
+    /// <see cref="Stop"/> or by a successful <see cref="Play"/>.
+    /// </summary>
+    public event Action<string>? PlaylistFellBack;
+
     /// <summary>The track the adapter should be playing, or null when stopped.</summary>
     public PlaylistTrack? CurrentTrack => _current;
 
@@ -65,6 +74,7 @@ public sealed class MusicPlaylistController
 
         if (!_config.TryGet(playlistName, out var definition) || definition.Tracks.Count == 0)
         {
+            PlaylistFellBack?.Invoke(playlistName);
             Stop();
             return;
         }

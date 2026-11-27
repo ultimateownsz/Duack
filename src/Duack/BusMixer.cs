@@ -197,7 +197,6 @@ public sealed class BusMixer
         public float Volume = volume;
         public bool Muted;
         public bool Paused;
-        public float EffectiveGain => Muted || Paused ? 0f : Volume;
     }
 }
 

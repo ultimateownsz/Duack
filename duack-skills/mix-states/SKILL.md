@@ -97,6 +97,23 @@ Peace = "peace"; }`), which the other name surfaces use:
   covers the seams (a state authored but never switched to, a removed config
   entry), but the typo class of miss never reaches runtime at all.
 
+The enum does not sync itself: nothing stops an authored state and an enum
+member from drifting apart, so check both directions once at startup —
+
+```csharp
+// every enum member has an authored state:
+foreach (GameMix mix in Enum.GetValues<GameMix>())
+    if (!config.MixStates.ContainsKey(mix.Name()))
+        throw new InvalidOperationException($"No authored mix state for {mix}.");
+
+// every authored state has an enum member (no dead entries):
+var members = new HashSet<string>(
+    Enum.GetValues<GameMix>().Select(mix => mix.Name()));
+foreach (var name in config.MixStates.Keys)
+    if (!members.Contains(name))
+        throw new InvalidOperationException($"Authored state '{name}' has no enum member.");
+```
+
 The core stays string-keyed on purpose: `AudioConfig.MixStates` is a
 `Dictionary<string, MixStateConfig>` that round-trips JSON and is cloned by the
 player-settings overlay, and every other name surface (buses, contexts,

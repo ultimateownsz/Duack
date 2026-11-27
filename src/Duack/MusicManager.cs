@@ -47,7 +47,16 @@ public class MusicManager
     private float? _fadeInDurationOverride;
     private float? _fadeOutDurationOverride;
     private float _transitionDuration;
-    private float _fadeOutDuration = 0.2f;
+
+    /// <summary>
+    /// The overlap crossfade's fast outgoing fade: the outgoing track fades out FASTER than the
+    /// incoming one fades in (pinned by
+    /// <c>MusicManagerFadeTests.Overlap_transition_fades_out_the_prior_track_faster_than_it_fades_in_the_new_one</c>),
+    /// so it clears the mix while the new track is still rising.
+    /// </summary>
+    private const float FastFadeOutSeconds = 0.2f;
+
+    private float _fadeOutDuration = FastFadeOutSeconds;
 
     /// <summary>Raised after the playlist advanced: carries the track that just completed.</summary>
     public event Action<PlaylistTrack>? TrackCompleted;
@@ -460,6 +469,16 @@ public class MusicManager
             _isCrossfading = true;
             _crossfadeElapsed = 0f;
             _transitionDuration = _fadeInDurationOverride ?? _music.CrossfadeSeconds;
+            // The outgoing fade duration must be assigned HERE: this path previously left
+            // _fadeOutDuration at whatever the last transition set, and the fresh-start path
+            // leaves it at 0 - which UpdateOverlapCrossfade reads as "outProgress = 1", zeroing
+            // the outgoing track's volume on the first frame (an audible cut instead of a
+            // crossfade; dogfooded in monsterprojectweb, hospital -> overworld). Precedence
+            // matches the file's chain: transition override > outgoing track's authored fade >
+            // the fast-fade default.
+            _fadeOutDuration = _fadeOutDurationOverride
+                ?? _outgoing?.FadeOutSeconds
+                ?? FastFadeOutSeconds;
             _fadeInDurationOverride = null;
             _fadeOutDurationOverride = null;
         }

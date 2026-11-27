@@ -9,6 +9,25 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 
 ## [Unreleased]
 
+### Fixed
+
+#### 2026-11-27
+- **Overlap crossfades now fade the outgoing track instead of cutting it (#46).** Symptom:
+  on an overlap backend (desktop), a playlist switch set the outgoing track's volume to zero on
+  the FIRST frame — an audible abrupt stop instead of a crossfade (heard in the dogfooding game:
+  leaving the hospital map, whose looping track had just restarted, cut the hospital track dead
+  under the overworld). Cause: the overlap path of `BeginTransition` never assigned
+  `_fadeOutDuration`, and the track-ended loop-restart path leaves it at 0 — which
+  `UpdateOverlapCrossfade` reads as "outProgress = 1", zeroing the outgoing volume on the first
+  frame. The sequenced (web) path assigns it and was unaffected. Now the overlap path assigns
+  `_fadeOutDuration` with the file's precedence chain: the transition override, else the outgoing
+  track's authored `FadeOutSeconds`, else the fast-fade default (0.2s — the outgoing deliberately
+  fades faster than the incoming track rises, pinned by the existing
+  `Overlap_transition_fades_out_the_prior_track_faster_than_it_fades_in_the_new_one`), extracted
+  to `FastFadeOutSeconds`. Pinned by
+  `MusicManagerFadeTests.Overlap_playlist_switch_fades_the_outgoing_track_instead_of_cutting_it`
+  (red first against the old code). (#46)
+
 ### Added
 
 #### 2026-11-27

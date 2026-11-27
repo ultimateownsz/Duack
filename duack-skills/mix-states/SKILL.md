@@ -1,16 +1,20 @@
 ---
 name: mix-states
-description: Duack named mix states — authoring per-bus target vectors with AudioConfigBuilder.WithMixState, applying instantly with MixStateManager.ApplyState or easing over a duration with TransitionTo (one-pole smoothing with crossfade-style telemetry — IsTransitioning, elapsed/duration, from/to), and how states compose with buses, ducking, and player settings. Use when a game needs named mix identities (peace, combat, low-health) over the same buses, including authoring them with a game-side enum adapter for typed state names.
+description: Duack named mix states — authoring per-bus target vectors with AudioConfigBuilder.WithMixState, applying instantly with MixStateManager.ApplyState or easing over a duration with TransitionTo (one-pole smoothing with crossfade-style telemetry — IsTransitioning, elapsed/duration, from/to), and how states compose with buses, ducking, and player settings. State targets are a multiplicative factor layer over the authored bus volumes, so they compose with user sliders instead of overwriting them. Use when a game needs named mix identities (peace, combat, low-health) over the same buses, including authoring them with a game-side enum adapter for typed state names.
 ---
 
 # Duack — Named Mix States
 
 ## What a mix state is
 
-A named vector of authored per-bus volume targets in the same flat bus table
+A named vector of authored per-bus factors in the same flat bus table
 buses live in — a "combat" state, a "low-health" state — authored in code, never
-captured from runtime. Buses the state does not name keep their current volume,
-so a state changes only what it declares.
+captured from runtime. Each factor **multiplies** that bus's authored volume (the
+number the player's settings sliders write): `effective = master × bus × state
+factor × duck × fade`. A state never overwrites the bus volume, so user settings
+and states are independent layers that compose instead of racing. Buses the
+state does not name keep their current factor, so a state changes only what it
+declares.
 
 ## Setup (authoring)
 
@@ -29,7 +33,7 @@ var states = new MixStateManager(
     musicManager.Buses,   // MusicManager.Buses — the music-side mixer
     sfxManager.Buses);    // SfxManager.Buses    — the SFX-side mixer
 
-states.ApplyState("combat");          // instant: targets written this frame
+states.ApplyState("combat");          // instant: factors written this frame
 states.TransitionTo("calm", 2f);       // eases over 2 seconds (0 or less = instant)
 
 states.Update(deltaSeconds);           // once per frame, same delta the managers get —
@@ -42,17 +46,20 @@ states.FromState; states.ToState;      // null outside a transition
 states.CurrentState;                   // the settled state's name
 ```
 
-A state writes **both** runtime mixers (music and SFX own one bus table each,
-seeded from the same config), so a transition moves the whole mix.
+A state writes **both** runtime mixers' factor layer (music and SFX own one bus
+table each, seeded from the same config), so a transition moves the whole mix.
+Each bus's factor eases from each mixer's own current factor, and a user slider
+write to a bus mid-transition survives — the two layers live in separate state.
 
 ## How it composes
 
-Targets are **bus volume inputs** to the same single resolver: duck contributions
-stay live on top of them (never embedded in bus state), per-bus mute/pause and the
-master mute still fold at resolution, and the player's settings sliders still layer
-over the state via their own bus writes. Unknown state names report loudly —
-`ApplyState`/`TransitionTo` return `false` and raise `states.UnknownState` with the
-name, and the mix is left untouched.
+Factors are a **multiplicative layer** in the same single resolver: the authored
+bus volume (user slider) × state factor, with duck contributions staying live on
+top (never embedded in bus state), per-bus mute/pause and the master mute still
+folding at resolution. `BusView` reports the composition fully — `Volume`
+(authored), `StateFactor`, `DuckRatio`, `EffectiveGain`. Unknown state names
+report loudly — `ApplyState`/`TransitionTo` return `false` and raise
+`states.UnknownState` with the name, and the mix is left untouched.
 
 ## Authoring states with a game enum
 

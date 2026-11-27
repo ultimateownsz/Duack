@@ -587,3 +587,99 @@ lifecycle pattern (onended disconnect + tracked id map) the panner calls layer o
 
 No slice E checkbox completes here — the acceptance remainder (human listening on both heads,
 two-backend sample) stays on #46 per `STATUS.md` — so nothing is ticked per the `/pr-review` rule.
+
+## PR #69 — feat(mix-states): state targets become a multiplicative factor layer (#68) (2026-11-28): good
+
+- Reviewed: 2026-11-28
+- Head at review: `9eec2f066bfe45cc8f5e345fb9b5bd7470af5dcb`
+- Base: `master` (rebased base `49d69c7`; #67 and #71 merged to master after this head's CI run)
+- Verdict: **good**
+- Reviewer: `qa` pass against `.opencode/commands/pr-review.md`; blocking candidates independently verified on the head via the GitHub contents API (no local SDK in this sandbox — network blocked for installs; CI `build-and-test` green at the head is the runner, matching the #61/#58 precedent)
+
+### Blocking
+
+- (none)
+
+### Medium
+
+**F1 — The "slider write during an in-flight transition survives" pin the PR claims does not exist in the diff.**
+- Rule: issue #68 acceptance bullet 2 ("A slider write during an in-flight transition survives (no per-frame race), pinned by test"); `AGENTS.md` TDD discipline; `CONTRIBUTING.md` ("a test that fails before your bug fix and passes after").
+- Proof: at head `9eec2f0`, `tests/Duack.Tests/CodeOnly/MixStateTests.cs` contains `SetBus` only at `:64` (slider `0.8` written *before* `ApplyState` — pins the omitted-bus/apply-survival half of #68's bullet 1) and `:236` (master slider written *after* an instant `ApplyState` — the composition pin). No test performs a slider write while a `TransitionTo` is in flight and then `Update`s. The PR body's Verification section nonetheless claims "slider-write-during-transition survival" among the pins. The survival itself is real but only evidenced transitively: `TransitionTo_EasesTheFactorTowardTargetsPerOnePoleFormula` pins `VolumeOf` stays `1f` after a mid-flight `Update`, and the state layer provably only ever calls `SetStateFactor`.
+- Required: add the small direct pin (slider `SetBus("music", 0.3f)`, `TransitionTo`, a mid-flight `Update`, assert `VolumeOf` stays `0.3f` and `EffectiveGain` composes `0.3f ×` the eased factor). The behavior already holds, so the test should pass immediately — it converts the transitive argument into the pin #68 demands. Alternatively reword the PR body, but the acceptance asks for the test.
+- Status: open.
+
+### Low
+
+**F2 — Dead member left behind: `BusState.EffectiveGain`.**
+- Proof: `src/Duack/BusMixer.cs:200` — both former callers (`Resolve`, `Views`) now route through the new `EffectiveGainOf` (`:152`, `:165`, `:192`); no other reference in `src/` or `tests/` (verified by grep at the head).
+- Required: delete the property (refactor step of the TDD loop).
+- Status: open.
+
+**F3 — Plan-workspace staleness: `mix-states/STATUS.md` still describes the pre-#69 contract.**
+- Proof: `docs/plans/vnext/mix-states/STATUS.md` "Open questions" presents the state-vs-slider race as pinned-not-solved ("revisit if a sample or a user hits it") — this PR is the solution landing; the known-limitations line "a transition eases each mixer from its own current volume" describes the volume layer, not the factor layer.
+- Required: reword both when #69 lands (or record the resolution); the walk-testable-state rule (`AGENTS.md`) wants plan docs describing the true branch state.
+- Status: open.
+
+### Checked and clear
+
+- **Semantics match #68's chain exactly:** `effective = master × bus (authored) × state factor × duck × fade`. The factor is read at effective-gain time via `EffectiveGainOf` (`BusMixer.cs:192`), mirroring the D4 duck pattern (read at snapshot, never stored in bus state); `ApplyState`/`TransitionTo`/`Update` only ever call `SetStateFactor` (`MixStateManager.cs` `WriteTargets`/`Update`), so the authored bus volume is unreachable by the state layer by construction.
+- **Acceptance coverage:** #68 bullet 1 pinned (`ApplyState_SetsFactorsWithoutTouchingBusVolumes`: `VolumeOf` stays `1f` on a named bus; `:64` slider `0.8` survives an apply on an omitted bus); bullet 3 pinned (`CompositionOrder_StateFactorThenLiveDuckThenPlayerMaster`: `0.5 × 1 × 0.4 × 0.25`); bullet 4 kept (the existing monotone/settle-at-duration test re-pointed at the factor); bullet 5 done (`BusView.StateFactor` with default `1f`, so positional `BusView` construction in `samples/Duack.Sample.Core/SampleAudio.cs:38` keeps compiling; unknown-state reporting untouched, re-pinned); bullet 6 done (skill + changelog); bullet 7 correctly deferred — the PR note keeps the MonsterProjectWeb human-listening check on #46.
+- **Ease math unchanged:** same one-pole closed form and settle epsilon, starts now captured from `StateFactorOf` per mixer (the #63 per-mixer capture carried over to the factor layer, re-pinned by `TransitionTo_EasesEachMixerFromItsOwnCurrentFactor`).
+- **`SetStateFactor` mirrors `SetBus` faithfully:** NaN→0, clamp [0,1], bit-exact no-op-on-unchanged, `Changed` only on real change; mid-transition per-frame writes are no-ops once settled, so the `Changed`-event traffic pattern is unchanged.
+- **Changelog:** dated `#### 2026-11-27` under `### Fixed` with `(#68)`, symptom-framed like the prior preview-breaking semantic entries in the same section ("Preview breaking: volumes now live in one flat bus table"). The diff's removal of a `#### 2026-11-25` header merges two adjacent same-date subsections — content preserved, no entry lost.
+- **Merge interaction with the just-landed #67/#71:** no file overlap (music playback/seek files vs mixer/mix-state files), GitHub reports CLEAN/MERGEABLE at the head. Caveat: the head's green CI ran before those merges landed, so the combined tree's first CI run is on push to master — risk is low given the disjoint files.
+- **Issue targeting:** `Closes #68` is correct — #68 is the standalone semantic-change issue; the slice-E acceptance remainder stays on #46 and the phase-doc checkbox stays unticked per the `/pr-review` rule (verdict clears the code, not the human listening).
+- **Public API:** additive (`BusMixer.SetStateFactor`/`StateFactorOf`, `BusView.StateFactor`) plus the deliberate semantic change, both stated in the body and changelog.
+- **548/548 local-pass claim:** not re-runnable here (no SDK); CI `build-and-test` pass at the reviewed head is the evidence.
+
+### Plan gate
+
+No slice E checkbox completes here — the acceptance remainder (human listening on both heads, the MonsterProjectWeb dogfood re-check) stays on #46 — so nothing is ticked per the `/pr-review` rule. F1 is the one item worth closing before merge; the rest are follow-ups.
+
+### 2026-11-28 — re-review after the #67/#71 merge landed under the PR: good
+
+The predicted combined-tree CI run happened on this PR's own merge commit (`pull_request` CI
+builds PR+base) and failed to compile: the #67 work on master and this PR had both extended the
+same test fake, `MixStateTests.FakeMusicBackend`, with the same members (`IsPaused`, `Position`,
+`Duration`, `SupportsSeek`, `Seek`, `Pause`, `Resume`) at different spots in the file — a clean
+text merge, a broken semantic one (the caveat above, materialized). Resolved by merging master
+into the branch (`1faafa2`) and keeping the richer recording fake, which already covers every
+member master's minimal version adds (`c07699e`); the full failing run listed no other errors.
+
+All three findings from the `9eec2f0` review are now closed at head `c00de5f`:
+
+- F1 (Medium): `MixStateTests.TransitionTo_SliderWriteDuringTransitionSurvives` added (`ebe5d8b`)
+  — slider `0.3f` mid-`TransitionTo`, `Update`, pins `VolumeOf` stays `0.3f` and `Resolve`
+  composes `0.3f ×` the one-pole-eased factor. The behavior pin #68's bullet 2 demanded.
+- F2 (Low): dead `BusState.EffectiveGain` removed (`9175736`).
+- F3 (Low): `mix-states/STATUS.md` reworded to the factor-layer contract, the race recorded as
+  resolved with the pinning test named (`c00de5f`).
+
+Verification: CI `build-and-test` pass at `c00de5f` on the combined tree (run 46074956237, 46s —
+the tests the sandbox still cannot run, no SDK). Verdict: **good**, mergeable.
+
+### 2026-11-28 — docs-writer pass over the PR's prose surfaces: clear after three stale-sentence fixes
+
+Ran the `docs-writer` brief (`.opencode/agents/docs-writer.md`) over every doc surface the PR
+touches. Skill, changelog, and the new members' summaries checked out: every skill claim
+verified against the code and tests (`Build` clamps targets, the composition chain, omitted
+buses keep their factor, per-mixer factor ease, loud unknown-state reporting, `BusView`
+readability), frontmatter convention matches the sibling skills, no slice/phase jargon in
+consumer-facing docs, changelog category/date/symptom framing and `(#68)` reference correct, and
+the entry's wrap width matches the file's existing norm.
+
+Three stale sentences still described the old volume-write contract and were fixed in this
+pass:
+
+- `BusMixer` class summary (`src/Duack/BusMixer.cs:15`): the effective-gain formula omitted the
+  state factor — now `volume × state factor × (muted or paused ? 0 : 1)`.
+- `MixStateManager.TransitionTo` summary (`src/Duack/MixStateManager.cs:108`): "restarts the
+  ease from the current volumes" — the ease runs on factors.
+- The `_starts` capture comment (`src/Duack/MixStateManager.cs:131`): "starting volume … the
+  volume it was actually playing" — the captured baseline is the mixer's own factor.
+
+Flagged, not fixed (pre-existing, repo-wide): the brief's XML doc contract asks every public
+parameter for a `<param>` and every returned value for a `<returns>`, but the bus/mix-state API
+(`SetBus`, `SetMute`, `ApplyState`, `TransitionTo`, the new `SetStateFactor`/`StateFactorOf`)
+documents parameters in prose inside `<summary>`, matching the file's established style. A
+file-wide `<param>`/`<returns>` pass is its own change, not this PR's.

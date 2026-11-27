@@ -12,11 +12,38 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 ### Fixed
 
 #### 2026-11-27
+- **Preview breaking (audible): mix-state targets are a multiplicative factor layer now,
+  not a bus-volume write (#68).** Symptom before: `MixStateManager` applied state targets by
+  writing the bus's authored volume (`BusMixer.SetBus`) on every mixer it drives — the same
+  number the player's settings sliders write, so states and user settings fought over it:
+  `ApplyState("combat")` clobbered a music slider set to 0.3 (the bus volume became the
+  state's 0.4), and a slider moved during an in-flight `TransitionTo` raced the per-frame
+  ease writes (last writer wins, both plain `SetBus` calls). Now: `BusMixer` gains a
+  per-bus state-factor layer (`SetStateFactor`/`StateFactorOf`) that is hot-updated per
+  frame by the state layer and folded into the effective-gain resolver at snapshot time —
+  `effective = master x bus (user/authored) x state factor x duck x fade` — exactly where
+  the duck ratio already lives (read at snapshot time, never folded into the authored bus
+  volume), so a slider write to a bus mid-transition survives and both layers compose
+  multiplicatively. `MixStateManager` eases FACTORS per-bus with the same one-pole closed
+  form (each mixer's own current factor, start-captured per mixer), `ApplyState`/
+  `TransitionTo` no longer touch the bus volume, `BusView` gains the `StateFactor`
+  contribution so the composition is fully readable, and the telemetry
+  (`CurrentState`, `IsTransitioning`, elapsed/duration, `FromState`/`ToState`,
+  `UnknownState`) keeps its exact shape. Semantics change (deliberate, preview stage):
+  an authored state `music 0.4` now means "multiply the music bus by 0.4" instead of
+  "set the music bus to 0.4" — configs that authored states against the flat table
+  values get the composed result instead of the replacement; buses a state does not name
+  keep their current factor (same omit-means-untouched rule, per layer). Symptom of
+  staying on the old contract: the state overwrite assertions in `MixStateTests` fail
+  (`VolumeOf` stays 1 while `StateFactorOf` carries the target). The mix-states
+  duack-skill documents the new contract. (#68)
+
 - **xUnit analyzer warnings cleaned up in `VoiceLimiterTests` (no behavior change).** Symptom:
   `xunit.analyzers` flagged `xUnit2029`/`xUnit2031` at `VoiceLimiterTests.cs:147-148` —
   `Assert.Empty` over a `Where` filter and `Assert.Single` over a `Where` filter. Now uses
   `Assert.DoesNotContain(collection, predicate)` and the filtering overload of
-  `Assert.Single(collection, predicate)`. Test-only; no production change.- **Overlap crossfades now fade the outgoing track instead of cutting it (#46).** Symptom:
+  `Assert.Single(collection, predicate)`. Test-only; no production change.
+- **Overlap crossfades now fade the outgoing track instead of cutting it (#46).** Symptom:
   on an overlap backend (desktop), a playlist switch set the outgoing track's volume to zero on
   the FIRST frame — an audible abrupt stop instead of a crossfade (heard in the dogfooding game:
   leaving the hospital map, whose looping track had just restarted, cut the hospital track dead
@@ -219,7 +246,6 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
   table (`WithBus("master", v)` replaces the same single entry), and the runtime still
   composes the fixed fields from the table values exactly as before. (#36)
 
-#### 2026-11-25
 - **The sample heads are non-interactive demos now** (maintainer ruling, Nov 25, human
   listening round 3: the storyline auto-plays, so the keyboard controls were dead surface
   advertising an interaction that does not exist). Removed in both heads: Space

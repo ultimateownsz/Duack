@@ -4,16 +4,20 @@ using System.Collections.Generic;
 namespace Duack;
 
 /// <summary>
-/// Applies named mix states (see <see cref="MixStateConfig"/>) to the runtime bus mixers.
-/// <see cref="ApplyState"/> writes a state's target vector instantly;
+/// Applies named mix states (see <see cref="MixStateConfig"/>) to the runtime bus mixers'
+/// state-factor layer (multiplicative on the authored bus volume, read at effective-gain
+/// time — the authored volumes stay untouched, so the player's settings sliders compose
+/// with states instead of racing them).
+/// <see cref="ApplyState"/> writes a state's target factor vector instantly;
 /// <see cref="TransitionTo(string, float)"/> eases every named bus toward its target with
 /// the one-pole smoothing of the shared plan (g(t) = g_target + (g(t0) − g_target)·e^(−t/τ),
 /// τ = duration / ln(1/SettleEpsilon), so the ease settles exactly at its duration), with
 /// telemetry matching the existing crossfade pattern (<see cref="IsTransitioning"/>,
-/// elapsed/duration, from/to). State targets are bus volume inputs to the same single
-/// effective-gain resolver: ducks stay live on top of them (read at snapshot time, never
-/// embedded) and the player's settings sliders still layer over the state via their own bus
-/// writes. A state only names buses: buses it omits are untouched.
+/// elapsed/duration, from/to). State factors are a multiplicative layer in the same single
+/// effective-gain resolver — `authored bus volume × state factor`, with ducks staying live
+/// on top of both (read at snapshot time, never embedded) — so the player's settings sliders
+/// (authored bus volume writes) compose with states instead of racing them. A state only
+/// names buses: buses it omits keep their current factor.
 ///
 /// <para>
 /// Constructed with the authored state table and every <see cref="BusMixer"/> the game's
@@ -76,9 +80,10 @@ public sealed class MixStateManager
     }
 
     /// <summary>
-    /// Writes the named state's target vector instantly on every mixer. Buses the state does
-    /// not name keep their current volume. Returns false — touching nothing, reporting
-    /// through <see cref="UnknownState"/> — when the state is not authored.
+    /// Writes the named state's target factors instantly on every mixer's state layer (the
+    /// authored bus volumes are untouched). Buses the state does not name keep their current
+    /// factor. Returns false — touching nothing, reporting through <see cref="UnknownState"/>
+    /// — when the state is not authored.
     /// </summary>
     public bool ApplyState(string name)
     {
@@ -95,12 +100,12 @@ public sealed class MixStateManager
     }
 
     /// <summary>
-    /// Begins easing every bus the named state targets toward its target over
+    /// Begins easing every bus the named state targets toward its target factor over
     /// <paramref name="seconds"/> (unscaled), snapping exactly at the duration. A duration of
     /// zero (or less) applies the state instantly instead. Returns false — touching nothing,
     /// reporting through <see cref="UnknownState"/> — when the state is not authored. A
     /// transition can be started while another is running: it restarts the ease from the
-    /// current volumes toward the new state's targets.
+    /// current factors toward the new state's targets.
     /// </summary>
     public bool TransitionTo(string name, float seconds)
     {
@@ -123,17 +128,17 @@ public sealed class MixStateManager
         DurationSeconds = seconds;
         _transitionTargets = state;
 
-        // Capture each mixer's own starting volume for every target bus. The mixers seed from
+        // Capture each mixer's own starting factor for every target bus. The mixers seed from
         // the same table and every write reaches all of them, so they agree unless a caller
         // hand-diverged them (a real project writes the player's volumes onto one mixer each);
         // capturing per mixer keeps every mixer's ease on its own audible baseline instead of
-        // jumping the second mixer off the volume it was actually playing.
+        // jumping the second mixer off the factor it was actually applying.
         _starts = new Dictionary<string, float>[_mixers.Length];
         for (var i = 0; i < _mixers.Length; i++)
         {
             var starts = new Dictionary<string, float>(StringComparer.Ordinal);
             foreach (var bus in state.Buses.Keys)
-                starts[bus] = _mixers[i].VolumeOf(bus);
+                starts[bus] = _mixers[i].StateFactorOf(bus);
             _starts[i] = starts;
         }
         return true;
@@ -151,24 +156,24 @@ public sealed class MixStateManager
 
         foreach (var (bus, target) in _transitionTargets.Buses)
         {
-            var targetVolume = Sanitize(target);
+            var targetFactor = Sanitize(target);
             for (var i = 0; i < _mixers.Length; i++)
             {
-                var value = targetVolume;
+                var value = targetFactor;
                 if (!finished)
                 {
-                    // Absolute closed form (start value → target over elapsed), not an
+                    // Absolute closed form (start factor → target over elapsed), not an
                     // incremental step: repeated updates compose to the same curve with no drift.
                     var start = _starts.Length > i && _starts[i].TryGetValue(bus, out var captured)
                         ? captured
-                        : _mixers[i].VolumeOf(bus);
+                        : _mixers[i].StateFactorOf(bus);
                     var eased = value + (start - value) * MathF.Exp(-ElapsedSeconds / tau);
                     if (MathF.Abs(eased - value) < SettleEpsilon)
                         eased = value;
                     value = Sanitize(eased);
                 }
 
-                _mixers[i].SetBus(bus, value);
+                _mixers[i].SetStateFactor(bus, value);
             }
         }
 
@@ -182,7 +187,7 @@ public sealed class MixStateManager
     {
         foreach (var (bus, target) in state.Buses)
             foreach (var mixer in _mixers)
-                mixer.SetBus(bus, Sanitize(target));
+                mixer.SetStateFactor(bus, Sanitize(target));
     }
 
     private void ClearTransition()

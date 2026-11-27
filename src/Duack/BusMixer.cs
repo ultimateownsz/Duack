@@ -12,10 +12,10 @@ namespace Duack;
 /// Routing: a cue reaches a bus by its per-play <c>bus</c> argument. An un-routed cue stays on
 /// the fixed SFX bus; an unknown bus name falls back to the SFX bus and raises <see
 /// cref="BusFellBack"/> so the routing mistake surfaces instead of staying silent (the
-/// no-silent-failure principle applied to routing). Effective gain per bus is volume × (muted
-/// or paused ? 0 : 1); the global master mute zero-folds into every resolution, and <see
-/// cref="Changed"/> fires on any state change so a frontend mixer can render this state
-/// without owning it.
+/// no-silent-failure principle applied to routing). Effective gain per bus is volume × state
+/// factor × (muted or paused ? 0 : 1); the global master mute zero-folds into every resolution,
+/// and <see cref="Changed"/> fires on any state change so a frontend mixer can render this
+/// state without owning it.
 /// </para>
 /// </summary>
 public sealed class BusMixer
@@ -45,6 +45,12 @@ public sealed class BusMixer
     private bool _masterMuted;
 
     private readonly Func<string, float>? _duckRatioFor;
+
+    /// <summary>Per-bus mix-state factors, written by the <see cref="MixStateManager"/> state
+    /// layer and read at effective-gain time — never folded into the authored bus volume, so
+    /// user settings (the slider writes) and states stay independent layers that compose
+    /// multiplicatively. Null/absent means factor 1 (no state naming this bus).</summary>
+    private readonly Dictionary<string, float> _stateFactors = new(StringComparer.Ordinal);
 
     /// <summary>
     /// Seeds the mixer from the flat bus table's authored volumes. The fixed three
@@ -143,7 +149,7 @@ public sealed class BusMixer
         }
 
         var bus = requestedBus ?? SfxBusName;
-        var gain = MasterMuted ? 0f : _buses[bus].EffectiveGain;
+        var gain = MasterMuted ? 0f : EffectiveGainOf(bus, _buses[bus]);
         return new BusResolution(bus, gain, fellBack);
     }
 
@@ -156,18 +162,41 @@ public sealed class BusMixer
             foreach (var (name, state) in _buses)
                 list.Add(new BusView(
                     name, state.Volume, state.Muted, state.Paused,
-                    MasterMuted ? 0f : state.EffectiveGain,
-                    _duckRatioFor is null ? 1f : _duckRatioFor(name)));
+                    MasterMuted ? 0f : EffectiveGainOf(name, state),
+                    _duckRatioFor is null ? 1f : _duckRatioFor(name),
+                    StateFactorOf(name)));
             return list;
         }
     }
+
+    /// <summary>
+    /// Writes the named bus's mix-state factor (0..1, the multiplier the state layer applies
+    /// on top of the authored bus volume). Hot-updated per frame by
+    /// <see cref="MixStateManager"/>'s ease; the authored volume is never touched, so a user
+    /// settings write to the bus survives mid-transition. Same clamp and bit-exact
+    /// no-op-on-unchanged rule as <see cref="SetBus"/>.
+    /// </summary>
+    public void SetStateFactor(string name, float factor)
+    {
+        factor = Math.Clamp(float.IsNaN(factor) ? 0f : factor, 0f, 1f);
+        if (_stateFactors.TryGetValue(name, out var existing)
+            && BitConverter.SingleToInt32Bits(existing) == BitConverter.SingleToInt32Bits(factor)) return;
+        _stateFactors[name] = factor;
+        Changed?.Invoke();
+    }
+
+    /// <summary>The named bus's mix-state factor (1 when the state layer never named it).</summary>
+    public float StateFactorOf(string name) =>
+        _stateFactors.TryGetValue(name, out var factor) ? factor : 1f;
+
+    private float EffectiveGainOf(string bus, BusState state) =>
+        state.Muted || state.Paused ? 0f : state.Volume * StateFactorOf(bus);
 
     private sealed class BusState(float volume)
     {
         public float Volume = volume;
         public bool Muted;
         public bool Paused;
-        public float EffectiveGain => Muted || Paused ? 0f : Volume;
     }
 }
 
@@ -176,7 +205,8 @@ public readonly record struct BusResolution(string Bus, float Gain, bool FellBac
 
 /// <summary>
 /// Diagnostics view of one bus: as authored (volume, mute, pause), as currently effective
-/// (gain), and the live duck contribution the duck system currently applies to it (1 = no
-/// ducking; D4: the ratio is read at snapshot time, never stored in bus state).
+/// (gain), the live duck contribution the duck system currently applies to it (1 = no
+/// ducking; D4: the ratio is read at snapshot time, never stored in bus state), and the
+/// mix-state factor the state layer currently applies (1 = no state naming this bus).
 /// </summary>
-public readonly record struct BusView(string Name, float Volume, bool Muted, bool Paused, float EffectiveGain, float DuckRatio);
+public readonly record struct BusView(string Name, float Volume, bool Muted, bool Paused, float EffectiveGain, float DuckRatio, float StateFactor = 1f);

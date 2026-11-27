@@ -351,4 +351,58 @@ public class MusicPlaylistControllerTests
             b.NotifyTrackCompleted();
         }
     }
+
+    [Fact]
+    public void Play_with_an_unknown_playlist_raises_the_fallback_report()
+    {
+        var controller = Controller(Sequential("a"));
+        string? reported = null;
+        controller.PlaylistFellBack += name => reported = name;
+
+        controller.Play("nope");
+
+        Assert.Equal("nope", reported);
+        Assert.False(controller.IsPlaying);
+        Assert.Null(controller.CurrentPlaylistName);
+    }
+
+    [Fact]
+    public void Play_with_an_empty_playlist_raises_the_fallback_report()
+    {
+        var config = new PlaylistConfig { Playlists = { ["empty"] = new PlaylistDefinition() } };
+        var controller = new MusicPlaylistController(config);
+        string? reported = null;
+        controller.PlaylistFellBack += name => reported = name;
+
+        controller.Play("empty");
+
+        Assert.Equal("empty", reported);
+        Assert.False(controller.IsPlaying);
+    }
+
+    [Fact]
+    public void Play_with_a_known_playlist_does_not_raise_the_fallback_report()
+    {
+        var controller = Controller(Sequential("a"));
+        string? reported = null;
+        controller.PlaylistFellBack += name => reported = name;
+
+        controller.Play("p");
+
+        Assert.Null(reported);
+        Assert.True(controller.IsPlaying);
+    }
+
+    [Fact]
+    public void Stop_does_not_raise_the_fallback_report()
+    {
+        var controller = Controller(Sequential("a"));
+        string? reported = null;
+        controller.PlaylistFellBack += name => reported = name;
+        controller.Play("p");
+
+        controller.Stop();
+
+        Assert.Null(reported);
+    }
 }

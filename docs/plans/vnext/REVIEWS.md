@@ -417,7 +417,6 @@ lifecycle pattern (onended disconnect + tracked id map) the panner calls layer o
   (`plan/01-vnext/phase-01-vnext-slices.md`) and the index row for E in this doc says
   "draft", both worth their own resync pass.
 
-
 ## PR #48 — docs: issue titles follow Conventional Commits, never slice names (2026-11-26): good
 
 - Head at review: `c63efdc` (base `master`); re-reviewed at `48a59c4` after the
@@ -446,3 +445,69 @@ lifecycle pattern (onended disconnect + tracked id map) the panner calls layer o
 - Non-blocking: the sentence in `AGENTS.md` self-references AGENTS.md's own
   slice-name ban, which reads circular in a file that is itself the rule source,
   but is accurate and harmless.
+
+## PR #47 — feat: named mix states (core), slice E start
+
+- Reviewed: 2026-11-26
+- Head at review: `d39895422209a3ae2fbd4b1a990ffc647775c75d`
+- Base: `master`
+- Verdict: **good**
+- Reviewer: `qa` pass against `.opencode/agents/qa.md`; blocking candidates independently verified on the head (CI `build-and-test` green at 39s — the tests the sandbox could not run)
+
+### Blocking
+
+- (none)
+
+### Medium
+
+**F1 — PR body would auto-close the tracking issue before acceptance is done.**
+- Rule: workspace convention (slice B precedent — the acceptance remainder got its own open issue #44); `AGENTS.md` changelog/issue discipline.
+- Proof: the PR #47 body ends with `Closes #46`, so merging would close #46 while the slice's acceptance remainder (two-backend sample, human listening) is still open and recorded in `mix-states/STATUS.md`.
+- Required: reword the PR body so #46 stays open, or retarget the remainder to a #44-style issue.
+- Status: fixed — PR body reworded the same day; the remainder stays on #46.
+
+### Low
+
+**F2 — Red-first TDD not provable from the commit shape.**
+- Rule: `AGENTS.md:21-30` (write the failing test first, confirm red).
+- Proof: `efd90d0` adds tests and implementation in one commit, so no file-only reader can confirm the tests were red before the code existed; the session that wrote them wrote them first but persisted nothing of the red run (no local SDK existed to run one).
+- Required: nothing for this PR; the pattern to prefer is a red-test state observable in history (green CI on a test-only commit, or the commit message recording the observed red).
+- Status: open (informational).
+
+**F3 — `AudioConfig.MixStates` setter's null fallback drops the Ordinal comparer.**
+- Proof: `src/Duack/AudioConfig.cs` — setter builds `new Dictionary<string, MixStateConfig>(StringComparer.Ordinal)` only on null; a hand-assigned non-Ordinal dictionary is accepted as-is, unlike the field initializer.
+- Required: none for this PR (authoring is builder-only, Ordinal); note for any future hand-composition.
+- Status: open (informational).
+
+### Checked and clear
+
+- Pure BCL held: no package or project reference added to `src/Duack` (only `System` namespaces; `MusicManager.Buses` and all mix-state surface are additive, no preview-breaking change — the changelog entry says so accurately).
+- Changelog: dated `#### 2026-11-26` under `### Added` with `(#46)`, matching the diff.
+- Tests targeted and green: `tests/Duack.Tests/CodeOnly/MixStateTests.cs` pins authoring/clamping, instant apply on both mixers, omitted buses untouched, the §12 one-pole closed form (`tau = duration / ln(1/SettleEpsilon)`), monotone easing settling exactly at the duration, telemetry, loud `UnknownState`, composition order (state target = bus volume, duck live on top, player slider layers after), player-settings carryover, and the `MusicManager.Buses` readback; CI `build-and-test` pass at the reviewed head.
+- Edge cases: unknown state names (reported, mix untouched), NaN and zero/negative duration (NaN/≤0 ease = instant apply), state naming a bus missing from a mixer (the `SetBus` authoring asymmetry, slice D2), a transition restarted while running (recaptured from current volumes).
+- Hot path: `MixStateManager.Update` allocates nothing per frame.
+- Plan-phase gate: the slice E checkbox stays unticked on purpose — the verdict clears the core but acceptance items remain (two-backend sample, human listening), so per the `/pr-review` rule nothing is ticked and the remainder stays on #46 (mirroring the #34 → #44 retarget).
+- Walk test: `tools/plan_check.py` prints `pass`; `docs/plans/vnext/README.md` slice E row and `mix-states/STATUS.md` describe the true branch state.
+
+## PR #61 — fix(mix-states): interrupted transitions report the interrupted target as FromState (2026-11-27): good
+
+- Reviewed: 2026-11-27
+- Head at review: `118fd1949950c3abd6b9e5e502074e171ec4e14c`
+- Base: `master`
+- Verdict: **good**
+- Reviewer: `qa` pass against `.opencode/agents/qa.md`; findings independently verified on the head (CI `build-and-test` green at 35s — the tests the sandbox could not run, no local SDK)
+
+### Blocking
+
+- (none)
+
+### Checked and clear
+
+- Fixes the #47 QA finding (#60): the repro test `TransitionTo_InterruptingAnInFlightTransitionReportsTheInterruptedTargetAsFrom` in `tests/Duack.Tests/CodeOnly/MixStateTests.cs` fails on master (mid-transition `CurrentState` is null, so `FromState = CurrentState` writes null) and passes with the fix.
+- The fix `FromState = ToState ?? CurrentState` is behavior-preserving for every pre-existing path: `ClearTransition()` nulls both telemetry fields together and `ApplyState` sets `CurrentState` before clearing, so `ToState` is non-null exactly when a transition is in flight — a fresh `TransitionTo` from a settled state still reports the settled state, NaN/≤0 durations still route to `ApplyState`, an unknown state name still returns early touching nothing, and completion in `Update` still nulls `FromState` outside a transition (pinned by the existing monotone-settling test).
+- Regression risk: the only repo readers of `FromState` are the property itself and `duack-skills/mix-states/SKILL.md:41` ("null outside a transition"), which stays true; the XML doc on the property now states the interruption semantics.
+- Changelog: dated `#### 2026-11-27` under `### Fixed` with the repro test name and `(#60)`, matching the diff.
+- Architecture: no package or project reference added to `src/Duack`; pure BCL change.
+- No plan-phase checkbox completes here (slice E's acceptance remainder stays on #46), so nothing is ticked per the `/pr-review` rule; the PR closes #60 on merge.
+- Test idea (informational, not required): a double-interrupt chain (calm → combat, interrupt with calm, interrupt again with combat) to pin that the second interrupt reports the first interrupt's target as `FromState`.
+

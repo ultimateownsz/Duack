@@ -1,7 +1,7 @@
 # Duack Skills
 
-Plain-Markdown guides covering common Duack tasks (ducking, buses, playlists, SFX variation,
-spatial, player settings, audio library, config, adapters, CLI, crossfades, concurrency,
+Plain-Markdown guides covering common Duack tasks (ducking, buses, mix states, playlists, SFX
+variation, spatial, player settings, audio library, config, adapters, CLI, crossfades, concurrency,
 track duration, and the audio-core quick reference). This directory is the **single source
 of truth** for the skill content.
 

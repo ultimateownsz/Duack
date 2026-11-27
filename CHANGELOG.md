@@ -11,7 +11,47 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 
 ### Added
 
+#### 2026-11-27
+- **Playlist name exposure and fallback report (#56).** `MusicManager` now exposes
+  `CurrentPlaylistName` — the name of the playlist the controller is running, or null when
+  stopped — so the per-frame re-trigger guard compares playlist to playlist:
+  `PlaylistTrack.Name` is a track name and only equals the playlist name for a single-track
+  playlist named after its track (the auto-built scene playlists), so guarding on it with a
+  multi-track playlist re-plays the sequence from the top on every frame. `MusicPlaylistController.Play`
+  on an unknown or empty playlist still stops and stays idle rather than throwing, but now
+  raises `PlaylistFellBack` with the requested name before stopping — the `BusMixer.BusFellBack`
+  precedent applied to music, so a typo that silently stopped the running music is findable.
+  `MusicManager` forwards the event; `Stop` and successful plays do not raise. The crossfade
+  duack-skill documents the single-track caveat of the `CurrentTrack?.Name` guard, and the
+  playlists duack-skill documents the `PlaylistNames`/`TrackNames` consumer-constants
+  convention. (#57)
+- Added the "Authoring playlist names" section to the playlists duack-skill: where a
+  playlist name comes from decides how to address it — auto-built names (from the audio
+  root or manifest) belong to strings/constants so a dropped track stays a no-code
+  change, while hand-authored playlists fit the game-side enum adapter the mix-states
+  skill documents. Docs only; no behavior change. (follow-up to the mix-states skill,
+  PR #47)
+
 #### 2026-11-26
+- **Named mix states (#46), core.** Authored per-bus target vectors with named states —
+  the standard game pattern of peace/combat/low-health mix identities over the same buses —
+  with no runtime capture: the authored config is the snapshot.
+  `AudioConfigBuilder.WithMixState(name, s => s.Bus("music", 0.4f).Bus("ambience", 1f))`
+  authors into the new `AudioConfig.MixStates` table (clamped by `Build` like every volume),
+  and the new `MixStateManager` applies them: apply instantly with `ApplyState(name)` or
+  ease over a duration with `TransitionTo(name, seconds)` — the one-pole smoothing formula
+  `g(t) = target + (start − target)·e^(−t/τ)`, `τ` mapped so the ease settles exactly at its
+  stated duration — advanced by its own once-per-frame `Update(unscaled dt)` like the fades
+  and ducks. Telemetry follows the crossfade pattern: `IsTransitioning`, `ElapsedSeconds`,
+  `DurationSeconds`, `FromState`/`ToState`, plus `CurrentState`. States write **both** runtime
+  bus mixers (the new additive `MusicManager.Buses` readback mirrors `SfxManager.Buses`),
+  ride the same single effective-gain resolver — duck contributions stay live on top and
+  player settings still layer over the state targets — and leave buses a state does not name
+  untouched. Unknown state names report loudly instead of failing silently: both methods
+  return `false` and raise `MixStateManager.UnknownState`, touching nothing. The player
+  settings overlay carries authored states over. Shipped with the `mix-states`
+  duack-skill. Remaining acceptance on #46: the two-backend sample (state transition under a
+  crossfade) and human listening on both heads, worst-moment standard.
 - Added the `spatial` duack-skill (`duack-skills/spatial/SKILL.md`): a self-contained guide
   to the 2D positional SFX surface — `SetListener`/`PlayAt` world placement, the pan and
   distance knobs in `SpatialConfig`, moving sources via `SfxSpatialVoice`, and the mute
@@ -140,6 +180,12 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 
 #### 2026-10-29
 - Clarified docs that "configuration-driven" means ducking/crossfades/playlists/volumes are driven by config objects authored in C# via `AudioConfigBuilder`/`PlaylistConfigBuilder`. Updated README and audio-core/crossfade skill docs to remove the apparent "config-driven (code-only)" contradiction.
+
+
+### Changed
+
+#### 2026-11-27
+- **CI skips docs-only changes.** `ci.yml`'s `push` and `pull_request` triggers now carry `paths-ignore` for `**.md`, `docs/`, `plan/`, `duack-skills/` and `.opencode/` — every file under those paths is markdown (verified), so the dotnet build/test run only fires when something code-level changes. The release and Pages workflows keep their tag/dispatch triggers. Caveat: a docs-only PR no longer reports the `build-and-test` check, so that check must not be a required status check for docs-only merges. (#62)
 
 
 ### Added
@@ -305,7 +351,21 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 
 ### Fixed
 
+#### 2026-11-27
+- **An interrupted mix-state transition reports its origin instead of null.** Symptom:
+  starting `TransitionTo` while another was still running read `FromState = CurrentState`,
+  which is null mid-transition, so the interrupting transition's `FromState` was null —
+  wrong telemetry for debug HUDs or transition-gated logic, with the audio easing
+  unaffected. `FromState` now reports the interrupted transition's target as the state
+  being left. Repro to re-verify:
+  `TransitionTo_InterruptingAnInFlightTransitionReportsTheInterruptedTargetAsFrom` in
+  `MixStateTests`. (#60)
+
 #### 2026-11-26
+- Fixed the CS0067 build warning in the mix-state tests: the headless backend fake's
+  `TrackEnded` event was declared but never used. The fake now mirrors `MusicManagerTests`
+  with a `RaiseTrackEnded` helper that invokes it, so the event a completion test would fire
+  exists without a pragma. Test-only change; no behavior touched. (#46)
 - The README's playlist example no longer teaches the wrong `Repeat` mode. Symptom: the
   "automatic sequencing (track intro --> loop)" snippet authored a two-track
   `battle-sequence` with `PlaylistRepeatMode.Track`, but repeat is playlist-level, so the

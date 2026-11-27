@@ -121,6 +121,10 @@ game — a page that builds it on load stays silent. And the world-unit scale is
 choose — pixels, meters, anything; the config's distances are in the same units your
 `PlayAt` positions are.
 
+One correctness rule that touches this slice: every per-frame `Update` (voice aging, ducks,
+fades, mix-state transitions) takes **unscaled** delta time, so positional mixes keep their
+timing while the game clock is paused or slowed.
+
 See also: `adapters` (the full Duack.KNI wiring, autoplay policy), `buses` (routing a
 positional cue to a user bus), `concurrency` (how a floor-muted play interacts with voice
-caps — it never takes a slot).
+caps — it never takes a slot), `mix-states`.

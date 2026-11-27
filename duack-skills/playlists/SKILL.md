@@ -47,6 +47,47 @@ var playlists = new PlaylistConfigBuilder()
     .Build();
 ```
 
+## Authoring playlist names
+
+Where a playlist name comes from decides how to address it:
+
+- **Auto-built playlists** (`BuildPlaylists`, one per discovered track and named after
+  it) are addressed with strings or a constants class. Their names come from the audio
+  root (or the checked-in manifest on web), so a dropped track creates a new addressable
+  playlist with no code change — a closed enum would force a recompile per new track and
+  defeat the drag-and-drop flow.
+- **Hand-authored playlists** (`battle-sequence`, a custom all-tracks playlist) exist
+  only in your `WithPlaylist` call and your `Play` call — the same two-site shape as mix
+  states — and fit a game-side enum adapter, the same pattern the `mix-states` skill
+  documents:
+
+```csharp
+public enum GamePlaylist { BattleSequence }
+
+public static class GamePlaylistAudio
+{
+    public static string Name(this GamePlaylist playlist)
+        => playlist.ToString().ToLowerInvariant();
+    public static void Play(this MusicManager music, GamePlaylist playlist, float? fadeInSeconds = null)
+        => music.Play(playlist.Name(), fadeInSeconds);
+}
+
+// authoring — the same .Name() mapping on both sides, so they cannot drift:
+new PlaylistConfigBuilder()
+    .WithPlaylist(GamePlaylist.BattleSequence.Name(), p => p
+        .Track("battle-intro", "Battle")
+        .Track("battle-loop",  "Battle")
+        .Repeat(PlaylistRepeatMode.Off));
+
+// runtime — no raw strings at the call site:
+music.Play(GamePlaylist.BattleSequence, fadeInSeconds: 1.5f);
+```
+
+  The closed set gives compile-time typo safety and a missing-member check
+  (`Enum.GetValues` against the playlist table at startup); the core API takes
+  strings either way. Auto-built playlists stay out of the enum on purpose:
+  they must keep appearing when you drop a track in, with no recompile.
+
 ## Controller
 
 ```csharp
@@ -108,9 +149,17 @@ audible and correct mid-transition. See `crossfade`.
 
 ## Edge cases
 
-- Unknown/empty playlist → controller stops and stays idle (no throw).
+- Unknown/empty playlist → controller stops and stays idle (no throw), and raises
+  `PlaylistFellBack` (forwarded by `MusicManager`) with the requested name — the
+  report that a typo stopped the music instead of a silent halt.
 - `Play(null)` throws `ArgumentNullException`.
 - Empty library → `BuildPlaylists` yields no playlists.
+- Playlist names and track names are different name spaces; a playlist may share a
+  string with a track (the auto-built scene playlists deliberately do). Author
+  them through consumer constants classes (`static class PlaylistNames` /
+  `TrackNames`, the `BusNames` discipline) so the two uses stay rename-safe —
+  constants document intent; only `MusicManager.CurrentPlaylistName` guards play
+  correctly for multi-track playlists.
 
 ## Studio & broadcast concepts
 

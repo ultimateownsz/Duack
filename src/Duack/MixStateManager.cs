@@ -55,7 +55,11 @@ public sealed class MixStateManager
     /// <summary>Total duration of the current transition (0 when none is active).</summary>
     public float DurationSeconds { get; private set; }
 
-    /// <summary>The state the current transition started from, if a transition is active.</summary>
+    /// <summary>
+    /// The state the current transition started from, if a transition is active. When a
+    /// transition interrupts an in-flight one, this is the interrupted transition's target
+    /// (the mix was heading there and is now leaving it), not the last settled state.
+    /// </summary>
     public string? FromState { get; private set; }
 
     /// <summary>The state the current transition is easing toward, if a transition is active.</summary>
@@ -109,7 +113,9 @@ public sealed class MixStateManager
         if (float.IsNaN(seconds) || seconds <= 0f)
             return ApplyState(name);
 
-        FromState = CurrentState;
+        // The state being left is the in-flight target when interrupting (CurrentState is
+        // null mid-transition), so the interrupted transition is reported as the origin.
+        FromState = ToState ?? CurrentState;
         ToState = name;
         CurrentState = null;
         IsTransitioning = true;

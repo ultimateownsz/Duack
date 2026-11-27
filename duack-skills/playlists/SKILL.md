@@ -47,6 +47,23 @@ var playlists = new PlaylistConfigBuilder()
     .Build();
 ```
 
+## Authoring playlist names
+
+Where a playlist name comes from decides how to address it:
+
+- **Auto-built playlists** (`BuildPlaylists`, one per discovered track and named after
+  it) are addressed with strings or a constants class. Their names come from the audio
+  root (or the checked-in manifest on web), so a dropped track creates a new addressable
+  playlist with no code change — a closed enum would force a recompile per new track and
+  defeat the drag-and-drop flow.
+- **Hand-authored playlists** (`battle-sequence`, a custom all-tracks playlist) exist
+  only in your `WithPlaylist` call and your `Play` call — the same two-site shape as mix
+  states — and fit a game-side enum adapter: `public enum GamePlaylist { BattleSequence }`
+  plus a one-line `Play(GamePlaylist.BattleSequence)` extension over
+  `MusicManager.Play(string)`. The closed set gives compile-time typo safety and a
+  missing-member check (`Enum.GetValues` against the playlist table at startup). See
+  `mix-states` for the adapter pattern; the core API takes strings either way.
+
 ## Controller
 
 ```csharp

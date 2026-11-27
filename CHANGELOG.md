@@ -53,6 +53,25 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 ### Added
 
 #### 2026-11-27
+- **Desktop music seek: decode-from-offset (#70).** PR #67's contract reports seek per backend
+  (the web head seeks via the browser player; clip backends reported false). But a desktop
+  `SoundEffect` holds the whole decoded PCM buffer in memory, so seek is implementable there
+  too - Duack's cross-platform adapter goal says the same addition works on both heads. The
+  new `ISeekableAudioClip` capability (additive, the `ISfxPositionalBackend` pattern) lets a
+  clip create an instance from a freshly decoded buffer that starts at the offset:
+  `SoundEffectMusicBackend.SupportsSeek` is true over such a clip and `Seek(position)` swaps
+  only the active instance - the replacement starts before the old stops (no audible gap),
+  volume/pitch carry over (an in-flight crossfade keeps fading), a paused backend stays
+  paused, and the readback clock is set (not accumulated) so `Position` is exact after the
+  seek. OGG decodes from the offset via NVorbis (forward `SamplePosition` seek, sequential
+  decode-and-discard as the fallback), WAV byte-slices the payload
+  (`OggPcmWav.SliceWav`, sample-frame rounded - `TimeSpan` tick quantization must not shift
+  the offset). Offset-decoded buffers are transient (not cached): paired with their instance
+  and released when the backend disposes it, so steady-state memory is unchanged. Costs,
+  recorded deliberately: a deep seek decodes-and-discards the skipped portion (right for rare
+  context-resume seeks, wrong for a scrub UI) and allocates one transient full-PCM buffer
+  until the rebuilt instance is released. An unseekable clip or a failed decode reports and
+  changes nothing. Closes #70.
 - **Playback position, duration, seek, and context resume (#15).** `MusicManager` exposes
   `Position` (TimeSpan), `Duration`, `SupportsSeek`, and `Play(name, startIndex,
   startPosition, fadeInSeconds)` so leaving a context can resume the same track at the same

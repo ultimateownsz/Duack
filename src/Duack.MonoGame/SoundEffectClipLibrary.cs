@@ -48,9 +48,45 @@ public sealed class SoundEffectClipLibrary : IAudioClipLibrary
         if (effect == null)
             return null; // Do not cache failures; a later call retries.
 
-        var clip = new SoundEffectAudioClip(trackName, effect);
+        var clip = new SoundEffectAudioClip(trackName, effect, offset => OpenOffsetStream(trackName, offset));
         _cache[trackName] = clip;
         return clip;
+    }
+
+    /// <summary>Opens the named track for an offset decode/slice — the seek path. The same
+    /// candidate-and-retry loop <see cref="Load"/> uses; OGG is decoded from the offset (NVorbis
+    /// seeks forward when the stream allows), WAV is byte-sliced. Null when the offset cannot be
+    /// honored (decode failed or at/past the payload's end).</summary>
+    private Stream? OpenOffsetStream(string fileName, TimeSpan offset)
+    {
+        var candidates = CandidateUris(_library, fileName);
+        Exception? lastError = null;
+        for (var attempt = 0; ; attempt++)
+        {
+            foreach (var uri in candidates)
+            {
+                try
+                {
+                    using var stream = Microsoft.Xna.Framework.TitleContainer.OpenStream(uri);
+                    return Path.GetExtension(uri) == ".ogg"
+                        ? OggPcmWav.Decode(stream, offset)
+                        : OggPcmWav.SliceWav(stream, offset);
+                }
+                catch (Exception ex)
+                {
+                    lastError = ex;
+                }
+            }
+
+            if (attempt > 0)
+            {
+                Debug.WriteLine($"[Audio] Could not seek Content/Audio/{fileName} to {offset}: {lastError?.Message}");
+                return null;
+            }
+
+            // Brief pause so a concurrent export/build copy can finish before the retry round.
+            System.Threading.Thread.Sleep(50);
+        }
     }
 
     /// <summary>Drops the cached clip for <paramref name="trackName"/> so the next

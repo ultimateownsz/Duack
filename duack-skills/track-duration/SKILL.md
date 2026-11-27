@@ -21,11 +21,15 @@ prefer the TimeSpan surface.
 
 - **Web (KNI / `MediaPlayerMusicBackend`)**: `Position` and `Duration` read the platform player.
   `SupportsSeek` is true — `Seek` rides the browser `<audio>` element (`fastSeek`), so resume works.
-- **Desktop (MonoGame / `SoundEffectMusicBackend`)**: a `SoundEffectInstance` cannot seek.
-  `SupportsSeek` is false; `Position` is the backend's own frame clock, `Duration` comes from the
-  clip (`IAudioClip.DurationSeconds` — implement it in your clip library for a now-playing UI).
-  `Seek` and a resume `Play(..., startPosition: ...)` are reported no-ops: the track restarts
-  from its top. The track+index part of a resume still works on both backends.
+- **Desktop (MonoGame / `SoundEffectMusicBackend`)**: a `SoundEffectInstance` cannot seek, but the
+  clip's fully decoded buffer can — the desktop backend seeks by decode-from-offset: implement
+  the `ISeekableAudioClip` capability in your clip library (`CreateInstance(TimeSpan)` decodes
+  from the offset; `Release(instance)` frees the transient buffer) and `SupportsSeek` becomes
+  true. Without the capability, `SupportsSeek` is false, `Position` is the backend's frame
+  clock, `Duration` comes from `IAudioClip.DurationSeconds`, and `Seek`/a resume position are
+  reported no-ops (the track restarts from its top; the track+index resume still works). The
+  offset decode costs a decode-and-discard of the skipped portion for OGG — right for rare
+  context-resume seeks, wrong for a scrub UI.
 
 ## Resuming a context
 

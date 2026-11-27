@@ -144,7 +144,7 @@ public class VoiceLimiterTests
         limiter.Acquire("hold", 1f, 4);
         limiter.Update(0.26f);
 
-        Assert.Empty(limiter.Active.Where(v => v.Cue == "tick"));
-        Assert.Single(limiter.Active.Where(v => v.Cue == "hold"));
+        Assert.DoesNotContain(limiter.Active, v => v.Cue == "tick");
+        Assert.Single(limiter.Active, v => v.Cue == "hold");
     }
 }

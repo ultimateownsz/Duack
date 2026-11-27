@@ -182,6 +182,12 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 - Clarified docs that "configuration-driven" means ducking/crossfades/playlists/volumes are driven by config objects authored in C# via `AudioConfigBuilder`/`PlaylistConfigBuilder`. Updated README and audio-core/crossfade skill docs to remove the apparent "config-driven (code-only)" contradiction.
 
 
+### Changed
+
+#### 2026-11-27
+- **CI skips docs-only changes.** `ci.yml`'s `push` and `pull_request` triggers now carry `paths-ignore` for `**.md`, `docs/`, `plan/`, `duack-skills/` and `.opencode/` — every file under those paths is markdown (verified), so the dotnet build/test run only fires when something code-level changes. The release and Pages workflows keep their tag/dispatch triggers. Caveat: a docs-only PR no longer reports the `build-and-test` check, so that check must not be a required status check for docs-only merges. (#62)
+
+
 ### Added
 
 #### 2026-11-25

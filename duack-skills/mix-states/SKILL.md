@@ -53,3 +53,52 @@ master mute still fold at resolution, and the player's settings sliders still la
 over the state via their own bus writes. Unknown state names report loudly —
 `ApplyState`/`TransitionTo` return `false` and raise `states.UnknownState` with the
 name, and the mix is left untouched.
+
+## Authoring states with a game enum
+
+State names live in exactly two places you wrote yourself — the authoring call
+and the runtime `ApplyState`/`TransitionTo` call — with no filesystem, library
+fixed name, or third source of truth to drift from. That makes mix states the
+best surface for a typed key, and the core takes strings, so the type lives in
+your game as a small adapter:
+
+```csharp
+public enum GameMix { Peace, Combat, LowHealth }
+
+public static class GameMixAudio
+{
+    public static string Name(this GameMix mix) => mix.ToString().ToLowerInvariant();
+    public static bool Apply(this MixStateManager m, GameMix mix) => m.ApplyState(mix.Name());
+    public static bool TransitionTo(this MixStateManager m, GameMix mix, float seconds)
+        => m.TransitionTo(mix.Name(), seconds);
+}
+
+// authoring
+new AudioConfigBuilder()
+    .WithMixState(GameMix.Combat.Name(), s => s.Bus("music", 0.4f))
+    .WithMixState(GameMix.Peace.Name(),  s => s.Bus("music", 1f));
+
+// runtime — your enum, no raw strings at the call site:
+states.TransitionTo(GameMix.Combat, 1.5f);
+```
+
+Why an enum over a constants class (`static class GameMix { public const string
+Peace = "peace"; }`), which the other name surfaces use:
+
+- **The closed set is the point.** `switch` over the enum warns when you add
+  `LowHealth` and forget to author it; iterating `Enum.GetValues<GameMix>()`
+  against `config.MixStates` at startup proves every state has authored targets.
+  Constants have no set to enumerate and no missing-member warning.
+- **No cross-assignment.** Any string constant can be passed where a state name
+  is expected (`ApplyState(PlaylistNames.Battle)` compiles); an enum value from
+  a different domain does not convert, so a `GameMix` cannot leak into a
+  playlist or bus parameter.
+- **A misspelling is a compile error, not a runtime report.** `UnknownState` still
+  covers the seams (a state authored but never switched to, a removed config
+  entry), but the typo class of miss never reaches runtime at all.
+
+The core stays string-keyed on purpose: `AudioConfig.MixStates` is a
+`Dictionary<string, MixStateConfig>` that round-trips JSON and is cloned by the
+player-settings overlay, and every other name surface (buses, contexts,
+playlists, duck sources) is string-keyed the same way. The enum is your game's
+vocabulary over that table, not a library type.

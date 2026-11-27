@@ -330,4 +330,51 @@ public class MusicManagerFadeTests
         // both backends; the stale 1.0f call fade would have reported 1.0s / 1.5s instead.
         Assert.Equal(0.5f, manager.TransitionDurationSeconds);
     }
+
+    [Fact]
+    public void Overlap_playlist_switch_fades_the_outgoing_track_instead_of_cutting_it()
+    {
+        // Dogfooded in monsterprojectweb (hospital -> overworld, heard as an abrupt stop): the
+        // overlap path of BeginTransition never assigned _fadeOutDuration, and the track-ended
+        // loop-restart path leaves it at 0 - which UpdateOverlapCrossfade reads as
+        // "outProgress = 1", zeroing the outgoing track's volume on the first frame (an audible
+        // cut instead of a crossfade). A Repeat.Track playlist restarts constantly, so a context
+        // switch away from it almost always hit the zeroed state. Desktop (the only overlap
+        // backend) never faded an outgoing track after a loop restart; the sequenced web path
+        // assigns _fadeOutDuration itself and was unaffected. The outgoing fade is deliberately
+        // FAST (0.2s, see the FasterThanItFadesIn pin) - one frame in, it must still be near
+        // full volume.
+        var backend = new FakeMusicBackend(supportsOverlap: true);
+        var config = new PlaylistConfig
+        {
+            Playlists =
+            {
+                ["first"] = new PlaylistDefinition
+                {
+                    Tracks = { new PlaylistTrack { Name = "a", Context = "Overworld" } },
+                    Repeat = PlaylistRepeatMode.Track,
+                },
+                ["second"] = new PlaylistDefinition
+                {
+                    Tracks = { new PlaylistTrack { Name = "b", Context = "Overworld" } },
+                    Repeat = PlaylistRepeatMode.Track,
+                },
+            },
+        };
+        var manager = new MusicManager(backend, new MusicPlaylistController(config), new MusicConfig { CrossfadeSeconds = 2f });
+
+        manager.Play("first");
+        manager.Update(0.016f);
+        backend.RaiseTrackEnded();   // the Repeat.Track loop restarts the track and leaves
+        manager.Update(0.016f);      // _fadeOutDuration at 0 - the state a long-running playlist
+                                     // is almost always in when the player leaves it
+        manager.Play("second");      // overlap switch: the outgoing track must ease, not cut
+        manager.Update(0.016f);      // one frame in: the fast fade (0.2s) has only just started
+
+        Assert.True(manager.IsTransitioning);
+        Assert.True(
+            backend.OutgoingVolumes[^1] > 0.9f,
+            $"the outgoing track must still be near full volume one frame into its fast fade, " +
+            $"was {backend.OutgoingVolumes[^1]}");
+    }
 }

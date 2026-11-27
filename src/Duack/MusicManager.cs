@@ -181,21 +181,28 @@ public class MusicManager
 
     /// <summary>Starts <paramref name="playlistName"/> from the top.</summary>
     /// <param name="playlistName">Name of the playlist to play.</param>
-    /// <param name="fadeInSeconds">Fade in duration in seconds. If null or omitted, uses
-    /// <see cref="AudioConfig.Music"/>.<c>CrossfadeSeconds</c>.</param>
+    /// <param name="fadeInSeconds">Fade in duration in seconds. When given it outranks the
+    /// track's authored <see cref="PlaylistTrack.FadeInSeconds"/>; when null or omitted, the track
+    /// fade applies and falls back to <see cref="AudioConfig.Music"/>.<c>CrossfadeSeconds</c>.</param>
     public void Play(string playlistName, float? fadeInSeconds = null)
     {
         _stoppingWithFade = false;
         _stopFadeElapsed = 0f;
         _stopFadeDuration = 0f;
 
-        if (fadeInSeconds.HasValue)
-            _fadeInDurationOverride = fadeInSeconds;
+        // A call-level fade is the consumer's runtime intent and outranks the track's authored
+        // FadeInSeconds; assigning unconditionally also drops any stale call fade from an earlier
+        // Play. When the call omits it, null lets the track fade apply in Update.
+        _fadeInDurationOverride = fadeInSeconds;
 
         _playlist.Play(playlistName);
         // Immediately trigger the transition so the crossfade starts on this frame,
         // not on the next Update() call.
         Update(0f);
+
+        // A call-level fade belongs to this call only: consumed inside Update if a transition
+        // began, discarded otherwise, so it never leaks into a later transition.
+        _fadeInDurationOverride = null;
 
         // If this is the first track (or starting fresh), force a fade-in from silence
         if (_backend.SupportsOverlap)
@@ -366,7 +373,9 @@ public class MusicManager
         var desired = _playlist.CurrentTrack;
         if (desired is not null && !ReferenceEquals(desired, _pending ?? _active))
         {
-            if (desired.FadeInSeconds.HasValue)
+            // The track's authored fade is the default only: a call-level fade from the Play
+            // that requested this transition outranks it (issue #52).
+            if (_fadeInDurationOverride is null && desired.FadeInSeconds.HasValue)
                 _fadeInDurationOverride = desired.FadeInSeconds;
             if (desired.FadeOutSeconds.HasValue)
                 _fadeOutDurationOverride = desired.FadeOutSeconds;

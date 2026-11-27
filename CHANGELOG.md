@@ -22,7 +22,7 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
   backend the resume position is deferred (``_pendingResume``) and applied when the sequencer
   swaps to the new track (the fresh-start path, where PlayTrack happens inside Play, still seeks
   immediately; a zero-length fade-out that completes within Play flushes at once, and Stop
-  cancels a deferred resume). Overlap backends (desktop) are unchanged. Closes the defect found dogfooding #67/#71 (issue below).
+  cancels a deferred resume). Overlap backends (desktop) are unchanged. (#75)
 - **Preview breaking (audible): mix-state targets are a multiplicative factor layer now,
   not a bus-volume write (#68).** Symptom before: `MixStateManager` applied state targets by
   writing the bus's authored volume (`BusMixer.SetBus`) on every mixer it drives — the same

@@ -27,6 +27,9 @@ internal sealed class FakeAudioInstance : IAudioInstance
         IsPlaying = false;
     }
 
+    public void Pause() { }
+    public void Resume() { }
+
     public void Dispose() => Disposed = true;
 
     /// <summary>Simulates the instance reaching the end of its (non-looped) playback.</summary>
@@ -38,6 +41,7 @@ internal sealed class FakeAudioClip : IAudioClip
 {
     public List<FakeAudioInstance> Instances { get; } = new();
     public bool Disposed { get; private set; }
+    public float? DurationSeconds { get; set; }
 
     public IAudioInstance CreateInstance()
     {

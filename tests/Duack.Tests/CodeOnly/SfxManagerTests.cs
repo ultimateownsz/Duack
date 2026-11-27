@@ -45,6 +45,13 @@ public class SfxManagerTests
         public void SetOutgoingVolume(float volume) { }
         public void StopOutgoing() { }
         public void Stop() => IsTrackPlaying = false;
+    public void Pause() { }
+    public void Resume() { }
+    public bool IsPaused => false;
+    public TimeSpan Position => TimeSpan.Zero;
+    public TimeSpan Duration => TimeSpan.Zero;
+    public void Seek(TimeSpan position) { }
+    public bool SupportsSeek => false;
         public void Update(float deltaSeconds) { }
     }
 

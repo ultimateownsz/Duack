@@ -33,8 +33,81 @@ public sealed class SoundEffectMusicBackend : IMusicBackend
     /// <inheritdoc />
     public bool SupportsOverlap => true;
 
+    private bool _paused;
+    private IAudioClip? _activeClip;
+
     /// <inheritdoc />
     public bool IsTrackPlaying => _active is { IsPlaying: true };
+
+    /// <summary>
+    /// The clip clock: <c>_elapsed</c> is advanced by <see cref="Update"/> and reset on every
+    /// <see cref="PlayTrack"/>/<see cref="Stop"/>, so it tracks the active instance's audible
+    /// position as long as updates run every frame. A <c>SoundEffectInstance</c> exposes no real
+    /// position, so this is the best reading available on clip backends.
+    /// </summary>
+    public TimeSpan Position => _active is null ? TimeSpan.Zero : TimeSpan.FromSeconds(_elapsed);
+
+    /// <summary>The active clip's duration, when the clip library exposes one.</summary>
+    public TimeSpan Duration => _activeClip?.DurationSeconds is { } seconds ? TimeSpan.FromSeconds(seconds) : TimeSpan.Zero;
+
+    /// <inheritdoc />
+    public bool SupportsSeek => _activeClip is ISeekableAudioClip;
+
+    /// <summary>
+    /// Seeks the active track by rebuilding its playback instance from a clip decoded at the
+    /// offset — a <c>SoundEffectInstance</c> cannot seek, but the fully decoded buffer it came
+    /// from can (the skip is a decode-and-discard for OGG, a byte slice for WAV). The replacement
+    /// starts before the old instance stops, so there is no audible gap; the instance's current
+    /// volume/pitch carry over (an in-flight crossfade keeps fading) and a paused backend stays
+    /// paused. Fail-soft: an unseekable clip or a failed offset decode reports and changes
+    /// nothing. Position readback is exact after the seek — the clock is set, not accumulated.
+    /// </summary>
+    public void Seek(TimeSpan position)
+    {
+        if (position < TimeSpan.Zero) position = TimeSpan.Zero;
+        if (_activeClip is not ISeekableAudioClip seekable)
+        {
+            Console.WriteLine($"[Duack] Seek({position}) ignored: clip backends cannot seek a " +
+                              "SoundEffectInstance; check IMusicBackend.SupportsSeek before relying on a resume position.");
+            return;
+        }
+
+        var instance = seekable.CreateInstance(position);
+        if (instance is null)
+        {
+            Console.WriteLine($"[Duack] Seek({position}) failed: the clip could not be decoded " +
+                              "from the offset; playback continues where it was.");
+            return;
+        }
+
+        if (_active != null)
+        {
+            instance.Volume = _active.Volume;
+            instance.Pitch = _active.Pitch;
+        }
+
+        var old = _active;
+        _active = instance;
+        _elapsed = (float)position.TotalSeconds;
+        if (_paused) instance.Pause();
+        else
+        {
+            instance.Play();
+            _activeStarted = true;
+        }
+
+        // The replacement is already audible, so tearing the old instance down overlaps two
+        // playing instances for the swap frame only - inaudible next to a resume seek.
+        if (old != null)
+        {
+            old.Stop();
+            old.Dispose();
+            seekable.Release(old);
+        }
+    }
+
+    /// <inheritdoc />
+    public bool IsPaused => _paused;
 
     /// <inheritdoc />
     public float CurrentTrackElapsedSeconds => _active is null ? 0f : _elapsed;
@@ -58,6 +131,7 @@ public sealed class SoundEffectMusicBackend : IMusicBackend
         _outgoing?.Dispose();
         _outgoing = _active;
 
+        _activeClip = clip;
         _active = clip.CreateInstance();
         _active.IsLooped = false;
         _active.Volume = initialVolume;
@@ -95,9 +169,31 @@ public sealed class SoundEffectMusicBackend : IMusicBackend
         _active?.Stop();
         _active?.Dispose();
         _active = null;
+        _activeClip = null;
         _activeStarted = false;
         _elapsed = 0f;
+        _paused = false;
         StopOutgoing();
+    }
+
+    /// <inheritdoc />
+    public void Pause()
+    {
+        if (_active is { IsPlaying: true })
+        {
+            _active.Pause();
+            _paused = true;
+        }
+    }
+
+    /// <inheritdoc />
+    public void Resume()
+    {
+        if (_paused && _active != null)
+        {
+            _active.Play();
+            _paused = false;
+        }
     }
 
     /// <inheritdoc />
@@ -106,6 +202,7 @@ public sealed class SoundEffectMusicBackend : IMusicBackend
         if (_active is not null)
             _elapsed += deltaSeconds;
         if (_activeStarted && _active is { IsPlaying: false })
+        if (!_paused && _activeStarted && _active is { IsPlaying: false })
         {
             // The instance stopped on its own (reached the end); report completion exactly once.
             _activeStarted = false;

@@ -1,3 +1,5 @@
+using System;
+
 namespace Duack;
 
 /// <summary>
@@ -34,6 +36,31 @@ public interface IMusicBackend
 
     /// <summary>Stops all music playback.</summary>
     void Stop();
+
+    /// <summary>Pauses playback without tearing down the active track (best-effort resume).</summary>
+    void Pause();
+
+    /// <summary>Resumes a paused track.</summary>
+    void Resume();
+
+    /// <summary>Current playback position of the active track (best-effort; zero if unsupported).</summary>
+    TimeSpan Position { get; }
+
+    /// <summary>Total duration of the active track (best-effort; zero if unsupported).</summary>
+    TimeSpan Duration { get; }
+
+    /// <summary>Seeks the active track to <paramref name="position"/> (best-effort; a no-op when <see cref="SupportsSeek"/> is false).</summary>
+    void Seek(TimeSpan position);
+
+    /// <summary>
+    /// True when <see cref="Seek"/> actually moves the audible position (the web platform player
+    /// can; a <c>SoundEffectInstance</c> cannot). Callers check this before relying on a resume
+    /// from a captured position; Seek on a backend without it is a reported no-op.
+    /// </summary>
+    bool SupportsSeek { get; }
+
+    /// <summary>True if playback is currently paused.</summary>
+    bool IsPaused { get; }
 
     /// <summary>True if any track is currently playing (active or, if overlapping, outgoing).</summary>
     bool IsTrackPlaying { get; }

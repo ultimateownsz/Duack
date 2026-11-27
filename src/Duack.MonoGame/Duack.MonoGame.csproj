@@ -17,6 +17,9 @@
   <ItemGroup>
     <None Include="..\..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Duack.Adapters.Tests" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Duack\Duack.csproj" />

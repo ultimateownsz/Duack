@@ -193,7 +193,14 @@ public class MusicManager
     /// <param name="fadeInSeconds">Fade in duration in seconds. When given it outranks the
     /// track's authored <see cref="PlaylistTrack.FadeInSeconds"/>; when null or omitted, the track
     /// fade applies and falls back to <see cref="AudioConfig.Music"/>.<c>CrossfadeSeconds</c>.</param>
-    public void Play(string playlistName, float? fadeInSeconds = null)
+    /// <summary>
+    /// Starts the named playlist, optionally resuming: <paramref name="startIndex"/> picks the
+    /// track (forwarded to the controller, clamped), <paramref name="startPosition"/> seeks the
+    /// track's audible position once the backend has started it — only on a backend whose
+    /// <see cref="SupportsSeek"/> is true; on a clip backend the position is reported and
+    /// dropped (the track+index resume still works, the audio restarts from the track top).
+    /// </summary>
+    public void Play(string playlistName, int startIndex = 0, TimeSpan? startPosition = null, float? fadeInSeconds = null)
     {
         _stoppingWithFade = false;
         _stopFadeElapsed = 0f;
@@ -204,7 +211,7 @@ public class MusicManager
         // Play. When the call omits it, null lets the track fade apply in Update.
         _fadeInDurationOverride = fadeInSeconds;
 
-        _playlist.Play(playlistName);
+        _playlist.Play(playlistName, startIndex);
         // Immediately trigger the transition so the crossfade starts on this frame,
         // not on the next Update() call.
         Update(0f);
@@ -212,6 +219,20 @@ public class MusicManager
         // A call-level fade belongs to this call only: consumed inside Update if a transition
         // began, discarded otherwise, so it never leaks into a later transition.
         _fadeInDurationOverride = null;
+
+        // A resume position needs the track to EXIST before it can be sought, so it rides after
+        // the transition start. On a backend that cannot seek (clip instances), report instead of
+        // pretending: the caller still gets the track+index resume, and knows the position was
+        // dropped. Console (not Debug) so it survives Release.
+        if (startPosition is { } resume)
+        {
+            if (_backend.SupportsSeek)
+                _backend.Seek(resume);
+            else
+                Console.WriteLine($"[Duack] Play resuming '{playlistName}' at track {startIndex}; the " +
+                                  "backend cannot seek, so the track plays from its start (check " +
+                                  "MusicManager.SupportsSeek before relying on a resume position).");
+        }
 
         // If this is the first track (or starting fresh), force a fade-in from silence
         if (_backend.SupportsOverlap)
@@ -281,6 +302,33 @@ public class MusicManager
 
     /// <summary>Stops playback and clears all transition state.</summary>
     /// <param name="fadeOutSeconds">Optional fade out duration in seconds.</param>
+    public void Pause() => _backend.Pause();
+    public void Resume() => _backend.Resume();
+    public bool IsPaused => _backend.IsPaused;
+
+    /// <summary>Current playback position of the active track (backend clock; zero if unsupported).</summary>
+    public TimeSpan Position => _backend.Position;
+
+    /// <summary>Total duration of the active track (zero if the backend cannot know it).</summary>
+    public TimeSpan Duration => _backend.Duration;
+
+    /// <summary>True when <see cref="Seek"/> actually moves the audible position on this backend.</summary>
+    public bool SupportsSeek => _backend.SupportsSeek;
+
+    /// <summary>
+    /// Seeks the active track (best-effort). Returns false — touching nothing, no audible change —
+    /// on a backend that cannot seek (check <see cref="SupportsSeek"/> first); the backend itself
+    /// reports the dropped seek.
+    /// </summary>
+    public bool Seek(TimeSpan position)
+    {
+        if (!_backend.SupportsSeek)
+            return false;
+
+        _backend.Seek(position);
+        return true;
+    }
+
     public void Stop(float? fadeOutSeconds = null)
     {
         var duration = fadeOutSeconds 

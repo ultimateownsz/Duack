@@ -26,7 +26,7 @@ public class MusicPositionTests
         public TimeSpan Position { get; set; } = TimeSpan.FromSeconds(7);
         public TimeSpan Duration { get; set; } = TimeSpan.FromSeconds(42);
         public bool SupportsSeek { get; set; }
-        public event EventHandler? TrackEnded;
+        public event EventHandler? TrackEnded { add { } remove { } }
 
         public void PlayTrack(string trackName, float initialVolume, float pitch)
         {

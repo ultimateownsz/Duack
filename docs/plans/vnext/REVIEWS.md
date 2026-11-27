@@ -511,3 +511,24 @@ lifecycle pattern (onended disconnect + tracked id map) the panner calls layer o
 - No plan-phase checkbox completes here (slice E's acceptance remainder stays on #46), so nothing is ticked per the `/pr-review` rule; the PR closes #60 on merge.
 - Test idea (informational, not required): a double-interrupt chain (calm → combat, interrupt with calm, interrupt again with combat) to pin that the second interrupt reports the first interrupt's target as `FromState`.
 
+
+## PR #58 — fix(music): call-level fadeInSeconds outranks the track's authored fade
+
+- Reviewed: 2026-11-27
+- Head at review: `dd74fac27495b50f8b3fec84b9cf13e148d814e3` (master merged in after #61 landed)
+- Base: `master`
+- Verdict: **good**
+- Reviewer: `qa` pass against `.opencode/agents/qa.md`; red-first claims independently re-derived against the old code (no local SDK — CI `build-and-test` green at 30s is the runner, on the combined head)
+
+### Blocking
+
+- (none)
+
+### Checked and clear
+
+- Red-first re-derived: under the old code `Update` overwrote the call's 0.8f with the track's 0.4f before `BeginTransition` consumed it (test 1 red: the transition ran 0.4f), and a same-track re-request's 1.0f survived into the successor transition of the next `Next()` (test 3 red: 1.0f, and 1.5f on the sequenced backend, against the expected 0.5f). The new unconditional assign + consume-or-discard closes both.
+- Precedence chain: call-level > track-level > `CrossfadeSeconds`, matching how the call already outranked the config-level default; a null call lets the track fade apply (test 2 pins the fallback).
+- No interaction with #61's `FromState` fix: different file (`MixStateManager.cs` vs `MusicManager.cs`); the merge was clean and CI ran on the combined head.
+- `OnBackendTrackEnded`'s override reads (the repeat-Track loop restart) predate this PR (#57); the PR's null-out only narrows the override lifetime — it removes the old leak path rather than adding one.
+- Changelog: dated `#### 2026-11-26` under `Unreleased → Fixed` with the repro test names and `(#52)`.
+- Docs: `MusicManager.Play`'s `fadeInSeconds` param doc now states the precedence; the playlists skill's "overrides track fade" claim is now true.

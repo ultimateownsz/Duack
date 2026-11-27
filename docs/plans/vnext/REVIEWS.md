@@ -635,3 +635,25 @@ two-backend sample) stays on #46 per `STATUS.md` — so nothing is ticked per th
 ### Plan gate
 
 No slice E checkbox completes here — the acceptance remainder (human listening on both heads, the MonsterProjectWeb dogfood re-check) stays on #46 — so nothing is ticked per the `/pr-review` rule. F1 is the one item worth closing before merge; the rest are follow-ups.
+
+### 2026-11-28 — re-review after the #67/#71 merge landed under the PR: good
+
+The predicted combined-tree CI run happened on this PR's own merge commit (`pull_request` CI
+builds PR+base) and failed to compile: the #67 work on master and this PR had both extended the
+same test fake, `MixStateTests.FakeMusicBackend`, with the same members (`IsPaused`, `Position`,
+`Duration`, `SupportsSeek`, `Seek`, `Pause`, `Resume`) at different spots in the file — a clean
+text merge, a broken semantic one (the caveat above, materialized). Resolved by merging master
+into the branch (`1faafa2`) and keeping the richer recording fake, which already covers every
+member master's minimal version adds (`c07699e`); the full failing run listed no other errors.
+
+All three findings from the `9eec2f0` review are now closed at head `c00de5f`:
+
+- F1 (Medium): `MixStateTests.TransitionTo_SliderWriteDuringTransitionSurvives` added (`ebe5d8b`)
+  — slider `0.3f` mid-`TransitionTo`, `Update`, pins `VolumeOf` stays `0.3f` and `Resolve`
+  composes `0.3f ×` the one-pole-eased factor. The behavior pin #68's bullet 2 demanded.
+- F2 (Low): dead `BusState.EffectiveGain` removed (`9175736`).
+- F3 (Low): `mix-states/STATUS.md` reworded to the factor-layer contract, the race recorded as
+  resolved with the pinning test named (`c00de5f`).
+
+Verification: CI `build-and-test` pass at `c00de5f` on the combined tree (run 46074956237, 46s —
+the tests the sandbox still cannot run, no SDK). Verdict: **good**, mergeable.

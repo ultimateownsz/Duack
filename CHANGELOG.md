@@ -12,6 +12,17 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 ### Fixed
 
 #### 2026-11-27
+- **The resume seek landed on the wrong track on single-instance (web) backends (#67 defect).**
+  Symptom (dogfooded in monsterprojectweb): returning from a battle to the overworld with
+  ``Play(name, index, startPosition)`` audibly glitched the still-fading-out battle track to the
+  resume position, and the overworld track then started from its top anyway. Cause: on a
+  non-overlap backend the transition fades the OLD track out FIRST and only swaps to the new
+  track when that fade completes - but Play fired the seek immediately after the transition
+  began, so it moved the still-playing old track and never the new one. Fix: on a non-overlap
+  backend the resume position is deferred (``_pendingResume``) and applied when the sequencer
+  swaps to the new track (the fresh-start path, where PlayTrack happens inside Play, still seeks
+  immediately; a zero-length fade-out that completes within Play flushes at once, and Stop
+  cancels a deferred resume). Overlap backends (desktop) are unchanged. Closes the defect found dogfooding #67/#71 (issue below).
 - **Preview breaking (audible): mix-state targets are a multiplicative factor layer now,
   not a bus-volume write (#68).** Symptom before: `MixStateManager` applied state targets by
   writing the bus's authored volume (`BusMixer.SetBus`) on every mixer it drives — the same

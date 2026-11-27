@@ -54,6 +54,25 @@ real backlog.
   when slice E's named mix states add more cross-referencing string surfaces that make the
   silent paths materially likelier.
 
+### Context → playlist routing with context-filtered track selection
+- What: a context → playlist name table authored on the mix config
+  (`WithContextPlaylist(contextName, playlistName)` storage on
+  `MusicConfig`), a `MusicManager.PlayForContext(contextName)` call that
+  resolves it, and an `onlyContextTracks` option so a playlist draws
+  only tracks whose `PlaylistTrack.Context` matches the active context
+  (bag-shuffle cycle accounting counts drawn tracks, not all).
+- Why not built: the consumer mapping layer (map/trigger/faint checks in
+  the game choosing `manager.Play(...)`) covers the need today, and the
+  names/semantics were only just settled (docs-writer pass Nov 26,
+  2026); also entangled with per-track repeat (issue #53), which should
+  land first or together so single-track routed playlists are
+  first-class.
+- Reopens when: a real game reports the hand-built mapping layer or the
+  same-track-plays-regardless selection hole biting in practice (a
+  Pokemon-style map/battle/hospital flow with a shared playlist is the
+  canonical repro), or when issue #53 lands and leaves the routing
+  still hand-rolled in a sample or game.
+
 ### Post-1.0 deprecation policy
 - What: adopt `[Obsolete]` with a stated removal version as the standard
   breaking-change instrument.

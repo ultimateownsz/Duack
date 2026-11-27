@@ -12,16 +12,25 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 ### Added
 
 #### 2026-11-26
-- **Music playlist misses are now reported instead of silent.** Two surfaces: `MusicManager.Play`
-  with an unknown (or empty) playlist previously stopped the running music silently — the
-  controller's no-throw guard is deliberate, but nothing surfaced the miss. Both
-  `MusicPlaylistController` and `MusicManager` now raise `PlaylistFellBack` (the `BusFellBack`
-  precedent on the SFX path) carrying the requested name. `MusicManager.CurrentPlaylistName`
-  is newly exposed too, so the re-trigger guard can compare playlist-to-playlist: the documented
-  `CurrentTrack?.Name != frame.Music` pattern compares a track name to a playlist name and only
-  holds for single-track playlists named after their track; on a multi-track playlist it would
-  restart the sequence every frame. Docs updated (crossfade skill guard caveat, playlists skill
-  naming convention, deferred register scope). (#56)
+- **Named mix states (#46), core.** Authored per-bus target vectors with named states —
+  the standard game pattern of peace/combat/low-health mix identities over the same buses —
+  with no runtime capture: the authored config is the snapshot.
+  `AudioConfigBuilder.WithMixState(name, s => s.Bus("music", 0.4f).Bus("ambience", 1f))`
+  authors into the new `AudioConfig.MixStates` table (clamped by `Build` like every volume),
+  and the new `MixStateManager` applies them: apply instantly with `ApplyState(name)` or
+  ease over a duration with `TransitionTo(name, seconds)` — the one-pole smoothing formula
+  `g(t) = target + (start − target)·e^(−t/τ)`, `τ` mapped so the ease settles exactly at its
+  stated duration — advanced by its own once-per-frame `Update(unscaled dt)` like the fades
+  and ducks. Telemetry follows the crossfade pattern: `IsTransitioning`, `ElapsedSeconds`,
+  `DurationSeconds`, `FromState`/`ToState`, plus `CurrentState`. States write **both** runtime
+  bus mixers (the new additive `MusicManager.Buses` readback mirrors `SfxManager.Buses`),
+  ride the same single effective-gain resolver — duck contributions stay live on top and
+  player settings still layer over the state targets — and leave buses a state does not name
+  untouched. Unknown state names report loudly instead of failing silently: both methods
+  return `false` and raise `MixStateManager.UnknownState`, touching nothing. The player
+  settings overlay carries authored states over. Shipped with the `mix-states`
+  duack-skill. Remaining acceptance on #46: the two-backend sample (state transition under a
+  crossfade) and human listening on both heads, worst-moment standard.
 - Added the `spatial` duack-skill (`duack-skills/spatial/SKILL.md`): a self-contained guide
   to the 2D positional SFX surface — `SetListener`/`PlayAt` world placement, the pan and
   distance knobs in `SpatialConfig`, moving sources via `SfxSpatialVoice`, and the mute
@@ -316,6 +325,10 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 ### Fixed
 
 #### 2026-11-26
+- Fixed the CS0067 build warning in the mix-state tests: the headless backend fake's
+  `TrackEnded` event was declared but never used. The fake now mirrors `MusicManagerTests`
+  with a `RaiseTrackEnded` helper that invokes it, so the event a completion test would fire
+  exists without a pragma. Test-only change; no behavior touched. (#46)
 - The README's playlist example no longer teaches the wrong `Repeat` mode. Symptom: the
   "automatic sequencing (track intro --> loop)" snippet authored a two-track
   `battle-sequence` with `PlaylistRepeatMode.Track`, but repeat is playlist-level, so the

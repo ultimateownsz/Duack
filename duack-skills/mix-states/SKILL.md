@@ -1,6 +1,6 @@
 ---
 name: mix-states
-description: Duack named mix states — authoring per-bus target vectors with AudioConfigBuilder.WithMixState, applying instantly with MixStateManager.ApplyState or easing over a duration with TransitionTo (one-pole smoothing with crossfade-style telemetry — IsTransitioning, elapsed/duration, from/to), and how states compose with buses, ducking, and player settings. Use when a game needs named mix identities (peace, combat, low-health) over the same buses.
+description: Duack named mix states — authoring per-bus target vectors with AudioConfigBuilder.WithMixState, applying instantly with MixStateManager.ApplyState or easing over a duration with TransitionTo (one-pole smoothing with crossfade-style telemetry — IsTransitioning, elapsed/duration, from/to), and how states compose with buses, ducking, and player settings. Use when a game needs named mix identities (peace, combat, low-health) over the same buses, including authoring them with a game-side enum adapter for typed state names.
 ---
 
 # Duack — Named Mix States

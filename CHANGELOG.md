@@ -12,7 +12,11 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 ### Fixed
 
 #### 2026-11-27
-- **Overlap crossfades now fade the outgoing track instead of cutting it (#46).** Symptom:
+- **xUnit analyzer warnings cleaned up in `VoiceLimiterTests` (no behavior change).** Symptom:
+  `xunit.analyzers` flagged `xUnit2029`/`xUnit2031` at `VoiceLimiterTests.cs:147-148` —
+  `Assert.Empty` over a `Where` filter and `Assert.Single` over a `Where` filter. Now uses
+  `Assert.DoesNotContain(collection, predicate)` and the filtering overload of
+  `Assert.Single(collection, predicate)`. Test-only; no production change.- **Overlap crossfades now fade the outgoing track instead of cutting it (#46).** Symptom:
   on an overlap backend (desktop), a playlist switch set the outgoing track's volume to zero on
   the FIRST frame — an audible abrupt stop instead of a crossfade (heard in the dogfooding game:
   leaving the hospital map, whose looping track had just restarted, cut the hospital track dead

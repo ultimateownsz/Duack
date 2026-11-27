@@ -39,6 +39,13 @@ public interface IAudioClip : IDisposable
 {
     /// <summary>Creates a fresh, independent playback instance of this clip.</summary>
     IAudioInstance CreateInstance();
+
+    /// <summary>
+    /// The clip's total duration in seconds, when the platform exposes it (a platform
+    /// <c>SoundEffect</c> does); null when unknown (the backend's duration readback then
+    /// reports zero rather than a guess).
+    /// </summary>
+    float? DurationSeconds { get; }
 }
 
 /// <summary>

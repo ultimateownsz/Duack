@@ -55,6 +55,7 @@ public class MusicManagerPlayResetTests
     public TimeSpan Position => TimeSpan.Zero;
     public TimeSpan Duration => TimeSpan.Zero;
     public void Seek(TimeSpan position) { }
+    public bool SupportsSeek => false;
         public void Update(float d) { }
     }
 

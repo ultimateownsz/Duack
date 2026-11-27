@@ -43,6 +43,7 @@ public class MusicManagerTests
     public TimeSpan Position => TimeSpan.Zero;
     public TimeSpan Duration => TimeSpan.Zero;
     public void Seek(TimeSpan position) { }
+    public bool SupportsSeek => false;
         public void Update(float deltaSeconds) { }
 
         /// <summary>Simulates the active track reaching its end (completion detection).</summary>

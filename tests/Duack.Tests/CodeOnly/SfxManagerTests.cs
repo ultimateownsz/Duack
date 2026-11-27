@@ -51,6 +51,7 @@ public class SfxManagerTests
     public TimeSpan Position => TimeSpan.Zero;
     public TimeSpan Duration => TimeSpan.Zero;
     public void Seek(TimeSpan position) { }
+    public bool SupportsSeek => false;
         public void Update(float deltaSeconds) { }
     }
 

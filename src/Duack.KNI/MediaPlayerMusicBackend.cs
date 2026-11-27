@@ -59,13 +59,20 @@ public sealed class MediaPlayerMusicBackend : IMusicBackend
     public bool IsPaused => _paused;
 
     /// <inheritdoc />
-    public TimeSpan Position => TimeSpan.Zero;
+    public TimeSpan Position => IsTrackPlaying || _paused ? _host.Position : TimeSpan.Zero;
 
     /// <inheritdoc />
-    public TimeSpan Duration => TimeSpan.Zero;
+    public TimeSpan Duration => _host.Duration;
 
     /// <inheritdoc />
-    public void Seek(TimeSpan position) { }
+    public bool SupportsSeek => true;
+
+    /// <inheritdoc />
+    public void Seek(TimeSpan position)
+    {
+        if (!_host.TrySeek(position))
+            Console.WriteLine($"[Duack] Seek to {position} failed on the platform player; playback continues from the current position.");
+    }
 
     /// <inheritdoc />
     public void PlayTrack(string trackName, float initialVolume, float pitch)

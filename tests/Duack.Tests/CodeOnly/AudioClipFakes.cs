@@ -41,6 +41,7 @@ internal sealed class FakeAudioClip : IAudioClip
 {
     public List<FakeAudioInstance> Instances { get; } = new();
     public bool Disposed { get; private set; }
+    public float? DurationSeconds { get; set; }
 
     public IAudioInstance CreateInstance()
     {

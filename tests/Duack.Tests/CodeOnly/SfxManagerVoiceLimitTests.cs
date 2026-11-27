@@ -32,6 +32,13 @@ public class SfxManagerVoiceLimitTests
         public void StopOutgoing() { }
         public void Stop() { }
         public void Update(float deltaSeconds) { }
+        public bool IsPaused { get; private set; }
+        public TimeSpan Position => TimeSpan.Zero;
+        public TimeSpan Duration => TimeSpan.Zero;
+        public bool SupportsSeek => false;
+        public void Seek(TimeSpan position) { }
+        public void Pause() => IsPaused = true;
+        public void Resume() => IsPaused = false;
     }
 
     private sealed class FakeVoiceControlBackend : ISfxBackend, ISfxVoiceControlBackend

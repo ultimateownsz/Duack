@@ -157,4 +157,71 @@ public class MediaPlayerMusicBackendTests
 
         Assert.Equal(1, ended);
     }
+
+    [Fact]
+    public void The_platform_player_can_seek()
+    {
+        var (backend, _) = Create();
+
+        Assert.True(backend.SupportsSeek);
+    }
+
+    [Fact]
+    public void Position_reads_the_platform_player_while_a_track_is_audible()
+    {
+        var (backend, host) = Create();
+        backend.PlayTrack("overworld", 0.5f, 0f);
+
+        host.Position = TimeSpan.FromSeconds(13);
+        Assert.Equal(TimeSpan.FromSeconds(13), backend.Position);
+
+        backend.Stop();
+        Assert.Equal(TimeSpan.Zero, backend.Position);
+    }
+
+    [Fact]
+    public void Position_reads_the_platform_player_while_paused()
+    {
+        var (backend, host) = Create();
+        backend.PlayTrack("overworld", 0.5f, 0f);
+        host.Position = TimeSpan.FromSeconds(9);
+
+        backend.Pause();
+
+        Assert.Equal(TimeSpan.FromSeconds(9), backend.Position);
+    }
+
+    [Fact]
+    public void Duration_reads_the_platform_player()
+    {
+        var (backend, host) = Create();
+        host.Duration = TimeSpan.FromSeconds(95.5);
+
+        Assert.Equal(TimeSpan.FromSeconds(95.5), backend.Duration);
+    }
+
+    [Fact]
+    public void Seek_delegates_to_the_platform_player()
+    {
+        var (backend, host) = Create();
+        backend.PlayTrack("overworld", 0.5f, 0f);
+
+        backend.Seek(TimeSpan.FromSeconds(13));
+
+        Assert.Equal(1, host.SeekCount);
+        Assert.Equal(TimeSpan.FromSeconds(13), host.LastSeek);
+    }
+
+    [Fact]
+    public void Seek_a_failed_platform_seek_is_reported_not_thrown()
+    {
+        var (backend, host) = Create();
+        backend.PlayTrack("overworld", 0.5f, 0f);
+        host.SeekResult = false;
+
+        backend.Seek(TimeSpan.FromSeconds(13));
+
+        Assert.Equal(1, host.SeekCount);
+        Assert.Equal(TimeSpan.Zero, host.Position); // nothing moved
+    }
 }

@@ -489,3 +489,25 @@ lifecycle pattern (onended disconnect + tracked id map) the panner calls layer o
 - Plan-phase gate: the slice E checkbox stays unticked on purpose — the verdict clears the core but acceptance items remain (two-backend sample, human listening), so per the `/pr-review` rule nothing is ticked and the remainder stays on #46 (mirroring the #34 → #44 retarget).
 - Walk test: `tools/plan_check.py` prints `pass`; `docs/plans/vnext/README.md` slice E row and `mix-states/STATUS.md` describe the true branch state.
 
+## PR #61 — fix(mix-states): interrupted transitions report the interrupted target as FromState (2026-11-27): good
+
+- Reviewed: 2026-11-27
+- Head at review: `118fd1949950c3abd6b9e5e502074e171ec4e14c`
+- Base: `master`
+- Verdict: **good**
+- Reviewer: `qa` pass against `.opencode/agents/qa.md`; findings independently verified on the head (CI `build-and-test` green at 35s — the tests the sandbox could not run, no local SDK)
+
+### Blocking
+
+- (none)
+
+### Checked and clear
+
+- Fixes the #47 QA finding (#60): the repro test `TransitionTo_InterruptingAnInFlightTransitionReportsTheInterruptedTargetAsFrom` in `tests/Duack.Tests/CodeOnly/MixStateTests.cs` fails on master (mid-transition `CurrentState` is null, so `FromState = CurrentState` writes null) and passes with the fix.
+- The fix `FromState = ToState ?? CurrentState` is behavior-preserving for every pre-existing path: `ClearTransition()` nulls both telemetry fields together and `ApplyState` sets `CurrentState` before clearing, so `ToState` is non-null exactly when a transition is in flight — a fresh `TransitionTo` from a settled state still reports the settled state, NaN/≤0 durations still route to `ApplyState`, an unknown state name still returns early touching nothing, and completion in `Update` still nulls `FromState` outside a transition (pinned by the existing monotone-settling test).
+- Regression risk: the only repo readers of `FromState` are the property itself and `duack-skills/mix-states/SKILL.md:41` ("null outside a transition"), which stays true; the XML doc on the property now states the interruption semantics.
+- Changelog: dated `#### 2026-11-27` under `### Fixed` with the repro test name and `(#60)`, matching the diff.
+- Architecture: no package or project reference added to `src/Duack`; pure BCL change.
+- No plan-phase checkbox completes here (slice E's acceptance remainder stays on #46), so nothing is ticked per the `/pr-review` rule; the PR closes #60 on merge.
+- Test idea (informational, not required): a double-interrupt chain (calm → combat, interrupt with calm, interrupt again with combat) to pin that the second interrupt reports the first interrupt's target as `FromState`.
+

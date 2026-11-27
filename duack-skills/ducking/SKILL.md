@@ -117,4 +117,8 @@ Duack's ducking model maps directly to classical audio engineering:
 - **Ratio**: Compressor ratio ($n:1$) determining target gain reduction / attenuation while triggered.
 - **Attenuation / Gain Reduction (GR)**: The effective reduction in amplitude applied to the music bus.
 
-See also: `crossfade` (ducking during transitions), `audio-core`.
+One correctness rule: pass **unscaled** delta time to every `Update` — ducks (and fades, and
+mix-state transitions) must keep running while the game clock is paused or slowed; a scaled
+delta freezes or warps the ease.
+
+See also: `crossfade` (ducking during transitions), `audio-core`, `mix-states`.

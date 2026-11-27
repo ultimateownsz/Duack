@@ -52,6 +52,24 @@ public sealed class AudioConfigBuilder
         return this;
     }
 
+    /// <summary>
+    /// Defines (or replaces) a named mix state — a vector of authored per-bus volume targets
+    /// (e.g. <c>WithMixState("combat", s => s.Bus("music", 0.4f).Bus("ambience", 1f))</c>),
+    /// applied at runtime by a <see cref="MixStateManager"/> riding the same bus table. Buses
+    /// a state does not name keep their current volume when it is applied.
+    /// </summary>
+    public AudioConfigBuilder WithMixState(string name, System.Action<MixStateBuilder> state)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new System.ArgumentException("Mix state name must not be blank.", nameof(name));
+        if (state is null) throw new System.ArgumentNullException(nameof(state));
+
+        var builder = new MixStateBuilder();
+        state(builder);
+        _config.MixStates[name] = builder.Build();
+        return this;
+    }
+
     /// <summary>The named table entry, adding it at full volume if it is not present yet.</summary>
     private BusConfig Bus(string name) =>
         _config.Buses.TryGetValue(name, out var bus) ? bus : _config.Buses[name] = new BusConfig();

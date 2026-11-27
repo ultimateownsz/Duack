@@ -106,6 +106,13 @@ public class MusicManager
     public IReadOnlyList<DuckSourceView> DuckSources => _duck.Sources;
 
     /// <summary>
+    /// Runtime state and routing for the one bus table this manager resolves from — the same
+    /// readback-and-writer surface <see cref="SfxManager.Buses"/> exposes, so a
+    /// <see cref="MixStateManager"/> drives both mixers of the mix.
+    /// </summary>
+    public BusMixer Buses => _buses;
+
+    /// <summary>
     /// Master bus volume (scales music and SFX alike), read live every frame so a settings
     /// slider applies without rebuilding the director; defaults to the constructor argument.
     /// A thin delegating writer into the mixer's <see cref="BusNames.Master"/> entry — the

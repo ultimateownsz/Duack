@@ -250,4 +250,16 @@ public class PlayerSettingsTests
         Assert.Same(browser, PlayerSettingsStoreSelector.Select(true, file, browser));
         Assert.Same(file, PlayerSettingsStoreSelector.Select(false, file, browser));
     }
+
+    [Fact]
+    public void Diagnostics_default_to_console_so_storage_failures_survive_release()
+    {
+        // The player-settings skill's contract: "Failed writes log via Console.WriteLine (not
+        // Debug) so they survive Release/browser builds." A null-sink default made every real
+        // game silent: a failed localStorage save/read is indistinguishable from "nothing saved
+        // yet" and reports nowhere - dogfooded in monsterprojectweb, where the web head's
+        // storage failures were invisible because nothing wired a sink. The store-level sink
+        // stays opt-in (tests pin that); the FACADE's default must be the console one.
+        Assert.IsType<ConsolePlayerSettingsDiagnostics>(PlayerSettings.Diagnostics);
+    }
 }

@@ -16,11 +16,15 @@ public static class PlayerSettings
     public static IPlayerSettingsStore Store { get; set; } = new FilePlayerSettingsStore();
 
     /// <summary>
-    /// Diagnostic sink used for player-settings load/save failures. Defaults to a silent sink so
-    /// consumers see nothing unless they opt in. Assign <see cref="ConsolePlayerSettingsDiagnostics"/>
-    /// (or a custom sink) to surface problems.
+    /// Diagnostic sink used for player-settings load/save failures. Defaults to the console sink
+    /// so a swallowed storage failure is REPORTED by default: the player-settings contract is
+    /// "failed writes log via Console.WriteLine (not Debug) so they survive Release/browser
+    /// builds", and a null-sink default made every real game silent - a failed localStorage
+    /// read/save was indistinguishable from "nothing saved yet" with nowhere to find out why
+    /// (dogfooded in monsterprojectweb's web head). Tests that need silence assign
+    /// <see cref="NullPlayerSettingsDiagnostics"/> explicitly.
     /// </summary>
-    public static IPlayerSettingsDiagnostics Diagnostics { get; set; } = new NullPlayerSettingsDiagnostics();
+    public static IPlayerSettingsDiagnostics Diagnostics { get; set; } = new ConsolePlayerSettingsDiagnostics();
 
     /// <summary>Returns the effective config: authored defaults with the player's values layered on.</summary>
     public static AudioConfig ApplyOverrides(AudioConfig authored) => ApplyOverrides(authored, Store);

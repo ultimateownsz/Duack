@@ -8,7 +8,9 @@ Core landed on the working branch (authored config + runtime transition, unit-te
 the §12 one-pole formula): `AudioConfigBuilder.WithMixState` authors named per-bus target
 vectors, `AudioConfig.MixStates` carries them (sanitized), `MusicManager.Buses` exposes the
 music-side mixer, and `MixStateManager` applies a state instantly or eases it over a duration,
-writing both runtime mixers. See slice.md for the decision record.
+writing both runtime mixers' state-factor layer. Since the multiplicative-layer change (#68,
+PR #69), state targets multiply the authored bus volumes instead of overwriting them:
+`effective = master × bus × state factor × duck × fade`. See slice.md for the decision record.
 
 ## Awaiting
 
@@ -21,15 +23,16 @@ writing both runtime mixers. See slice.md for the decision record.
 
 ## Open questions
 
-- The per-frame `SetBus` writes during a transition race a hot volume slider writing the same
-  bus (last writer wins that frame). Pinned instead of solved: the player-settings surface
-  writes master/music/sfx sliders; a state that also targets those buses will fight a slider
-  the player is actively dragging. Noting it here; revisit if a sample or a user hits it.
+- (resolved) The per-frame state writes racing a hot volume slider: under the old
+  volume-write contract a transition and a slider fought over the same number (last writer
+  wins that frame). Solved by the multiplicative factor layer (#68): the state layer only
+  ever writes the per-bus factor, the slider writes the authored bus volume, and both
+  compose — pinned by `MixStateTests.TransitionTo_SliderWriteDuringTransitionSurvives`.
 
 ## Known limitations
 
 - The runtime remains two bus mixers seeded from one table (slice-F D13); a state writes both,
-  and a transition eases each mixer from its own current volume, so an externally hand-diverged
+  and a transition eases each mixer from its own current factor, so an externally hand-diverged
   mixer is eased from its own audible baseline, not re-converged through the first mixer (D2).
 - `MixStateManager.Update` expects the same unscaled frame delta the managers get, like every
   other ease in the library; there is no way to enforce that from the core.

@@ -291,10 +291,10 @@ public class MediaPlayerMusicBackendTests
 
         backend.Seek(TimeSpan.FromSeconds(11.17));
 
-        for (var frame = 0; frame < MaxSeekVerifyFrames + 1; frame++)
+        for (var frame = 0; frame < MediaPlayerMusicBackend.MaxSeekVerifyFrames + 1; frame++)
             backend.Update(0.016f);
 
-        Assert.Equal(MaxSeekVerifyFrames + 1, host.SeekCount); // applied once + retried up to the bound, then stopped
+        Assert.Equal(MediaPlayerMusicBackend.MaxSeekVerifyFrames + 1, host.SeekCount); // applied once + retried up to the bound, then stopped
     }
 
     [Fact]

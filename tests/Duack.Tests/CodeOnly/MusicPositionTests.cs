@@ -16,7 +16,7 @@ public class MusicPositionTests
 {
     private sealed class FakeMusicBackend : IMusicBackend
     {
-        public bool SupportsOverlap => true;
+        public bool SupportsOverlap { get; set; } = true;
         public List<string> PlayedTracks { get; } = new();
         public List<TimeSpan> Seeks { get; } = new();
         public bool IsTrackPlaying { get; private set; }
@@ -87,6 +87,69 @@ public class MusicPositionTests
 
         Assert.Equal(new[] { TimeSpan.FromSeconds(13) }, backend.Seeks);
         Assert.Equal(new[] { "explore" }, backend.PlayedTracks);
+    }
+
+    [Fact]
+    public void Play_with_startPosition_on_a_non_overlap_backend_seeks_only_when_the_new_track_starts()
+    {
+        // The web head is a single player: with something already playing, a transition fades the
+        // OLD track out FIRST and swaps to the new one only when that fade completes. A resume
+        // seek fired at Play time would move the still-playing old track (audible glitch mid-
+        // fade-out) and the new track would still start from its top - the seek must ride the swap.
+        var backend = new FakeMusicBackend { SupportsOverlap = false, SupportsSeek = true };
+        var manager = new MusicManager(
+            backend,
+            new MusicPlaylistController(ThreeTracks(), new Random(1)),
+            new MusicConfig { CrossfadeSeconds = 0.2f }); // fade-out half = 0.1s
+        backend.PlayTrack("battle", 1f, 0f); // the battle music the resume is leaving behind
+
+        manager.Play("main", 1, TimeSpan.FromSeconds(13));
+
+        Assert.Empty(backend.Seeks); // nothing is sought yet: the old track is still the audible one
+        Assert.Equal(new[] { "battle" }, backend.PlayedTracks);
+
+        manager.Update(0.05f);
+        Assert.Empty(backend.Seeks); // still fading the old track out
+
+        manager.Update(0.1f); // the fade-out completes; the new track starts
+        Assert.Equal(new[] { "battle", "explore" }, backend.PlayedTracks);
+        Assert.Equal(new[] { TimeSpan.FromSeconds(13) }, backend.Seeks);
+    }
+
+    [Fact]
+    public void Play_with_startPosition_on_a_non_overlap_backend_flushes_once_the_swap_has_happened()
+    {
+        // A zero-length fade-out completes inside Play's own Update(0f): the deferred seek must
+        // flush immediately, not wait for a later frame that no longer swaps.
+        var playlist = ThreeTracks();
+        foreach (var track in playlist.Playlists["main"].Tracks)
+            track.FadeOutSeconds = 0f;
+        var backend = new FakeMusicBackend { SupportsOverlap = false, SupportsSeek = true };
+        var manager = new MusicManager(
+            backend,
+            new MusicPlaylistController(playlist, new Random(1)),
+            new MusicConfig { CrossfadeSeconds = 0f });
+        backend.PlayTrack("battle", 1f, 0f);
+
+        manager.Play("main", 1, TimeSpan.FromSeconds(13));
+        manager.Update(0.016f); // the frame that realizes the zero-length fade-out's swap
+
+        Assert.Equal(new[] { "battle", "explore" }, backend.PlayedTracks);
+        Assert.Equal(new[] { TimeSpan.FromSeconds(13) }, backend.Seeks);
+    }
+
+    [Fact]
+    public void Stop_cancels_a_deferred_resume()
+    {
+        var backend = new FakeMusicBackend { SupportsOverlap = false, SupportsSeek = true };
+        var manager = new MusicManager(backend, new MusicPlaylistController(ThreeTracks(), new Random(1)));
+        backend.PlayTrack("battle", 1f, 0f);
+
+        manager.Play("main", 1, TimeSpan.FromSeconds(13));
+        manager.Stop();
+        manager.Update(1f); // long past the fade-out: the cancelled resume must not seek
+
+        Assert.Empty(backend.Seeks);
     }
 
     [Fact]

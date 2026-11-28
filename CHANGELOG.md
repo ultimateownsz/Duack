@@ -11,7 +11,53 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 
 ### Fixed
 
+#### 2026-11-28
+- **The deferred resume seek was lost when the element refused fastSeek at the swap (#75
+  follow-up).** Symptom (web head, console): `[Music] Resuming 'Overworld' at 00:00:14.7
+  (SupportsSeek: True)` followed at the swap by `[Duack] Seek to 00:00:14.7693870 failed on the
+  platform player; playback continues from the current position.` - and the track counted up from
+  00:00. The deferral itself worked (the seek now fires at the swap instead of moving the
+  still-fading-out old track), but the swap's `Play(newSrc)` leaves the element loading, fastSeek
+  is refused then, and `Seek` treated that first refusal as terminal: the verify loop (built
+  exactly for a seek landing mid-load) was never armed, so one refusal lost the resume. Fix: the
+  first refusal arms the verify loop like any other not-yet-stuck state and a refused re-apply is
+  retried on the following frames instead of ending the verify (only the frame bound ends it, and
+  the give-up stays reported); the bound is raised 30 -> 300 frames because a cold src load can
+  outlast 0.5 s. (#76)
+- **The desktop clip clock kept advancing while paused, so the readback position drifted by the
+  pause duration (#67 defect).** Symptom (dogfooded alongside the #75 resume work): on the desktop
+  build, pausing and later resuming context with `Play(name, index, startPosition)` restarted ahead
+  of where the audio actually paused - the pause duration was baked into `Position` - while the web
+  build resumed correctly. Cause: `SoundEffectMusicBackend.Update` advanced the clip clock whenever
+  an instance existed, with no paused guard, while the web backend's `Position` reads the player's
+  real (frozen) clock. Fix: the clip clock freezes while paused and continues from the paused
+  position on `Resume`; the end detection also guards explicitly on the paused state (a paused
+  `SoundEffectInstance` reports `IsPlaying == false`), and the duplicated end-detection `if` left
+  by the #67/#71 merge in the same method is dropped. (#76)
+
 #### 2026-11-27
+- **The resume seek landed on the wrong track on single-instance (web) backends (#67 defect).**
+  Symptom (dogfooded in monsterprojectweb): returning from a battle to the overworld with
+  ``Play(name, index, startPosition)`` audibly glitched the still-fading-out battle track to the
+  resume position, and the overworld track then started from its top anyway. Cause: on a
+  non-overlap backend the transition fades the OLD track out FIRST and only swaps to the new
+  track when that fade completes - but Play fired the seek immediately after the transition
+  began, so it moved the still-playing old track and never the new one. Fix: on a non-overlap
+  backend the resume position is deferred (``_pendingResume``) and applied when the sequencer
+  swaps to the new track (the fresh-start path, where PlayTrack happens inside Play, still seeks
+  immediately; a zero-length fade-out that completes within Play flushes at once, and Stop
+  cancels a deferred resume). Overlap backends (desktop) are unchanged. (#75)
+- **The web element's async src load ate the resume fastSeek (#75 follow-up).**
+  Symptom (same QA round, console evidence): the resume was delegated with the right position and
+  `SupportsSeek: True` - and the track still restarted from its top. Cause: the element loads its
+  new `src` asynchronously, and a fastSeek that lands before the load completes is reset by the
+  load itself (currentTime snaps back to 0 - the browser's documented behavior for a seek before
+  loadedmetadata); the seek was accepted (no exception, so nothing reported) and then eaten.
+  Fix: the web backend verifies the seek on the following frames and re-applies until the position
+  sticks (bounded by `MaxSeekVerifyFrames`; giving up is reported - a wedged element cannot spin
+  the per-frame retry forever); tolerance distinguishes a reset (snap to zero) from normal
+  playback drift, and a stick is verified once, not reapplied.
+
 - **Preview breaking (audible): mix-state targets are a multiplicative factor layer now,
   not a bus-volume write (#68).** Symptom before: `MixStateManager` applied state targets by
   writing the bus's authored volume (`BusMixer.SetBus`) on every mixer it drives — the same

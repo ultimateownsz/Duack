@@ -176,6 +176,53 @@ public class SoundEffectMusicBackendTests
     }
 
     [Fact]
+    public void Pause_freezes_the_position_clock()
+    {
+        var (backend, _, _) = Create();
+        backend.PlayTrack("overworld", 0.5f, 0f);
+
+        backend.Update(5f);
+        backend.Pause();
+        backend.Update(3f);
+
+        // The clip clock must freeze while paused, like the web backend's player position:
+        // a context resume that reads Position after a pause must not skip ahead.
+        Assert.Equal(TimeSpan.FromSeconds(5), backend.Position);
+    }
+
+    [Fact]
+    public void Resume_continues_the_clock_from_the_paused_position()
+    {
+        var (backend, _, _) = Create();
+        backend.PlayTrack("overworld", 0.5f, 0f);
+
+        backend.Update(5f);
+        backend.Pause();
+        backend.Update(3f);
+        backend.Resume();
+        backend.Update(1f);
+
+        Assert.Equal(TimeSpan.FromSeconds(6), backend.Position);
+    }
+
+    [Fact]
+    public void Update_while_paused_does_not_raise_TrackEnded()
+    {
+        var (backend, _, _) = Create();
+        backend.PlayTrack("overworld", 0.5f, 0f);
+        var ended = 0;
+        backend.TrackEnded += (_, _) => ended++;
+
+        // A paused SoundEffectInstance reports IsPlaying == false; the end detection
+        // must not read that as a natural end.
+        backend.Pause();
+        backend.Update(0.016f);
+        backend.Update(0.016f);
+
+        Assert.Equal(0, ended);
+    }
+
+    [Fact]
     public void Duration_reports_the_active_clips_duration()
     {
         var library = new FakeAudioClipLibrary();

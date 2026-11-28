@@ -57,6 +57,7 @@ public class MusicManager
     private const float FastFadeOutSeconds = 0.2f;
 
     private float _fadeOutDuration = FastFadeOutSeconds;
+    private (string Playlist, int StartIndex, TimeSpan Position)? _pendingResume;
 
     /// <summary>Raised after the playlist advanced: carries the track that just completed.</summary>
     public event Action<PlaylistTrack>? TrackCompleted;
@@ -221,17 +222,31 @@ public class MusicManager
         _fadeInDurationOverride = null;
 
         // A resume position needs the track to EXIST before it can be sought, so it rides after
-        // the transition start. On a backend that cannot seek (clip instances), report instead of
-        // pretending: the caller still gets the track+index resume, and knows the position was
-        // dropped. Console (not Debug) so it survives Release.
+        // the transition start. On an overlap backend the new track is already the active one
+        // (BeginTransition played it), so the seek lands on the right track here. On a
+        // non-overlap backend the transition is still fading the OLD track out - the new track
+        // starts only when that fade completes - so the seek is DEFERRED to the swap: seeking
+        // now would move the still-playing old track (audible glitch mid-fade-out) and the new
+        // track would still start from its top. On a backend that cannot seek (clip instances),
+        // report instead of pretending: the caller still gets the track+index resume, and knows
+        // the position was dropped. Console (not Debug) so it survives Release.
         if (startPosition is { } resume)
         {
-            if (_backend.SupportsSeek)
-                _backend.Seek(resume);
+            if (_backend.SupportsOverlap)
+            {
+                if (_backend.SupportsSeek)
+                    _backend.Seek(resume);
+                else
+                    Console.WriteLine($"[Duack] Play resuming '{playlistName}' at track {startIndex}; the " +
+                                      "backend cannot seek, so the track plays from its start (check " +
+                                      "MusicManager.SupportsSeek before relying on a resume position).");
+            }
             else
-                Console.WriteLine($"[Duack] Play resuming '{playlistName}' at track {startIndex}; the " +
-                                  "backend cannot seek, so the track plays from its start (check " +
-                                  "MusicManager.SupportsSeek before relying on a resume position).");
+            {
+                _pendingResume = (playlistName, startIndex, resume);
+                if (!_isCrossfading)
+                    ApplyPendingResume();
+            }
         }
 
         // If this is the first track (or starting fresh), force a fade-in from silence
@@ -345,6 +360,7 @@ public class MusicManager
             _isCrossfading = false;
             _crossfadeElapsed = 0f;
             _pending = null;
+            _pendingResume = null;
             _fadeOutDurationOverride = null;
             return;
         }
@@ -361,6 +377,7 @@ public class MusicManager
         _active = null;
         _outgoing = null;
         _pending = null;
+        _pendingResume = null;
         _transitionFrom = null;
         _backend.Stop();
         _backend.StopOutgoing();
@@ -485,6 +502,7 @@ public class MusicManager
                 _active.Name,
                 Compose(_sequencer.InGain, _active.Context),
                 NextCuePitch());
+            ApplyPendingResume();
         }
 
         if (_sequencer.Phase == MusicFadePhase.Steady)
@@ -503,6 +521,23 @@ public class MusicManager
         {
             ApplyVolumes(fadeIn: _sequencer.InGain, fadeOut: 0f);
         }
+    }
+
+    /// <summary>
+    /// Applies a deferred resume position (non-overlap backends: the seek must wait until the
+    /// sequencer swaps to the new track, so it lands on the track that is actually audible).
+    /// A backend that cannot seek gets the same drop report as the immediate path.
+    /// </summary>
+    private void ApplyPendingResume()
+    {
+        if (_pendingResume is not { } pending) return;
+        _pendingResume = null;
+        if (_backend.SupportsSeek)
+            _backend.Seek(pending.Position);
+        else
+            Console.WriteLine($"[Duack] Play resuming '{pending.Playlist}' at track {pending.StartIndex}; the " +
+                              "backend cannot seek, so the track plays from its start (check " +
+                              "MusicManager.SupportsSeek before relying on a resume position).");
     }
 
     private void BeginTransition(PlaylistTrack desired)

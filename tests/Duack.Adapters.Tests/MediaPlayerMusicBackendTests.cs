@@ -208,20 +208,21 @@ public class MediaPlayerMusicBackendTests
         // load itself (currentTime snaps back to 0). The backend verifies on the following frames
         // and re-applies until the position sticks - the resume then audibly continues.
         var host = new FakeMediaPlayerHost { ResetPositionOnNextSeek = true };
-        var backend = Create(host);
+        var (backend, _) = Create(host);
         backend.PlayTrack("overworld", 0.5f, 0f);
 
         backend.Seek(TimeSpan.FromSeconds(11.17));
 
-        backend.Update(0.016f); // the src load lands: currentTime snapped back to zero
-        Assert.NotEqual(TimeSpan.FromSeconds(11.17), backend.Position);
+        backend.Update(0.016f); // the src load's reset snaps to zero mid-frame; the verify re-applies
 
-        backend.Update(0.016f);
-        backend.Update(0.016f);
-
-        Assert.Equal(TimeSpan.FromSeconds(11.17), backend.Position);
         Assert.Equal(1, host.LoadResetCount);
-        Assert.True(host.SeekCount >= 2);
+        Assert.Equal(2, host.SeekCount); // applied once + re-applied once: it stuck
+        Assert.Equal(TimeSpan.FromSeconds(11.17), backend.Position);
+
+        backend.Update(0.016f);
+        backend.Update(0.016f);
+
+        Assert.Equal(TimeSpan.FromSeconds(11.17), backend.Position); // sticks, never reapplied
     }
 
     [Fact]
@@ -247,8 +248,8 @@ public class MediaPlayerMusicBackendTests
         // The platform keeps accepting the seek (no exception) but the position never moves
         // (e.g. a muted/not-yet-loaded element): the verify gives up at the bound and reports,
         // so a wedged element cannot spin the per-frame retry forever.
-        var host = new FakeMediaPlayerHost { SeekResult = true };
-        var backend = Create(host);
+        var host = new FakeMediaPlayerHost { SeekResult = true, IgnoreSeekPosition = true };
+        var (backend, _) = Create(host);
         backend.PlayTrack("overworld", 0.5f, 0f);
 
         backend.Seek(TimeSpan.FromSeconds(11.17));

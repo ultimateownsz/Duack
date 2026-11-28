@@ -99,9 +99,10 @@ public sealed class MediaPlayerMusicBackend : IMusicBackend
             return;
         }
 
-        // Tolerance: the element plays while verifying, so the position drifts by the frame delta;
-        // a reset by the src load snaps to zero - far outside any drift. A paused element reads
-        // the target exactly and settles immediately.
+        // The element plays while verifying, so the position drifts by the frame delta; a reset
+        // by the src load snaps to zero - far outside any drift. Re-apply while the read position
+        // is nowhere near the target; only a position that arrived (or a paused element, which
+        // reads the target exactly) stops the verify. A wedged element is retried to the bound.
         if (Math.Abs((Position - target).TotalSeconds) < 0.5)
         {
             _pendingSeek = null;

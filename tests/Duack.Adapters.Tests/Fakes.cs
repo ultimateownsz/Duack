@@ -33,6 +33,10 @@ internal sealed class FakeMediaPlayerHost : IMediaPlayerHost
     public bool ResetPositionOnNextSeek { get; set; }
     public int LoadResetCount { get; private set; }
 
+    /// <summary>Models an element that accepts the seek but never moves its audible position
+    /// (a muted/not-yet-loaded player): every TrySeek reports success while Position stays put.</summary>
+    public bool IgnoreSeekPosition { get; set; }
+
     public bool TrySeek(TimeSpan position)
     {
         SeekCount++;
@@ -44,7 +48,7 @@ internal sealed class FakeMediaPlayerHost : IMediaPlayerHost
             Position = TimeSpan.Zero;
             return SeekResult;
         }
-        if (SeekResult)
+        if (SeekResult && !IgnoreSeekPosition)
             Position = position;
         return SeekResult;
     }

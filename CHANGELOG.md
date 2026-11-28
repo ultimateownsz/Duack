@@ -11,6 +11,18 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 
 ### Fixed
 
+#### 2026-11-28
+- **The desktop clip clock kept advancing while paused, so the readback position drifted by the
+  pause duration (#67 defect).** Symptom (dogfooded alongside the #75 resume work): on the desktop
+  build, pausing and later resuming context with `Play(name, index, startPosition)` restarted ahead
+  of where the audio actually paused - the pause duration was baked into `Position` - while the web
+  build resumed correctly. Cause: `SoundEffectMusicBackend.Update` advanced the clip clock whenever
+  an instance existed, with no paused guard, while the web backend's `Position` reads the player's
+  real (frozen) clock. Fix: the clip clock freezes while paused and continues from the paused
+  position on `Resume`; the end detection also guards explicitly on the paused state (a paused
+  `SoundEffectInstance` reports `IsPlaying == false`), and the duplicated end-detection `if` left
+  by the #67/#71 merge in the same method is dropped. (#76)
+
 #### 2026-11-27
 - **The resume seek landed on the wrong track on single-instance (web) backends (#67 defect).**
   Symptom (dogfooded in monsterprojectweb): returning from a battle to the overworld with

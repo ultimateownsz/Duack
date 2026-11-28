@@ -27,8 +27,8 @@ internal sealed class FakeAudioInstance : IAudioInstance
         IsPlaying = false;
     }
 
-    public void Pause() { }
-    public void Resume() { }
+    // A paused SoundEffectInstance reports IsPlaying == false (State != Playing).
+    public void Pause() => IsPlaying = false;
 
     public void Dispose() => Disposed = true;
 

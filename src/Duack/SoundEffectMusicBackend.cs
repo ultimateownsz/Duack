@@ -42,8 +42,9 @@ public sealed class SoundEffectMusicBackend : IMusicBackend
     /// <summary>
     /// The clip clock: <c>_elapsed</c> is advanced by <see cref="Update"/> and reset on every
     /// <see cref="PlayTrack"/>/<see cref="Stop"/>, so it tracks the active instance's audible
-    /// position as long as updates run every frame. A <c>SoundEffectInstance</c> exposes no real
-    /// position, so this is the best reading available on clip backends.
+    /// position as long as updates run every frame; it freezes while paused, matching the web
+    /// backend's player position. A <c>SoundEffectInstance</c> exposes no real position, so this
+    /// is the best reading available on clip backends.
     /// </summary>
     public TimeSpan Position => _active is null ? TimeSpan.Zero : TimeSpan.FromSeconds(_elapsed);
 
@@ -199,12 +200,14 @@ public sealed class SoundEffectMusicBackend : IMusicBackend
     /// <inheritdoc />
     public void Update(float deltaSeconds)
     {
-        if (_active is not null)
+        // The clip clock freezes while paused, like the web backend's player position, so a
+        // context resume that reads Position after a pause does not skip ahead by the pause.
+        if (!_paused && _active is not null)
             _elapsed += deltaSeconds;
-        if (_activeStarted && _active is { IsPlaying: false })
         if (!_paused && _activeStarted && _active is { IsPlaying: false })
         {
             // The instance stopped on its own (reached the end); report completion exactly once.
+            // A paused SoundEffectInstance also reports IsPlaying == false, hence the guard.
             _activeStarted = false;
             TrackEnded?.Invoke(this, EventArgs.Empty);
         }

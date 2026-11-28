@@ -27,10 +27,23 @@ internal sealed class FakeMediaPlayerHost : IMediaPlayerHost
     public TimeSpan? LastSeek { get; private set; }
     public bool SeekResult { get; set; } = true;
 
+    /// <summary>Models the element's async src load: the next TrySeek "succeeds" but the load
+    /// resets currentTime to zero (the browser's documented behavior for a seek before
+    /// loadedmetadata); the seek is eaten, and only a re-apply after the load can stick.</summary>
+    public bool ResetPositionOnNextSeek { get; set; }
+    public int LoadResetCount { get; private set; }
+
     public bool TrySeek(TimeSpan position)
     {
         SeekCount++;
         LastSeek = position;
+        if (ResetPositionOnNextSeek)
+        {
+            ResetPositionOnNextSeek = false;
+            LoadResetCount++;
+            Position = TimeSpan.Zero;
+            return SeekResult;
+        }
         if (SeekResult)
             Position = position;
         return SeekResult;

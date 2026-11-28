@@ -200,6 +200,65 @@ public class MediaPlayerMusicBackendTests
         Assert.Equal(TimeSpan.FromSeconds(95.5), backend.Duration);
     }
 
+
+    [Fact]
+    public void Seek_reapplies_when_the_src_load_resets_the_position()
+    {
+        // A fastSeek that lands before the element finished loading its new src is reset by the
+        // load itself (currentTime snaps back to 0). The backend verifies on the following frames
+        // and re-applies until the position sticks - the resume then audibly continues.
+        var host = new FakeMediaPlayerHost { ResetPositionOnNextSeek = true };
+        var backend = Create(host);
+        backend.PlayTrack("overworld", 0.5f, 0f);
+
+        backend.Seek(TimeSpan.FromSeconds(11.17));
+
+        backend.Update(0.016f); // the src load lands: currentTime snapped back to zero
+        Assert.NotEqual(TimeSpan.FromSeconds(11.17), backend.Position);
+
+        backend.Update(0.016f);
+        backend.Update(0.016f);
+
+        Assert.Equal(TimeSpan.FromSeconds(11.17), backend.Position);
+        Assert.Equal(1, host.LoadResetCount);
+        Assert.True(host.SeekCount >= 2);
+    }
+
+    [Fact]
+    public void Seek_that_sticks_is_verified_once_and_not_reapplied()
+    {
+        var (backend, host) = Create();
+        backend.PlayTrack("overworld", 0.5f, 0f);
+
+        backend.Seek(TimeSpan.FromSeconds(11.17));
+
+        var seeksAfterApply = host.SeekCount;
+        backend.Update(0.016f);
+        backend.Update(0.016f);
+        backend.Update(0.016f);
+
+        Assert.Equal(TimeSpan.FromSeconds(11.17), backend.Position);
+        Assert.Equal(seeksAfterApply, host.SeekCount);
+    }
+
+    [Fact]
+    public void Seek_that_never_sticks_is_reported_and_stops_reapplying()
+    {
+        // The platform keeps accepting the seek (no exception) but the position never moves
+        // (e.g. a muted/not-yet-loaded element): the verify gives up at the bound and reports,
+        // so a wedged element cannot spin the per-frame retry forever.
+        var host = new FakeMediaPlayerHost { SeekResult = true };
+        var backend = Create(host);
+        backend.PlayTrack("overworld", 0.5f, 0f);
+
+        backend.Seek(TimeSpan.FromSeconds(11.17));
+
+        for (var frame = 0; frame < 31; frame++)
+            backend.Update(0.016f);
+
+        Assert.Equal(31, host.SeekCount); // applied once + retried up to the bound, then stopped
+    }
+
     [Fact]
     public void Seek_delegates_to_the_platform_player()
     {

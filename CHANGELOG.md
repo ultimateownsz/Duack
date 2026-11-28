@@ -23,6 +23,17 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
   swaps to the new track (the fresh-start path, where PlayTrack happens inside Play, still seeks
   immediately; a zero-length fade-out that completes within Play flushes at once, and Stop
   cancels a deferred resume). Overlap backends (desktop) are unchanged. (#75)
+- **The web element's async src load ate the resume fastSeek (#75 follow-up).**
+  Symptom (same QA round, console evidence): the resume was delegated with the right position and
+  `SupportsSeek: True` - and the track still restarted from its top. Cause: the element loads its
+  new `src` asynchronously, and a fastSeek that lands before the load completes is reset by the
+  load itself (currentTime snaps back to 0 - the browser's documented behavior for a seek before
+  loadedmetadata); the seek was accepted (no exception, so nothing reported) and then eaten.
+  Fix: the web backend verifies the seek on the following frames and re-applies until the position
+  sticks (bounded by `MaxSeekVerifyFrames`; giving up is reported - a wedged element cannot spin
+  the per-frame retry forever); tolerance distinguishes a reset (snap to zero) from normal
+  playback drift, and a stick is verified once, not reapplied.
+
 - **Preview breaking (audible): mix-state targets are a multiplicative factor layer now,
   not a bus-volume write (#68).** Symptom before: `MixStateManager` applied state targets by
   writing the bus's authored volume (`BusMixer.SetBus`) on every mixer it drives — the same

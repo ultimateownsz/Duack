@@ -1,6 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <TargetFramework />
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+  </PropertyGroup>
+
+  <PropertyGroup>
     <!-- Backend-agnostic core: pure BCL (System.Text.Json only). No MonoGame/KNI/engine
          reference, so it builds for every TFM and every front-end (game, tools, adapters). -->
     <RootNamespace>Duack</RootNamespace>

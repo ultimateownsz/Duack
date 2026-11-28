@@ -12,6 +12,18 @@ Detailed per-change notes live in [`.opencode/audit-log.md`](.opencode/audit-log
 ### Fixed
 
 #### 2026-11-28
+- **The deferred resume seek was lost when the element refused fastSeek at the swap (#75
+  follow-up).** Symptom (web head, console): `[Music] Resuming 'Overworld' at 00:00:14.7
+  (SupportsSeek: True)` followed at the swap by `[Duack] Seek to 00:00:14.7693870 failed on the
+  platform player; playback continues from the current position.` - and the track counted up from
+  00:00. The deferral itself worked (the seek now fires at the swap instead of moving the
+  still-fading-out old track), but the swap's `Play(newSrc)` leaves the element loading, fastSeek
+  is refused then, and `Seek` treated that first refusal as terminal: the verify loop (built
+  exactly for a seek landing mid-load) was never armed, so one refusal lost the resume. Fix: the
+  first refusal arms the verify loop like any other not-yet-stuck state and a refused re-apply is
+  retried on the following frames instead of ending the verify (only the frame bound ends it, and
+  the give-up stays reported); the bound is raised 30 -> 300 frames because a cold src load can
+  outlast 0.5 s. (#76)
 - **The desktop clip clock kept advancing while paused, so the readback position drifted by the
   pause duration (#67 defect).** Symptom (dogfooded alongside the #75 resume work): on the desktop
   build, pausing and later resuming context with `Play(name, index, startPosition)` restarted ahead

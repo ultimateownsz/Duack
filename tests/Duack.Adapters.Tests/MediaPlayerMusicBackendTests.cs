@@ -243,6 +243,43 @@ public class MediaPlayerMusicBackendTests
     }
 
     [Fact]
+    public void Seek_refused_while_the_element_loads_is_retried_until_it_sticks()
+    {
+        // The deferred resume seek fires at the swap, right after the new src load started: the
+        // element refuses fastSeek while it is still loading (TrySeek false). The backend must
+        // arm the verify anyway and retry on the following frames - giving up on the first
+        // refusal is how the resume was lost on the web head (the track restarted from 0).
+        var host = new FakeMediaPlayerHost { FailFirstSeekCount = 2 };
+        var (backend, _) = Create(host);
+        backend.PlayTrack("overworld", 0.5f, 0f);
+
+        backend.Seek(TimeSpan.FromSeconds(14.77));  // refused: the element is still loading
+        backend.Update(0.016f);                     // refused again
+        backend.Update(0.016f);                     // accepted - the load finished
+
+        Assert.Equal(3, host.SeekCount);
+        Assert.Equal(TimeSpan.FromSeconds(14.77), backend.Position);
+    }
+
+    [Fact]
+    public void A_refused_reseek_does_not_end_the_verify()
+    {
+        // Mid-verify refusals (the element not ready yet) must not drop the pending seek; only
+        // the frame bound ends the verify.
+        var host = new FakeMediaPlayerHost { FailFirstSeekCount = 2, ResetPositionOnNextSeek = true };
+        var (backend, _) = Create(host);
+        backend.PlayTrack("overworld", 0.5f, 0f);
+
+        backend.Seek(TimeSpan.FromSeconds(11.17));  // refused (call 1): the loop arms anyway
+        backend.Update(0.016f);                     // refused (call 2): the loop keeps going
+        backend.Update(0.016f);                     // accepted, but the load resets (call 3)
+        backend.Update(0.016f);                     // re-applied (call 4): it sticks
+
+        Assert.Equal(4, host.SeekCount);
+        Assert.Equal(TimeSpan.FromSeconds(11.17), backend.Position);
+    }
+
+    [Fact]
     public void Seek_that_never_sticks_is_reported_and_stops_reapplying()
     {
         // The platform keeps accepting the seek (no exception) but the position never moves
@@ -254,10 +291,10 @@ public class MediaPlayerMusicBackendTests
 
         backend.Seek(TimeSpan.FromSeconds(11.17));
 
-        for (var frame = 0; frame < 31; frame++)
+        for (var frame = 0; frame < MaxSeekVerifyFrames + 1; frame++)
             backend.Update(0.016f);
 
-        Assert.Equal(31, host.SeekCount); // applied once + retried up to the bound, then stopped
+        Assert.Equal(MaxSeekVerifyFrames + 1, host.SeekCount); // applied once + retried up to the bound, then stopped
     }
 
     [Fact]

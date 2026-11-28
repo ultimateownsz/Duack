@@ -77,6 +77,8 @@ Each topic is one self-contained Markdown guide in duack-skills/. Read them your
 
 You need the [.NET 10 SDK.](https://dotnet.microsoft.com/download)
 
+The packages multi-target `net8.0` and `net10.0`, so games still on .NET 8 (e.g. FlatRedBall, which rides the MonoGame adapter) can reference them without retargeting.
+
 ```sh
 dotnet add package Duack --prerelease
 dotnet add package Duack.MonoGame --prerelease   # desktop (Duack.KNI for browser/WASM)
